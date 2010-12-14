@@ -42,7 +42,7 @@ class TestRcsCommon < Test::Unit::TestCase
     clear = SecureRandom.random_bytes(16)
     key = Digest::MD5.digest "4yeN5zu0+il3Jtcb5a1sBcAdjYFcsD9z"
 
-    # padding is ON by default
+    # padding is ON by default, disable it
     enc = aes_encrypt(clear, key, PAD_NOPAD)
 
     # must be exactly the same size
@@ -58,15 +58,28 @@ class TestRcsCommon < Test::Unit::TestCase
     clear = SecureRandom.random_bytes(19)
     key = Digest::MD5.digest "4yeN5zu0+il3Jtcb5a1sBcAdjYFcsD9z"
 
-    # padding is ON by default
+    # padding is ON by default, disable it
+    assert_raise(OpenSSL::Cipher::CipherError) do
+      aes_encrypt(clear, key, PAD_NOPAD)
+    end
+    
+  end
+
+  def test_crypt_wrong_padding
+
+    clear = SecureRandom.random_bytes(16)
+    key = Digest::MD5.digest "4yeN5zu0+il3Jtcb5a1sBcAdjYFcsD9z"
+
+    # padding is ON by default, disable it
     enc = aes_encrypt(clear, key, PAD_NOPAD)
 
     # must be exactly the same size
     assert_true enc.length == clear.length
 
     assert_raise(OpenSSL::Cipher::CipherError) do
-      aes_decrypt(enc, key, PAD_NOPAD)
+      aes_decrypt(enc, key)
     end
-    
+
   end
+
 end

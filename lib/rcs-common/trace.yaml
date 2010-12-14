@@ -1,0 +1,42 @@
+
+# *** YAML2LOG4R ***
+log4r_config:
+  # define all pre config ...
+  pre_config:
+    global:
+      level: DEBUG
+    root  :
+      level: DEBUG
+
+  # define all loggers ...
+  loggers:
+    - name      : rcslogger
+      level     : DEBUG
+      additive  : 'false'
+      trace     : 'false'      
+      outputters:
+        - stderr
+        - logfile    
+
+  # define all outputters (incl. formatters)      
+  outputters:
+    - type     : StderrOutputter
+      name     : stderr 
+      level    : DEBUG
+      formatter:
+      # take a look at this: http://log4r.rubyforge.org/rdoc/Log4r/PatternFormatter.html
+        date_pattern: '%Y-%m-%d %H:%M:%S'
+        pattern     : '%d [%l]: %X{:test} %x\t %m '
+        type        : PatternFormatter
+
+    - type        : DateFileOutputter
+      name        : logfile
+      level       : DEBUG
+      date_pattern: '%Y-%m-%d'
+      trunc       : 'false'
+      dirname     : "#{HOME}/logs"
+      formatter   :
+        date_pattern: '%Y-%m-%d %H:%M:%S'
+        pattern     : '%d [%l]: %x %m'
+        type        : PatternFormatter
+        

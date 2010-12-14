@@ -13,11 +13,11 @@ require 'jeweler'
 Jeweler::Tasks.new do |gem|
   # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
   gem.name = "rcs-common"
-  gem.homepage = "http://github.com/alor/rcs-common"
-  gem.license = "MIT"
-  gem.summary = %Q{TODO: one-line summary of your gem}
-  gem.description = %Q{TODO: longer description of your gem}
-  gem.email = "a.ornaghi@hackingteam.it"
+  gem.homepage = "http://www.hackingteam.it"
+  gem.license = "HT"
+  gem.summary = %Q{RCS Common components}
+  gem.description = %Q{Common components for the RCS Backend}
+  gem.email = "alor@hackingteam.it"
   gem.authors = ["ALoR"]
   # Include your dependencies below. Runtime dependencies are required when using your gem,
   # and development dependencies are only needed for development (ie running rake tasks, tests, etc)
