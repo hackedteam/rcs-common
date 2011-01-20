@@ -1,26 +1,47 @@
 require 'helper'
 
 class TestRcsCommon < Test::Unit::TestCase
-  def test_pascalize
-    source = "ciao"
-    #            length             c            i            a            o           null
-    dest = "\x0a\x00\x00\x00" + "\x63\x00" + "\x69\x00" + "\x61\x00" + "\x6f\x00" + "\x00\x00"
 
-    assert_equal dest, source.pascalize
+  def test_mime_cod
+    mime = RCS::MimeType::get('test.cod')
+    expected = 'application/vnd.rim.cod'
+    assert_equal mime, expected
   end
 
-  def test_unpascalize
-    #              length             c            i            a            o           null
-    source = "\x0a\x00\x00\x00" + "\x63\x00" + "\x69\x00" + "\x61\x00" + "\x6f\x00" + "\x00\x00"
-    dest = "ciao"
-
-    assert_equal dest, source.unpascalize
+  def test_mime_jad
+    mime = RCS::MimeType::get('test.jad')
+    expected = 'text/vnd.sun.j2me.app-descriptor'
+    assert_equal mime, expected
   end
 
-  def test_unpascalize_multi
-    multi_source = "\x0a\x00\x00\x00c\x00i\x00a\x00o\x00\x00\x00" + "\x0a\x00\x00\x00m\x00i\x00a\x00o\x00\x00\x00" + "\x08\x00\x00\x00b\x00a\x00o\x00\x00\x00"
-    multi_dest = ["ciao", "miao", "bao"]
-
-    assert_equal multi_dest, multi_source.unpascalize_ary
+  def test_mime_jnlp
+    mime = RCS::MimeType::get('test.jnlp')
+    expected = 'application/x-java-jnlp-file'
+    assert_equal mime, expected
   end
+
+  def test_mime_cab
+    mime = RCS::MimeType::get('test.cab')
+    expected = 'application/vnd.ms-cab-compressed'
+    assert_equal mime, expected
+  end
+
+  def test_mime_apk
+    mime = RCS::MimeType::get('test.apk')
+    expected = 'application/vnd.android.package-archive'
+    assert_equal mime, expected
+  end
+
+  def test_mime_exe
+    mime = RCS::MimeType::get('test.exe')
+    expected = 'application/octet-stream'
+    assert_equal mime, expected
+  end
+
+  def test_mime_unknown
+    mime = RCS::MimeType::get('test.unknown')
+    expected = 'binary/octet-stream'
+    assert_equal mime, expected
+  end
+
 end

@@ -15,7 +15,7 @@ module Tracer
   # the path provided is the path where the 'trace.yaml' resides
   # the configuration inside the yaml can be changed at will
   # and the trace system will reflect it 
-  def trace_init(path='.')
+  def trace_init(path = '.', file = 'trace.yaml')
     # the configuration file is YAML
     # the file must be called trace.yaml and put in the working directory
     # of the module that wants to use the 'trace' function
@@ -25,7 +25,12 @@ module Tracer
     trace_cfg['HOME'] = path
 
     # load the YAML file with this
-    trace_cfg.load_yaml_file('trace.yaml')
+    begin
+      trace_cfg.load_yaml_file(file)
+    rescue
+      raise "FATAL: cannot find trace.yaml file. aborting."
+    end
+
   end
 
   # http://log4r.rubyforge.org/manual.html#ndc
@@ -62,7 +67,7 @@ module Tracer
     log.send(level, "#{msg}")
     
   end
-  
+
 end # Tracer::
 end # RCS::
 

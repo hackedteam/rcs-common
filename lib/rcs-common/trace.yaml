@@ -16,7 +16,7 @@ log4r_config:
       trace     : 'false'      
       outputters:
         - stderr
-        - logfile    
+#        - logfile
 
   # define all outputters (incl. formatters)      
   outputters:
@@ -29,14 +29,14 @@ log4r_config:
         pattern     : '%d [%l]: %X{:test} %x\t %m '
         type        : PatternFormatter
 
-    - type        : DateFileOutputter
-      name        : logfile
-      level       : DEBUG
-      date_pattern: '%Y-%m-%d'
-      trunc       : 'false'
-      dirname     : "#{HOME}/logs"
-      formatter   :
-        date_pattern: '%Y-%m-%d %H:%M:%S'
-        pattern     : '%d [%l]: %x %m'
-        type        : PatternFormatter
+#    - type        : DateFileOutputter
+#      name        : logfile
+#      level       : DEBUG
+#      date_pattern: '%Y-%m-%d'
+#      trunc       : 'false'
+#      dirname     : "#{HOME}/logs"
+#      formatter   :
+#        date_pattern: '%Y-%m-%d %H:%M:%S'
+#        pattern     : '%d [%l]: %x %m'
+#        type        : PatternFormatter
         

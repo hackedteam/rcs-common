@@ -12,16 +12,21 @@ class Evidence
   attr_reader :name
   attr_reader :timestamp
   
-  # factory to create a random evidence
   def initialize
+
+  end
+
+  # factory to create a random evidence
+  def generate(type)
     @name =  SecureRandom.hex(16)
     @timestamp = Time.new
-    
+
     @content = 'prova log'
     @size = @content.length
-    
+
+    return self
   end
-      
+  
 end
 
 end # RCS::
