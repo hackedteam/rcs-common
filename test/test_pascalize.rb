@@ -1,4 +1,5 @@
 require 'helper'
+require 'securerandom'
 
 class TestRcsCommon < Test::Unit::TestCase
   def test_pascalize
@@ -18,9 +19,30 @@ class TestRcsCommon < Test::Unit::TestCase
   end
 
   def test_unpascalize_multi
-    multi_source = "\x0a\x00\x00\x00c\x00i\x00a\x00o\x00\x00\x00" + "\x0a\x00\x00\x00m\x00i\x00a\x00o\x00\x00\x00" + "\x08\x00\x00\x00b\x00a\x00o\x00\x00\x00"
+    multi_source = "\x0a\x00\x00\x00c\x00i\x00a\x00o\x00\x00\x00" +
+                   "\x0a\x00\x00\x00m\x00i\x00a\x00o\x00\x00\x00" +
+                   "\x08\x00\x00\x00b\x00a\x00o\x00\x00\x00"
     multi_dest = ["ciao", "miao", "bao"]
 
     assert_equal multi_dest, multi_source.unpascalize_ary
   end
+
+  def test_unpascalize_multi_and_random
+    multi_source = "\x0a\x00\x00\x00c\x00i\x00a\x00o\x00\x00\x00" +
+                   "\x0a\x00\x00\x00m\x00i\x00a\x00o\x00\x00\x00" +
+                   "\x08\x00\x00\x00b\x00a\x00o\x00\x00\x00" +
+                   SecureRandom.random_bytes(32)
+
+    multi_dest = ["ciao", "miao", "bao"]
+
+    assert_equal multi_dest, multi_source.unpascalize_ary
+  end
+
+  def test_unpascalize_random
+    source = SecureRandom.random_bytes(64)
+
+    assert_nil source.unpascalize
+    assert_equal [], source.unpascalize_ary
+  end
+
 end
