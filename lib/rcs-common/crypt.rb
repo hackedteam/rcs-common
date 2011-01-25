@@ -5,6 +5,7 @@
 #
 
 require 'openssl'
+require 'digest/sha1'
 
 module RCS
 
@@ -33,7 +34,20 @@ module Crypt
     data << decipher.final
     return data
   end
-  
+
+  def aes_encrypt_integrity(clear_text, key, padding=PAD_PKCS5)
+    # add the integrity check at the end of the message
+    clear_text += Digest::SHA1.digest(clear_text)
+    return aes_encrypt(clear_text, key, padding)
+  end
+
+  def aes_decrypt_integrity(enc_text, key, padding=PAD_PKCS5)
+    text = aes_decrypt(enc_text, key, padding)
+    # check the integrity at the end of the message
+    check = text.slice!(text.length - Digest::SHA1.new.digest_length, text.length)
+    raise "Invalid sha1 check" unless check == Digest::SHA1.digest(text)
+    return text
+  end
 end
 
 end #namespace
