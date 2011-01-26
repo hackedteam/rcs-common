@@ -12,7 +12,8 @@ module RCS
 module Crypt
   PAD_NOPAD = 0
   PAD_PKCS5 = 1
-  
+  SHA1_DIGEST_LENGTH = 20
+
   def aes_encrypt(clear_text, key, padding=PAD_PKCS5)
     cipher = OpenSSL::Cipher::Cipher.new('aes-128-cbc')
     cipher.encrypt
@@ -44,7 +45,7 @@ module Crypt
   def aes_decrypt_integrity(enc_text, key, padding=PAD_PKCS5)
     text = aes_decrypt(enc_text, key, padding)
     # check the integrity at the end of the message
-    check = text.slice!(text.length - Digest::SHA1.new.digest_length, text.length)
+    check = text.slice!(text.length - SHA1_DIGEST_LENGTH, text.length)
     raise "Invalid sha1 check" unless check == Digest::SHA1.digest(text)
     return text
   end
