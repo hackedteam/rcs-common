@@ -18,6 +18,22 @@ class TestRcsCommon < Test::Unit::TestCase
     assert_equal dest, source.unpascalize
   end
 
+  def test_pascalize_null
+    source = ""
+    #            length            null
+    dest = "\x02\x00\x00\x00" + "\x00\x00"
+
+    assert_equal dest, source.pascalize
+  end
+
+  def test_unpascalize_null
+    #              length            null
+    source = "\x0a\x00\x00\x00" + "\x00\x00"
+    dest = ""
+
+    assert_equal dest, source.unpascalize
+  end
+  
   def test_unpascalize_multi
     multi_source = "\x0a\x00\x00\x00c\x00i\x00a\x00o\x00\x00\x00" +
                    "\x0a\x00\x00\x00m\x00i\x00a\x00o\x00\x00\x00" +
