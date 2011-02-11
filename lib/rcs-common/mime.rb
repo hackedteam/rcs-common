@@ -39,7 +39,12 @@ class MimeType
     
     # if there are multiple choices, get the first one
     type = type.first if type.is_a?(Array)
-    
+
+    # special case for IE mobile not understanding this
+    if File.extname(file) == '.cab' then
+      type = MIME::Type.new('binary/octet-stream')
+    end
+
     # default if none is found
     type = MIME::Type.new('binary/octet-stream') if type.nil?
 

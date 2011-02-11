@@ -22,7 +22,9 @@ class TestRcsCommon < Test::Unit::TestCase
 
   def test_mime_cab
     mime = RCS::MimeType::get('test.cab')
-    expected = 'application/vnd.ms-cab-compressed'
+    #expected = 'application/vnd.ms-cab-compressed'
+    # fucking IE mobile not understanding the real mime type
+    expected = 'binary/octet-stream'
     assert_equal mime, expected
   end
 
