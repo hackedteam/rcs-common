@@ -29,36 +29,47 @@ end
 
 module RCS
 
+class DeviceEvidence
+  def additional_header
+    ''
+  end
+
+  def type_id
+    0x0240
+  end
+
+  def data
+    "The time is #{Time.now}".to_utf16le
+  end
+end
+
 class Evidence
   attr_reader :size
   attr_reader :content
   attr_reader :name
   attr_reader :timestamp
 
-  @@logtype = { :DEVICE => 0x0240 }
-
   include Crypt
 
-  def initialize(log_key, deviceid, userid, sourceid)
-    @key = log_key
-    @deviceid = deviceid
-    @userid = userid
-    @sourceid = sourceid
+  def initialize(info)
+    @info = info
   end
 
-  def generate_header(type, additional = '')
+  def generate_header
     thigh, tlow = @timestamp.wtime
-    deviceid_utf16 = @deviceid.to_utf16le
-    userid_utf16 = @userid.to_utf16le
-    sourceid_utf16 = @sourceid.to_utf16le
+    deviceid_utf16 = @info[:device_id].to_utf16le
+    userid_utf16 = @info[:user_id].to_utf16le
+    sourceid_utf16 = @info[:source_id].to_utf16le
 
-    struct = [2008121901, @@logtype[:DEVICE], thigh, tlow, deviceid_utf16.size, userid_utf16.size, sourceid_utf16.size, additional.size]
+    tid = @delegate.type_id
+    additional_size = @delegate.additional_header.size
+    struct = [2008121901, tid, thigh, tlow, deviceid_utf16.size, userid_utf16.size, sourceid_utf16.size, additional_size]
     header = struct.pack("I*")
 
     header += deviceid_utf16
     header += userid_utf16
     header += sourceid_utf16
-    header += additional
+    header += @delegate.additional_header
 
     return header
   end
@@ -66,18 +77,18 @@ class Evidence
   def encrypt(data)
     rest = data.size % 16
     data += "a" * (16 - rest % 16) unless rest == 0
-    return aes_encrypt(data, @key, PAD_NOPAD)
+    return aes_encrypt(data, @info[:log_key], PAD_NOPAD)
   end
 
-  def obfuscate(type, data)
-    header = generate_header(type)
+  def obfuscate
+    header = generate_header
     encrypted_header = encrypt(header)
 
     source = [encrypted_header.size].pack("I")
     source += encrypted_header
 
-    source += [data.size].pack("I")
-    encrypted_data = encrypt(data)
+    source += [@delegate.data.size].pack("I")
+    encrypted_data = encrypt(@delegate.data)
     source += encrypted_data
 
     return source
@@ -88,7 +99,8 @@ class Evidence
     @name =  SecureRandom.hex(16)
     @timestamp = Time.now.utc
 
-    @content = obfuscate(type, "The time is #{Time.now}".to_utf16le)
+    @delegate = eval("#{type.to_s.capitalize}Evidence").new
+    @content = obfuscate
     @size = @content.length
 
     return self
