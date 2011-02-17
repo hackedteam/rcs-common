@@ -121,6 +121,8 @@ class Evidence
     File.open(file, "r") do |f|
       @content = f.read
     end
+    
+    return self
   end
 
 end
