@@ -2,9 +2,6 @@
 #  Status of the process and system
 #
 
-# from RCS::Common
-require 'rcs-common/trace'
-
 # system
 require 'sys/filesystem'
 require 'sys/cpu'
@@ -12,12 +9,8 @@ require 'sys/cpu'
 include Sys
 
 module RCS
-module Collector
-
-#TODO: move this class to rcs-common
 
 class Status
-  extend RCS::Tracer
 
   OK = "OK"
   WARN = "WARN"
@@ -92,5 +85,4 @@ class Status
 
 end #Status
 
-end #Collector::
 end #RCS::

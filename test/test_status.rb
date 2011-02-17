@@ -1,14 +1,6 @@
 require 'helper'
 
 module RCS
-module Collector
-
-# dirty hack to fake the trace function
-# re-open the class and override the method
-class Status
-  def trace(a, b)
-  end
-end
 
 class TestStatus < Test::Unit::TestCase
 
@@ -40,5 +32,4 @@ class TestStatus < Test::Unit::TestCase
   end
 end
 
-end #Collector::
 end #RCS::
