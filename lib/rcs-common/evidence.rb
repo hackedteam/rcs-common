@@ -48,10 +48,12 @@ class Evidence
   attr_reader :content
   attr_reader :name
   attr_reader :timestamp
-
+  attr_reader :info
+  
   include Crypt
-
-  def initialize(info)
+  
+  def initialize(key, info = {})
+    @key = key
     @info = info
   end
 
@@ -73,13 +75,13 @@ class Evidence
 
     return header
   end
-
+  
   def encrypt(data)
     rest = data.size % 16
     data += "a" * (16 - rest % 16) unless rest == 0
-    return aes_encrypt(data, @info[:log_key], PAD_NOPAD)
+    return aes_encrypt(data, @key, PAD_NOPAD)
   end
-
+  
   def obfuscate
     header = generate_header
     encrypted_header = encrypt(header)
