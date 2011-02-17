@@ -106,6 +106,23 @@ class Evidence
     return self
   end
 
+  # save the file in the specified dir
+  def dump_to_file(dir)
+    # dump the file (using the @name) in the 'dir'
+    File.open(dir + '/' + @name, "w") do |f|
+      f.write(@content)
+    end
+  end
+
+  # load an evidence from a file
+  def load_from_file(file)
+    # load the content of the file in @content
+    # TODO: it could be even delayed at the first time @content is requested
+    File.open(file, "r") do |f|
+      @content = f.read
+    end
+  end
+
 end
 
 end # RCS::
