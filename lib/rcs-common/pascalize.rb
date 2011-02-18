@@ -12,7 +12,8 @@ class String
     pascalized = [self.encode('UTF-16LE').bytesize + 2].pack('I')
     pascalized += self.encode('UTF-16LE').unpack('H*').pack('H*') 
     pascalized += "\x00\x00"
-    
+
+    # BINARY is an alias for ASCII-8BIT
     return pascalized.encode!('ASCII-8BIT')
   end
   
@@ -21,6 +22,8 @@ class String
     begin
       # get the len (unsigned int 4 bytes)
       len = self.unpack('I')
+      # sanity check to avoid
+      return nil unless len.first <= self.length - 4
       # get the string
       unpascalized = self.slice(4, len.first).force_encoding('UTF-16LE')
       # convert to UTF-8
