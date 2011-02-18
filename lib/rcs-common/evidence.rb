@@ -4,22 +4,13 @@
 
 require 'securerandom'
 require 'rcs-common/crypt'
+require 'rcs-common/time'
+require 'rcs-common/utf16le'
+
+# evidence types
+require 'rcs-common/evidence/device'
 
 module RCS
-
-class DeviceEvidence
-  def additional_header
-    ''
-  end
-
-  def type_id
-    0x0240
-  end
-
-  def data
-    "The time is #{Time.now}".to_utf16le
-  end
-end
 
 class Evidence
   attr_reader :size
@@ -29,14 +20,14 @@ class Evidence
   attr_reader :info
   
   include Crypt
-  
+
   def initialize(key, info = {})
     @key = key
     @info = info
   end
-
+  
   def generate_header
-    thigh, tlow = @timestamp.wtime
+    thigh, tlow = @timestamp.to_filetime
     deviceid_utf16 = @info[:device_id].to_utf16le
     userid_utf16 = @info[:user_id].to_utf16le
     sourceid_utf16 = @info[:source_id].to_utf16le
@@ -51,7 +42,7 @@ class Evidence
     header += sourceid_utf16
     header += @delegate.additional_header
 
-    return header
+    return encrypt(header)
   end
   
   def encrypt(data)
@@ -60,51 +51,56 @@ class Evidence
     return aes_encrypt(data, @key, PAD_NOPAD)
   end
   
-  def obfuscate
-    header = generate_header
-    encrypted_header = encrypt(header)
-
-    source = [encrypted_header.size].pack("I")
-    source += encrypted_header
-
-    source += [@delegate.data.size].pack("I")
-    encrypted_data = encrypt(@delegate.data)
-    source += encrypted_data
-
-    return source
+  def append_data(data, len = data.size)
+    [len].pack("I") + data
   end
-
+  
   # factory to create a random evidence
   def generate(type)
     @name =  SecureRandom.hex(16)
     @timestamp = Time.now.utc
-
+    
+    # create a delegate of the requested type
     @delegate = eval("#{type.to_s.capitalize}Evidence").new
-    @content = obfuscate
-    @size = @content.length
+    
+    # generate header
+    buf = append_data(generate_header)
+    
+    # append data
+    chunks = @delegate.data
+    chunks.each do | c |
+      buf += append_data( encrypt(c), c.size )
+    end
+    
+    @content = buf
 
     return self
   end
-
+  
+  def size
+    @content.size
+  end
+  
   # save the file in the specified dir
   def dump_to_file(dir)
     # dump the file (using the @name) in the 'dir'
-    File.open(dir + '/' + @name, "w") do |f|
+    File.open(dir + '/' + @name, "wb") do |f|
       f.write(@content)
     end
   end
-
+  
   # load an evidence from a file
   def load_from_file(file)
     # load the content of the file in @content
     # TODO: it could be even delayed at the first time @content is requested
-    File.open(file, "r") do |f|
+    File.open(file, "rb") do |f|
       @content = f.read
+      @name = File.basename f
     end
     
     return self
   end
-
+  
 end
 
 end # RCS::
