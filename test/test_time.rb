@@ -1,25 +1,10 @@
 require "helper"
 
-# TODO: implement test for wtime
 class TestTime < Test::Unit::TestCase
-
-  # Called before every test method runs. Can be used
-  # to set up fixture information.
-  def setup
-    # Do nothing
+  
+  def test_filetime
+    t = Time.now
+    assert_equal Time.from_filetime(*t.to_filetime).to_s, t.to_s
   end
-
-  # Called after every test method runs. Can be used to tear
-  # down fixture information.
-
-  def teardown
-    # Do nothing
-  end
-
-  # Fake test
-  def test_fail
-
-    # To change this template use File | Settings | File Templates.
-    fail("Not implemented")
-  end
+  
 end
