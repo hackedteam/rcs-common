@@ -7,6 +7,7 @@ gem "log4r", ">= 1.1.9"
 gem 'mime-types'
 gem 'sys-filesystem'
 gem 'sys-cpu'
+gem 'sqlite3-ruby'
 
 # Add dependencies to develop your gem here.
 # Include everything needed to run rake, tests, features, etc.
