@@ -33,7 +33,7 @@ class TestEvidenceManager < Test::Unit::TestCase
     EvidenceManager.instance.sync_start @session, *@ident, @now
 
     info = EvidenceManager.instance.get_info @session[:instance]
-
+   
     assert_equal @session[:bid], info['bid']
     assert_equal @session[:build], info['build']
     assert_equal @session[:instance], info['instance']

