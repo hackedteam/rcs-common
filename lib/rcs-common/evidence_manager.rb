@@ -120,7 +120,7 @@ class EvidenceManager
     # sanity check
     path = REPO_DIR + '/' + instance
     return unless File.exist?(path)
-                
+    
     begin
       db = SQLite3::Database.open(path)
       db.results_as_hash = true

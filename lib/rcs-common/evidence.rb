@@ -32,7 +32,7 @@ class Evidence
   include Crypt
   
   def delegate_from_typeid(id)
-    delegate_from_typesym RCS::Common::TYPES[id]
+    delegate_from_typesym RCS::Common::EVIDENCE_TYPES[id]
   end
   
   def delegate_from_typesym(type)
@@ -143,7 +143,7 @@ class Evidence
     # issue the delegate depending on evidence type
     type = header.slice!(0..3).unpack("I").shift
     @delegate = delegate_from_typeid(type)
-    @info[:type] = RCS::Common::TYPES[type]
+    @info[:type] = RCS::Common::EVIDENCE_TYPES[type]
 
     high = header.slice!(0..3).unpack("I").shift
     low = header.slice!(0..3).unpack("I").shift
