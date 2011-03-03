@@ -117,7 +117,7 @@ class EvidenceManager
     # sanity check
     path = REPO_DIR + '/' + instance
     return unless File.exist?(path)
-                
+    
     begin
       db = SQLite3::Database.open(path)
       db.results_as_hash = true
@@ -296,6 +296,7 @@ class EvidenceManager
   end
 
   private
+  # TODO: rubyfy
   def status_to_s(status)
     case status
       when SYNC_IDLE
@@ -321,6 +322,7 @@ class EvidenceManager
     else
       size = 0
     end
+
     # return the size in a human readable format
     if size >= GiB then
       return (size.to_f / GiB).round(2).to_s + ' GiB'

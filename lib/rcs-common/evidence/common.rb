@@ -1,7 +1,7 @@
 module RCS
 module Common
 
-TYPES = { 0 => :GENERIC, 0x0240 => :DEVICE, 0x0140 => :CALL, 0x0241 => :INFO }
+EVIDENCE_TYPES = { 0 => :GENERIC, 0x0240 => :DEVICE, 0x0140 => :CALL, 0x0241 => :INFO }
 
 class GenericEvidence
   

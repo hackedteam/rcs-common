@@ -24,7 +24,9 @@ class CallEvidence < Common::GenericEvidence
     
     @info = {}
     @info[:version] = data.slice!(0..3).unpack("I").shift
-    @info[:channel] = CHANNEL[data.slice!(0..3).unpack("I").shift]
+    
+    channel = data.slice!(0..3).unpack("I").shift
+    @info[:channel] = CHANNEL[channel]
     @info[:program_type] = PROGRAM[data.slice!(0..3).unpack("I").shift]
     
     @info[:sample_rate] = data.slice!(0..3).unpack("I").shift
@@ -41,16 +43,25 @@ class CallEvidence < Common::GenericEvidence
     caller_len = data.slice!(0..3).unpack("I").shift
     callee_len = data.slice!(0..3).unpack("I").shift
     
-    @info[:caller] = data.slice!(0..caller_len-1) unless caller_len == 0
-    @info[:callee] = data.slice!(0..callee_len-1) unless callee_len == 0
+    caller_len != 0 ? @info[:caller] = data.slice!(0..caller_len-1) : @info[:caller] = ''
+    @info[:caller].force_encoding('UTF-16LE').encode!('UTF-8')
+    @info[:caller].lstrip!
+    @info[:caller].rstrip!
+    
+    callee_len != 0 ? @info[:callee] = data.slice!(0..callee_len-1) : @info[:callee] = ''
+    @info[:callee].force_encoding('UTF-16LE').encode!('UTF-8')
+    @info[:callee].lstrip!
+    @info[:callee].rstrip!
   end
-
+  
   def decode_content(chunks)
+    content = ''
     chunks.each do |c|
-      puts "Chunk of size #{c.size}"
+      content += c
     end
+    return content
   end
-
+  
 end
 
 end # RCS::

@@ -31,18 +31,47 @@ class Evidence
   extend Crypt
   include Crypt
   
+  # TODO: improve handling of delegation, should generate exceptions on invalid id or symbols
   def delegate_from_typeid(id)
-    delegate_from_typesym RCS::Common::TYPES[id]
+    begin
+      delegate_from_typesym RCS::Common::EVIDENCE_TYPES[id]
+    rescue Exception => e
+      return nil
+    end
   end
   
   def delegate_from_typesym(type)
-    eval("#{type.to_s.capitalize}Evidence").new
+    begin
+      eval("#{type.to_s.capitalize}Evidence").new
+    rescue Exception => e
+      return nil
+    end
   end
   
   def initialize(key, info = {})
     @key = key
     @info = info
     @version = Evidence.VERSION_ID
+  end
+  
+  def method_missing(method_sym, *arguments, &block)
+    if @info.has_key? method_sym
+      get_info method_sym
+    else
+      super
+    end
+  end
+  
+  def self.respond_to?(method_sym, include_private=false)
+    if @info.has_key? method_sym
+      true
+    else
+      super
+    end
+  end
+  
+  def get_info(sym)
+    return @info[sym]
   end
   
   def generate_header
@@ -142,9 +171,15 @@ class Evidence
 
     # issue the delegate depending on evidence type
     type = header.slice!(0..3).unpack("I").shift
+    begin
+      @info[:type] = RCS::Common::EVIDENCE_TYPES[type]
+    rescue Exception => e
+      return nil
+    end
+    
     @delegate = delegate_from_typeid(type)
-    @info[:type] = RCS::Common::TYPES[type]
-
+    return nil unless @delegate.nil? == false
+    
     high = header.slice!(0..3).unpack("I").shift
     low = header.slice!(0..3).unpack("I").shift
     @info[:timestamp] = Time.from_filetime(high, low)
@@ -183,7 +218,3 @@ class Evidence
 end
 
 end # RCS::
-
-if __FILE__ == $0
-  # TODO Generated stub
-end
