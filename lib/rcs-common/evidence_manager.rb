@@ -111,9 +111,6 @@ class EvidenceManager
       trace :warn, "Cannot insert into the repository: #{e.message}"
       raise "Cannot save evidence"
     end
-
-    #TODO: notify the pusher to send the evidence to db
-    
   end
   
   def get_info(instance)
