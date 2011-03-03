@@ -30,12 +30,12 @@ class TestEvidence < Test::Unit::TestCase
   
   def test_delegate_from_typesym
     evidence = RCS::Evidence.new(@key)
-    assert_raise(NameError) { evidence.delegate_from_typesym :THISISGOINGTOFAIL }
+    assert_nil evidence.delegate_from_typesym :THISISGOINGTOFAIL
   end
   
   def test_delegate_from_typeid
     evidence = RCS::Evidence.new(@key)
-    assert_raise(ArgumentError) { evidence.delegate_from_typeid 0xFFFF }
+    assert_nil evidence.delegate_from_typeid 0xFFFF
   end
   
   def test_align_to_block_len
