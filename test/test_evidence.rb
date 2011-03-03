@@ -2,12 +2,13 @@ require "helper"
 
 module RCS
 
+  # TODO: implement more test cases for Evidence class
 class TestEvidence < Test::Unit::TestCase
   
   # Called before every test method runs. Can be used
   # to set up fixture information.
   def setup
-    @key = 'Ez2vdMwu6VNQxsSj2OmUhbOzoPwsgJTP'
+    @key = ["000102030405060708090a0b0c0d0e0f"].pack('H*')
     @info = { :device_id => "test-device", :user_id => "test-user", :source_id => "127.0.0.1" }
   end
   
@@ -22,11 +23,41 @@ class TestEvidence < Test::Unit::TestCase
   def test_generate
     piece = RCS::Evidence.new(@key, @info).generate(:DEVICE)
     evidence = RCS::Evidence.new(@key).deserialize(piece.binary)
-      
+    
     assert_equal piece.content.force_encoding('UTF-16LE').encode('UTF-8'), evidence.content
     assert_equal piece.binary, evidence.binary
   end
   
+  def test_delegate_from_typesym
+    evidence = RCS::Evidence.new(@key)
+    assert_raise(NameError) { evidence.delegate_from_typesym :THISISGOINGTOFAIL }
+  end
+  
+  def test_delegate_from_typeid
+    evidence = RCS::Evidence.new(@key)
+    assert_raise(ArgumentError) { evidence.delegate_from_typeid 0xFFFF }
+  end
+  
+  def test_align_to_block_len
+    evidence = RCS::Evidence.new(@key)
+    assert_equal(0, evidence.align_to_block_len(0))
+    assert_equal(16, evidence.align_to_block_len(15))
+    assert_equal(16, evidence.align_to_block_len(16))
+    assert_equal(32, evidence.align_to_block_len(17))
+  end
+  
+  def test_encrypt
+    evidence = RCS::Evidence.new(@key)
+    test_string = ['00112233445566778899aabbccddeeff'].pack('H*')
+    assert_equal('69c4e0d86a7b0430d8cdb78070b4c55a', evidence.encrypt(test_string).unpack('H*').shift)
+  end
+
+  def test_decrypt
+    evidence = RCS::Evidence.new(@key)
+    test_string = ['69c4e0d86a7b0430d8cdb78070b4c55a'].pack('H*')
+    assert_equal('00112233445566778899aabbccddeeff', evidence.decrypt(test_string).unpack('H*').shift)
+  end
+
 end
 
 end # RCS::
