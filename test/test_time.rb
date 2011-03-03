@@ -2,9 +2,21 @@ require "helper"
 
 class TestTime < Test::Unit::TestCase
   
-  def test_filetime
-    t = Time.now
-    assert_equal Time.from_filetime(*t.to_filetime).to_s, t.to_s
+  def setup
+    @high_memory = "\x90\xd9\xcb\x01"
+    @high = 0x01cbd990
+    @low = 0x63e06740
   end
   
+  def test_from_filetime
+    assert_equal '2011-03-03 11:47:28 +0100', Time.from_filetime(@high, @low).to_s
+  end
+  
+  def test_from_filetime_has_millisec
+    assert_equal Time.from_filetime(@high, @low).usec, 436000
+  end
+  
+  def test_unpack_from_memory
+    assert_equal @high, @high_memory.unpack('I').shift
+  end
 end
