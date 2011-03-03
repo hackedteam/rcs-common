@@ -2,7 +2,7 @@ require 'rcs-common/evidence/common'
 
 module RCS
 
-class CallEvidence < Common::GenericEvidence
+module CallEvidence
 
   LOG_VOICE_VERSION = 2008121901
   CHANNEL = { 0 => :INCOMING, 1 => :OUTGOING }
@@ -13,11 +13,11 @@ class CallEvidence < Common::GenericEvidence
               0x0145 => :MOBILE,
               0x0146 => :SKYPE_WSAPI,
               0X0147 => :MSN_WSAPI }
-
+  
   def type_id
     0x0140
   end
-
+  
   def decode_additional_header(data)
     
     return nil if data.size == 0
@@ -55,13 +55,9 @@ class CallEvidence < Common::GenericEvidence
   end
   
   def decode_content(chunks)
-    content = ''
-    chunks.each do |c|
-      content += c
-    end
-    return content
+    chunks
   end
-  
+
 end
 
 end # RCS::
