@@ -5,6 +5,7 @@
 # from RCS::Common
 require 'rcs-common/trace'
 require 'rcs-common/flatsingleton'
+require 'rcs-common/fixnum'
 
 # system
 require 'sqlite3'
@@ -108,11 +109,13 @@ class EvidenceManager
     begin
       db = SQLite3::Database.open(REPO_DIR + '/' + session[:instance])
       db.execute("INSERT INTO evidence (size, content) VALUES (#{size}, ? );", SQLite3::Blob.new(content))
+      ret = db.last_insert_row_id
       db.close
     rescue Exception => e
       trace :warn, "Cannot insert into the repository: #{e.message}"
       raise "Cannot save evidence"
     end
+    return ret
   end
 
   def get_evidence(id, instance)
@@ -287,9 +290,19 @@ class EvidenceManager
       time = time.to_s.split(' +').first
       status = status_to_s(e['sync_status'])
       count = e[:evidence].length.to_s
-      size = size_string(e[:evidence])
 
-      puts "|#{e['instance'].center(42)}|#{e['subtype'].center(12)}| #{time} |#{status.center(13)}|#{count.rjust(5)} |#{size.rjust(11)} |"
+      array = e[:evidence]
+      # calculate the sum of all the elements
+      if array.length != 0 then
+        # convert the array of array, into a single array of value
+        size = array.reduce(:+)
+        # calculate the sum
+        size = size.reduce(:+)
+      else
+        size = 0
+      end
+
+      puts "|#{e['instance'].center(42)}|#{e['subtype'].center(12)}| #{time} |#{status.center(13)}|#{count.rjust(5)} |#{size.to_s_bytes.rjust(11)} |"
     end
     
     # print the table footer
@@ -310,33 +323,6 @@ class EvidenceManager
   def status_to_s(status)
     statuses = {SYNC_IDLE => "IDLE", SYNC_IN_PROGRESS => "IN PROGRESS", SYNC_TIMEOUTED => "TIMEOUT"}
     return statuses[status]
-  end
-
-  KiB = 1024
-  MiB = KiB * 1024
-  GiB = MiB * 1024
-
-  def size_string(array)
-    # calculate the sum of all the elements
-    if array.length != 0 then
-      # convert the array of array, into a single array of value
-      size = array.reduce(:+)
-      # calculate the sum
-      size = size.reduce(:+)
-    else
-      size = 0
-    end
-
-    # return the size in a human readable format
-    if size >= GiB then
-      return (size.to_f / GiB).round(2).to_s + ' GiB'
-    elsif size >= MiB
-      return (size.to_f / MiB).round(2).to_s + ' MiB'
-    elsif size >= KiB
-      return (size.to_f / KiB).round(2).to_s + ' KiB'
-    else
-      return size.to_s + ' B'
-    end
   end
 
   # executed from rcs-collector-status
