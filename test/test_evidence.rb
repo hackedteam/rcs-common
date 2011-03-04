@@ -19,23 +19,13 @@ class TestEvidence < Test::Unit::TestCase
     # Do nothing
   end
   
-  # Fake test
+  # TODO: this test is not really a good one ... tests both generation and deserialization of evidence :(
   def test_generate
     piece = RCS::Evidence.new(@key, @info).generate(:DEVICE)
     evidence = RCS::Evidence.new(@key).deserialize(piece.binary)
-    
-    assert_equal piece.content.force_encoding('UTF-16LE').encode('UTF-8'), evidence.content
+        
+    assert_equal piece.content.force_encoding('UTF-16LE').encode('UTF-8'), evidence.content.force_encoding('UTF-16LE').encode('UTF-8')
     assert_equal piece.binary, evidence.binary
-  end
-  
-  def test_delegate_from_typesym
-    evidence = RCS::Evidence.new(@key)
-    assert_nil evidence.delegate_from_typesym :THISISGOINGTOFAIL
-  end
-  
-  def test_delegate_from_typeid
-    evidence = RCS::Evidence.new(@key)
-    assert_nil evidence.delegate_from_typeid 0xFFFF
   end
   
   def test_align_to_block_len
