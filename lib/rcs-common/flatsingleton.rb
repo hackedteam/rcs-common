@@ -4,6 +4,8 @@
 # we can call directly Class.method
 #
 
+require 'singleton'
+
 module FlatSingleton
 
   # catch the call to the method on the class

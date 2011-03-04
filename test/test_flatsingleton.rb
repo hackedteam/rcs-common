@@ -1,8 +1,5 @@
 require "helper"
 
-require 'rcs-common/flatsingleton'
-require 'singleton'
-
 class TestSingleton
   include Singleton
   extend FlatSingleton
