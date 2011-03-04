@@ -22,7 +22,7 @@ class EvidenceManager
   SYNC_IN_PROGRESS = 1
   SYNC_TIMEOUTED = 2
 
-  def sync_start(session, version, user, device, source, time)
+  def sync_start(session, version, user, device, source, time, key=nil)
 
     # create the repository for this instance
     return unless create_repository session[:instance]
@@ -31,9 +31,11 @@ class EvidenceManager
       
     begin
       db = SQLite3::Database.open(REPO_DIR + '/' + session[:instance])
-      #key = db.execute("SELECT key FROM info;")
-      #key = key.first.first unless key.empty?
-      key = 0
+      if key.nil? then
+        # retrieve the old one and keep it
+        old = db.execute("SELECT key FROM info;")
+        key = old.first.first unless old.empty?
+      end
       db.execute("DELETE FROM info;")
       db.execute("INSERT INTO info VALUES (#{session[:bid]},
                                            '#{session[:build]}',
@@ -98,7 +100,7 @@ class EvidenceManager
     trace :info, "[#{session[:instance]}] Sync ended"
   end
 
-  def store(session, size, content)
+  def store_evidence(session, size, content)
     # sanity check
     raise "No repository for this instance" unless File.exist?(REPO_DIR + '/' + session[:instance])
 
@@ -112,8 +114,32 @@ class EvidenceManager
       raise "Cannot save evidence"
     end
   end
-  
-  def get_info(instance)
+
+  def get_evidence(id, instance)
+    # sanity check
+    path = REPO_DIR + '/' + instance
+    return unless File.exists?(path)
+
+    begin
+      db = SQLite3::Database.open(path)
+      ret = db.execute("SELECT content FROM evidence WHERE id=#{id};")
+      db.close
+      return ret.first.first
+    rescue Exception => e
+      trace :warn, "Cannot read from the repository: #{e.message}"
+    end
+  end
+
+  def instances
+    # return all the instances
+    entries = []
+    Dir[REPO_DIR + '/*'].each do |e|
+      entries << File.basename(e)
+    end
+    return entries
+  end
+
+  def instance_info(instance)
     # sanity check
     path = REPO_DIR + '/' + instance
     return unless File.exist?(path)
@@ -129,7 +155,7 @@ class EvidenceManager
     end
   end
   
-  def get_info_evidence(instance)
+  def evidence_info(instance)
     # sanity check
     path = REPO_DIR + '/' + instance
     return unless File.exist?(path)
@@ -144,7 +170,7 @@ class EvidenceManager
     end
   end
   
-  def get_evidence_ids(instance)
+  def evidence_ids(instance)
     # sanity check
     path = REPO_DIR + '/' + instance
     return unless File.exist?(path)
@@ -154,21 +180,6 @@ class EvidenceManager
       ret = db.execute("SELECT id FROM evidence;")
       db.close
       return ret.reduce(:+)
-    rescue Exception => e
-      trace :warn, "Cannot read from the repository: #{e.message}"
-    end
-  end
-  
-  def get_evidence(id, instance)
-    # sanity check
-    path = REPO_DIR + '/' + instance
-    return unless File.exists?(path)
-    
-    begin
-      db = SQLite3::Database.open(path)
-      ret = db.execute("SELECT content FROM evidence WHERE id=#{id};")
-      db.close
-      return ret.first.first
     rescue Exception => e
       trace :warn, "Cannot read from the repository: #{e.message}"
     end
@@ -225,12 +236,12 @@ class EvidenceManager
 
     # delete all the instance with zero evidence pending and not in progress
     if options[:purge] then
-      Dir[REPO_DIR + '/*'].each do |e|
-        entry = get_info(File.basename(e))
-        evidence = get_info_evidence(File.basename(e))
+      instances.each do |e|
+        entry = instance_info(e)
+        evidence = evidence_info(e)
         # IN_PROGRESS sync must be preserved
         # evidences must be preserved
-        File.delete(e) if entry['sync_status'] != SYNC_IN_PROGRESS and evidence.length == 0
+        File.delete(REPO_DIR + '/' + e) if entry['sync_status'] != SYNC_IN_PROGRESS and evidence.length == 0
       end
     end
 
@@ -238,19 +249,19 @@ class EvidenceManager
 
     # we want just one instance
     if options[:instance] then
-      entry = get_info(options[:instance])
+      entry = instance_info(options[:instance])
       if entry.nil? then
         puts "\nERROR: Invalid instance"
         return 1
       end
-      entry[:evidence] = get_info_evidence(options[:instance])
+      entry[:evidence] = evidence_info(options[:instance])
       entries << entry
     else
       # take the info from all the instances
-      Dir[REPO_DIR + '/*'].each do |e|
-        entry = get_info(File.basename(e))
+      instances.each do |e|
+        entry = instance_info(e)
         unless entry.nil? then
-          entry[:evidence] = get_info_evidence(File.basename(e))
+          entry[:evidence] = evidence_info(e)
           entries << entry
         end
       end
@@ -296,16 +307,9 @@ class EvidenceManager
   end
 
   private
-  # TODO: rubyfy
   def status_to_s(status)
-    case status
-      when SYNC_IDLE
-        return "IDLE"
-      when SYNC_IN_PROGRESS
-        return "IN PROGRESS"
-      when SYNC_TIMEOUTED
-        return "TIMEOUT"
-    end
+    statuses = {SYNC_IDLE => "IDLE", SYNC_IN_PROGRESS => "IN PROGRESS", SYNC_TIMEOUTED => "TIMEOUT"}
+    return statuses[status]
   end
 
   KiB = 1024
