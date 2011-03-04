@@ -9,53 +9,68 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["ALoR"]
-  s.date = %q{2011-02-17}
+  s.date = %q{2011-03-04}
   s.description = %q{Common components for the RCS Backend}
   s.email = %q{alor@hackingteam.it}
   s.extra_rdoc_files = [
-    "LICENSE.txt",
-    "README.rdoc"
+    "LICENSE.txt"
   ]
   s.files = [
     ".document",
     "Gemfile",
     "LICENSE.txt",
-    "README.rdoc",
     "Rakefile",
     "VERSION",
     "lib/rcs-common.rb",
     "lib/rcs-common/crypt.rb",
     "lib/rcs-common/evidence.rb",
+    "lib/rcs-common/evidence/call.rb",
+    "lib/rcs-common/evidence/common.rb",
+    "lib/rcs-common/evidence/device.rb",
+    "lib/rcs-common/evidence/info.rb",
+    "lib/rcs-common/evidence_manager.rb",
+    "lib/rcs-common/flatsingleton.rb",
     "lib/rcs-common/mime.rb",
     "lib/rcs-common/pascalize.rb",
     "lib/rcs-common/status.rb",
+    "lib/rcs-common/time.rb",
     "lib/rcs-common/trace.rb",
     "lib/rcs-common/trace.yaml",
+    "lib/rcs-common/utf16le.rb",
     "rcs-common.gemspec",
     "test/helper.rb",
     "test/test_crypt.rb",
+    "test/test_evidence.rb",
+    "test/test_evidence_manager.rb",
+    "test/test_flatsingleton.rb",
     "test/test_mime.rb",
     "test/test_pascalize.rb",
     "test/test_rcs-common.rb",
     "test/test_status.rb",
+    "test/test_time.rb",
     "test/test_trace.rb"
   ]
   s.homepage = %q{http://www.hackingteam.it}
   s.licenses = ["HT"]
   s.require_paths = ["lib"]
-  s.rubygems_version = %q{1.5.2}
+  s.rubygems_version = %q{1.3.7}
   s.summary = %q{RCS Common components}
   s.test_files = [
     "test/helper.rb",
     "test/test_crypt.rb",
+    "test/test_evidence.rb",
+    "test/test_evidence_manager.rb",
+    "test/test_flatsingleton.rb",
     "test/test_mime.rb",
     "test/test_pascalize.rb",
     "test/test_rcs-common.rb",
     "test/test_status.rb",
+    "test/test_time.rb",
     "test/test_trace.rb"
   ]
 
   if s.respond_to? :specification_version then
+    current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION
     s.specification_version = 3
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
@@ -63,6 +78,8 @@ Gem::Specification.new do |s|
       s.add_runtime_dependency(%q<mime-types>, [">= 0"])
       s.add_runtime_dependency(%q<sys-filesystem>, [">= 0"])
       s.add_runtime_dependency(%q<sys-cpu>, [">= 0"])
+      s.add_runtime_dependency(%q<sqlite3-ruby>, [">= 0"])
+      s.add_runtime_dependency(%q<ffi>, [">= 0"])
       s.add_development_dependency(%q<bundler>, ["~> 1.0.0"])
       s.add_development_dependency(%q<jeweler>, ["~> 1.5.2"])
       s.add_development_dependency(%q<rcov>, [">= 0"])
@@ -72,6 +89,8 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<mime-types>, [">= 0"])
       s.add_dependency(%q<sys-filesystem>, [">= 0"])
       s.add_dependency(%q<sys-cpu>, [">= 0"])
+      s.add_dependency(%q<sqlite3-ruby>, [">= 0"])
+      s.add_dependency(%q<ffi>, [">= 0"])
       s.add_dependency(%q<bundler>, ["~> 1.0.0"])
       s.add_dependency(%q<jeweler>, ["~> 1.5.2"])
       s.add_dependency(%q<rcov>, [">= 0"])
@@ -82,6 +101,8 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<mime-types>, [">= 0"])
     s.add_dependency(%q<sys-filesystem>, [">= 0"])
     s.add_dependency(%q<sys-cpu>, [">= 0"])
+    s.add_dependency(%q<sqlite3-ruby>, [">= 0"])
+    s.add_dependency(%q<ffi>, [">= 0"])
     s.add_dependency(%q<bundler>, ["~> 1.0.0"])
     s.add_dependency(%q<jeweler>, ["~> 1.5.2"])
     s.add_dependency(%q<rcov>, [">= 0"])
