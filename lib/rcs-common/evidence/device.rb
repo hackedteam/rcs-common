@@ -11,9 +11,13 @@ module DeviceEvidence
   def content
     "The time is #{Time.now} ;)".to_utf16le_binary
   end
+
+  def generate_content
+    [ content ]
+  end
   
   def decode_content(chunks)
-    chunks.shift.force_encoding('UTF-16LE').encode('UTF-8')
+    chunks.shift.force_encoding('UTF-16LE').encode('UTF-8') if not chunks.empty?
   end
 end
 

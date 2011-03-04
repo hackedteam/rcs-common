@@ -1,12 +1,12 @@
+
 require 'rcs-common/evidence/common'
 
 module RCS
 
-class InfoEvidence < Common::GenericEvidence
+module InfoEvidence
   def type_id
     0x0241
   end
-
 end
 
 end # RCS::

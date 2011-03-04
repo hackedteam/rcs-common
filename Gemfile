@@ -8,6 +8,7 @@ gem 'mime-types'
 gem 'sys-filesystem'
 gem 'sys-cpu'
 gem 'sqlite3-ruby'
+gem 'ffi'
 
 # Add dependencies to develop your gem here.
 # Include everything needed to run rake, tests, features, etc.

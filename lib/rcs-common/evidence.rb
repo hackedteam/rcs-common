@@ -2,6 +2,8 @@
 # Evidence factory (backdoor logs)
 #
 
+require 'ffi'
+require 'stringio'
 require 'securerandom'
 require 'rcs-common/crypt'
 require 'rcs-common/time'
@@ -15,6 +17,17 @@ require 'rcs-common/evidence/info'
 
 module RCS
 
+class EvidenceHeader < FFI::Struct
+  layout :version, :uint32,
+         :type,    :uint32,
+         :time_h,  :uint32,
+         :time_l,  :uint32,
+         :deviceid_size, :uint32,
+         :userid_size, :uint32,
+         :sourceid_size, :uint32,
+         :additional_size, :uint32
+end
+
 class Evidence
   
   extend Crypt
@@ -27,6 +40,10 @@ class Evidence
   attr_reader :timestamp
   attr_reader :info
   attr_reader :version
+  attr_reader :type
+  attr_reader :device_id
+  attr_reader :source_id
+  attr_reader :user_id
   
   def self.VERSION_ID
     2008121901
@@ -41,11 +58,11 @@ class Evidence
   end
   
   def extend_on_type(type)
-    extend RCS.const_get "#{type.to_s.capitalize}Evidence"
+    extend instance_eval "#{type.to_s.capitalize}Evidence"
   end
   
   def extend_on_typeid(id)
-    extend_on_type RCS::Common::EVIDENCE_TYPES[id]
+    extend_on_type EVIDENCE_TYPES[id]
   end
   
   def generate_header
@@ -53,7 +70,7 @@ class Evidence
     deviceid_utf16 = @device_id.to_utf16le_binary
     userid_utf16 = @user_id.to_utf16le_binary
     sourceid_utf16 = @source_id.to_utf16le_binary
-
+    
     add_header = ''
     if respond_to? :additional_header
       add_header = additional_header
@@ -138,58 +155,57 @@ class Evidence
   end
   
   def deserialize(data)
+    
+    raise EvidenceDeserializeError("no content!") if data.nil?
+    
     @binary = data
-    
-    header_length = data.slice!(0..3).unpack("I").shift
-    header = decrypt( data.slice!(0 .. header_length - 1) )
-    
-    # check that version is correct
-    @version = header.slice!(0..3).unpack("I").shift
-    return nil unless @version == Evidence.VERSION_ID
-    
-    # extend class depending on evidence type
-    type = header.slice!(0..3).unpack("I").shift
-    begin
-      @type = RCS::Common::EVIDENCE_TYPES[type]
-      extend_on_typeid(type)
-    rescue Exception => e
-      return nil
-    end
+    binary_string = StringIO.new @binary
 
-    high = header.slice!(0..3).unpack("I").shift
-    low = header.slice!(0..3).unpack("I").shift
-    @timestamp = Time.from_filetime(high, low)
+    # header
+    header_length = binary_string.read(4).unpack("I").shift
+    header_string = StringIO.new decrypt(binary_string.read header_length)
+    header_ptr = FFI::MemoryPointer.from_string header_string.read(EvidenceHeader.size)
+    header = EvidenceHeader.new header_ptr
+
+    # check that version is correct
+    raise EvidenceDeserializeError("mismatching version") unless header[:version] == Evidence.VERSION_ID
+
+    @timestamp = Time.from_filetime(header[:time_h], header[:time_l])
+    @device_id = header_string.read(header[:deviceid_size]).force_encoding('UTF-16LE') unless header[:deviceid_size] == 0
+    @user_id = header_string.read(header[:userid_size]).force_encoding('UTF-16LE') unless header[:userid_size] == 0
+    @source_id = header_string.read(header[:sourceid_size]).force_encoding('UTF-16LE') unless header[:sourceid_size] == 0
+
+    # extend class depending on evidence type
+    begin
+      @type = EVIDENCE_TYPES[ header[:type] ]
+      extend_on_type @type
+    rescue Exception => e
+      raise EvidenceDeserializeError("unknown type")
+    end
     
-    deviceid_size = header.slice!(0..3).unpack("I").shift
-    userid_size = header.slice!(0..3).unpack("I").shift
-    sourceid_size = header.slice!(0..3).unpack("I").shift
-    additional_size = header.slice!(0..3).unpack("I").shift
-    
-    @device_id = header.slice!(0 .. deviceid_size - 1).force_encoding('UTF-16LE') unless deviceid_size == 0
-    @user_id = header.slice!(0 .. userid_size - 1).force_encoding('UTF-16LE') unless userid_size == 0
-    @source_id = header.slice!(0 .. sourceid_size - 1).force_encoding('UTF-16LE') unless sourceid_size == 0
-    additional_data = ''
-    additional_data += header.slice!(0 .. additional_size - 1) unless additional_size == 0
-    
-    decode_additional_header(additional_data) if respond_to? :decode_additional_header
+    if header[:additional_size] != 0
+      additional_data = header_string.read header[:additional_size]
+      decode_additional_header(additional_data) if respond_to? :decode_additional_header
+    end
     
     # split content to chunks
-    chunks = []
-    while data.size != 0
-      len = data.slice!(0..3).unpack("I").shift
-      content = data.slice!( 0 .. align_to_block_len(len) - 1 )
-      chunks += [decrypt(content).slice!( 0 .. len - 1 )]
-    end
-    
-    begin
-      @content = decode_content(chunks) if respond_to? :decode_content
-    rescue Exception => e
-      return self
+    @content = ''
+    while not binary_string.eof?
+      len = binary_string.read(4).unpack("I").shift
+      content = binary_string.read align_to_block_len(len)
+      @content += StringIO.new( decrypt(content) ).read(len)
     end
     
     return self
   end
   
+end
+
+class EvidenceDeserializeError < StandardError
+  attr_reader :msg
+  def initialize(msg)
+    @msg = msg
+  end
 end
 
 end # RCS::
