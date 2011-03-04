@@ -101,12 +101,15 @@ class TestEvidenceManager < Test::Unit::TestCase
     evidence = "test-evidence"
     EvidenceManager.sync_start @session, *@ident, @now
     # insert two fake evidences
-    EvidenceManager.store_evidence @session, evidence.length, evidence
-    EvidenceManager.store_evidence @session, evidence.length, evidence
+    id1 = EvidenceManager.store_evidence @session, evidence.length, evidence
+    id2 = EvidenceManager.store_evidence @session, evidence.length, evidence
     info = EvidenceManager.evidence_info @session[:instance]
     assert_equal evidence.length, info[0].first
     assert_equal evidence.length, info[1].first
     assert_equal 2, info.length
+    assert_true id1 > 0
+    assert_true id2 > 0
+    assert_true id2 > id1
   end
 
 end
