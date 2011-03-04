@@ -1,3 +1,4 @@
+
 require 'rcs-common/evidence/common'
 
 module RCS
@@ -13,51 +14,63 @@ module CallEvidence
               0x0145 => :MOBILE,
               0x0146 => :SKYPE_WSAPI,
               0X0147 => :MSN_WSAPI }
-  
+
+  class CallAdditionalHeader < FFI::Struct
+    layout :version, :uint32,
+           :channel, :uint32,
+           :software, :uint32,
+           :sample_rate, :uint32,
+           :incoming, :uint32,
+           :starttime_l, :uint32,
+           :starttime_h, :uint32,
+           :stoptime_l, :uint32,
+           :stoptime_h, :uint32,
+           :caller_len, :uint32,
+           :callee_len, :uint32
+  end
+
+  attr_reader :channel
+  attr_reader :made_using
+  attr_reader :sample_rate
+  attr_reader :start_time
+  attr_reader :stop_time
+  attr_reader :caller
+  attr_reader :callee
+
   def type_id
     0x0140
   end
   
   def decode_additional_header(data)
     
-    return nil if data.size == 0
+    return nil if data.nil? or data.size == 0
     
-    @info = {}
-    @info[:version] = data.slice!(0..3).unpack("I").shift
+    binary = StringIO.new data
+    header_ptr = FFI::MemoryPointer.from_string binary.read CallAdditionalHeader.size
+    header = CallAdditionalHeader.new header_ptr
     
-    channel = data.slice!(0..3).unpack("I").shift
-    @info[:channel] = CHANNEL[channel]
-    @info[:program_type] = PROGRAM[data.slice!(0..3).unpack("I").shift]
+    puts "#{binary.size}:#{CallAdditionalHeader.size}, version #{header[:version]}"
+        
+    @channel = CHANNEL[header[:channel]]
+    @made_using = PROGRAM[header[:software]]
     
-    @info[:sample_rate] = data.slice!(0..3).unpack("I").shift
-    @info[:incoming] = data.slice!(0..3).unpack("I").shift
+    @sample_rate = header[:sample_rate]
     
-    low = data.slice!(0..3).unpack("I").shift
-    high = data.slice!(0..3).unpack("I").shift
-    @info[:start_time] = Time.from_filetime(high, low)
+    @start_time = Time.from_filetime header[:starttime_h], header[:starttime_l]
+    @stop_time = Time.from_filetime header[:stoptime_h], header[:stoptime_l]
     
-    low = data.slice!(0..3).unpack("I").shift
-    high = data.slice!(0..3).unpack("I").shift
-    @info[:stop_time] = Time.from_filetime(high, low)
+    @caller = ''
+    @caller = binary.read(header[:caller_len]).force_encoding('UTF-16LE').encode!('UTF-8').lstrip.rstrip if header[:caller_len] != 0
     
-    caller_len = data.slice!(0..3).unpack("I").shift
-    callee_len = data.slice!(0..3).unpack("I").shift
+    @callee = ''
+    @callee = binary.read(header[:callee_len]).force_encoding('UTF-16LE').encode!('UTF-8').lstrip.rstrip if header[:callee_len] != 0
     
-    caller_len != 0 ? @info[:caller] = data.slice!(0..caller_len-1) : @info[:caller] = ''
-    @info[:caller].force_encoding('UTF-16LE').encode!('UTF-8')
-    @info[:caller].lstrip!
-    @info[:caller].rstrip!
-    
-    callee_len != 0 ? @info[:callee] = data.slice!(0..callee_len-1) : @info[:callee] = ''
-    @info[:callee].force_encoding('UTF-16LE').encode!('UTF-8')
-    @info[:callee].lstrip!
-    @info[:callee].rstrip!
   end
   
   def decode_content(chunks)
     chunks
   end
-
+  
 end
 
 end # RCS::
