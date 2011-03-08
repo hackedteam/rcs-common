@@ -48,9 +48,7 @@ module CallEvidence
     binary = StringIO.new data
     header_ptr = FFI::MemoryPointer.from_string binary.read CallAdditionalHeader.size
     header = CallAdditionalHeader.new header_ptr
-    
-    puts "#{binary.size}:#{CallAdditionalHeader.size}, version #{header[:version]}"
-        
+           
     @channel = CHANNEL[header[:channel]]
     @made_using = PROGRAM[header[:software]]
     
