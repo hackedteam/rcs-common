@@ -1,5 +1,5 @@
 
-class Fixnum
+module ByteSize
 
   KiB = 1024
   MiB = KiB * 1024
@@ -21,4 +21,14 @@ class Fixnum
     end
   end
 
+end
+
+class Fixnum
+  include ByteSize
+end
+
+# we need to add it even to Bignum for windows32 compatibility
+# everything ove a GiB is Bignum...
+class Bignum
+  include ByteSize
 end
