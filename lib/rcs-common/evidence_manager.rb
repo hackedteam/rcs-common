@@ -133,6 +133,20 @@ class EvidenceManager
     end
   end
 
+  def del_evidence(id, instance)
+    # sanity check
+    path = REPO_DIR + '/' + instance
+    return unless File.exists?(path)
+
+    begin
+      db = SQLite3::Database.open(path)
+      ret = db.execute("DELETE FROM evidence WHERE id=#{id};")
+      db.close
+    rescue Exception => e
+      trace :warn, "Cannot delete from the repository: #{e.message}"
+    end
+  end
+
   def instances
     # return all the instances
     entries = []
@@ -182,7 +196,7 @@ class EvidenceManager
       db = SQLite3::Database.open(path)
       ret = db.execute("SELECT id FROM evidence;")
       db.close
-      return ret.reduce(:+)
+      return ret.flatten
     rescue Exception => e
       trace :warn, "Cannot read from the repository: #{e.message}"
     end
@@ -294,10 +308,8 @@ class EvidenceManager
       array = e[:evidence]
       # calculate the sum of all the elements
       if array.length != 0 then
-        # convert the array of array, into a single array of value
-        size = array.reduce(:+)
         # calculate the sum
-        size = size.reduce(:+)
+        size = array.flatten.reduce(:+)
       else
         size = 0
       end
