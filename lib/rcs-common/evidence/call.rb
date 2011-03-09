@@ -4,17 +4,17 @@ require 'rcs-common/evidence/common'
 module RCS
 
 module CallEvidence
-
+  
   LOG_VOICE_VERSION = 2008121901
-  CHANNEL = { 0 => :INCOMING, 1 => :OUTGOING }
-  PROGRAM = { 0x0141 => :SKYPE,
-              0x0142 => :GTALK,
-              0x0143 => :YAHOO,
-              0x0144 => :MSN,
-              0x0145 => :MOBILE,
-              0x0146 => :SKYPE_WSAPI,
-              0X0147 => :MSN_WSAPI }
-
+  CHANNEL = { 0 => :incoming, 1 => :outgoing }
+  PROGRAM = { 0x0141 => :skype,
+              0x0142 => :gtalk,
+              0x0143 => :yahoo,
+              0x0144 => :msn,
+              0x0145 => :mobile,
+              0x0146 => :skype_wsapi,
+              0X0147 => :msn_wsapi }
+  
   class CallAdditionalHeader < FFI::Struct
     layout :version, :uint32,
            :channel, :uint32,
@@ -28,7 +28,7 @@ module CallEvidence
            :caller_len, :uint32,
            :callee_len, :uint32
   end
-
+  
   attr_reader :channel
   attr_reader :made_using
   attr_reader :sample_rate
@@ -36,20 +36,23 @@ module CallEvidence
   attr_reader :stop_time
   attr_reader :caller
   attr_reader :callee
-
+  
   def type_id
     0x0140
   end
   
   def decode_additional_header(data)
     
-    return nil if data.nil? or data.size == 0
+    raise EvidenceDeserializeError.new("incomplete evidence") if data.nil? or data.size == 0
     
     binary = StringIO.new data
     header_ptr = FFI::MemoryPointer.from_string binary.read CallAdditionalHeader.size
     header = CallAdditionalHeader.new header_ptr
-           
+
+    raise EvidenceDeserializeError.new("invalid log version for voice call") unless header[:version] == LOG_VOICE_VERSION
+    
     @channel = CHANNEL[header[:channel]]
+    puts "CHANNEL #{header[:channel]} => #{CHANNEL[header[:channel]]}"
     @made_using = PROGRAM[header[:software]]
     
     @sample_rate = header[:sample_rate]
@@ -57,16 +60,19 @@ module CallEvidence
     @start_time = Time.from_filetime header[:starttime_h], header[:starttime_l]
     @stop_time = Time.from_filetime header[:stoptime_h], header[:stoptime_l]
     
-    @caller = ''
-    @caller = binary.read(header[:caller_len]).force_encoding('UTF-16LE').encode!('UTF-8').lstrip.rstrip if header[:caller_len] != 0
+    raise RCS::EvidenceDeserializeError.new("invalid callee") if header [:callee_len] == 0
     
-    @callee = ''
-    @callee = binary.read(header[:callee_len]).force_encoding('UTF-16LE').encode!('UTF-8').lstrip.rstrip if header[:callee_len] != 0
+    @caller ||= binary.read(header[:caller_len]).force_encoding('UTF-16LE').encode!('UTF-8').lstrip.rstrip if header[:caller_len] != 0
+    @callee ||= binary.read(header[:callee_len]).force_encoding('UTF-16LE').encode!('UTF-8').lstrip.rstrip if header[:callee_len] != 0
     
   end
   
   def decode_content(chunks)
     chunks
+  end
+  
+  def end_call?
+    return true if @content.length == 4 and @content == "\xff\xff\xff\xff"
   end
   
 end
