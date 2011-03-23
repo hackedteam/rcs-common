@@ -10,7 +10,7 @@ class Database
 
   def self.safe_escape(*strings)
     strings.each do |s|
-      s.replace SQLite3::Database.quote(s)
+      s.replace SQLite3::Database.quote(s) if s.class == String
     end
   end
 
