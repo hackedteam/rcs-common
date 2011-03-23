@@ -61,6 +61,7 @@ class Status
 
   # returns the CPU usage of the current process
   def self.my_cpu_load
+    #TODO: FIXME!!  when two thread call this method...
     # the first call to it
     @@prev_cpu ||= Process.times
     @@prev_time ||= Time.now

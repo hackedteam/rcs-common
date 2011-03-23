@@ -145,7 +145,6 @@ class Evidence
   # load an evidence from a file
   def load_from_file(file)
     # load the content of the file in @content
-    # TODO: it could be even delayed at the first time @content is requested
     File.open(file, "rb") do |f|
       @binary = f.read
       @name = File.basename f

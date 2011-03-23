@@ -6,9 +6,7 @@
 require 'rcs-common/trace'
 require 'rcs-common/flatsingleton'
 require 'rcs-common/fixnum'
-
-# system
-require 'sqlite3'
+require 'rcs-common/sqlite3'
 
 module RCS
 
@@ -29,7 +27,9 @@ class EvidenceManager
     return unless create_repository session[:instance]
     
     trace :info, "[#{session[:instance]}] Sync is in progress..."
-      
+
+    SQLite3::Database.safe_escape user, device, source
+
     begin
       db = SQLite3::Database.open(REPO_DIR + '/' + session[:instance])
       if key.nil? then
