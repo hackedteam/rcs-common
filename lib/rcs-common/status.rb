@@ -15,7 +15,10 @@ class Status
   OK = "OK"
   WARN = "WARN"
   ERROR = "ERROR"
-  
+
+  @@prev_cpu = {}
+  @@prev_time = {}
+
   def self.my_status
     return @@status || "N/A"
   end
@@ -60,26 +63,26 @@ class Status
   end
 
   # returns the CPU usage of the current process
-  def self.my_cpu_load
-    #TODO: FIXME!!  when two thread call this method...
-    # the first call to it
-    @@prev_cpu ||= Process.times
-    @@prev_time ||= Time.now
+  def self.my_cpu_load(me)
+
+    # the first call to it, keep track of different thread calling the method
+    @@prev_cpu[me] ||= Process.times
+    @@prev_time[me] ||= Time.now
 
     # calculate the current cpu time
     current_cpu = Process.times
 
     # diff them and divide by the call interval
-    cpu_time = (current_cpu.utime + current_cpu.stime) - (@@prev_cpu.utime + @@prev_cpu.stime)
-    time_diff = Time.now - @@prev_time
+    cpu_time = (current_cpu.utime + current_cpu.stime) - (@@prev_cpu[me].utime + @@prev_cpu[me].stime)
+    time_diff = Time.now - @@prev_time[me]
     # prevent division by zero on low res systems
     time_diff = (time_diff == 0) ? 1 : time_diff
     # calculate the percentage
     cpu_percent = cpu_time / time_diff
 
     # remember it for the next iteration
-    @@previous_times = Process.times
-    @@prev_time = Time.now
+    @@prev_cpu[me] = Process.times
+    @@prev_time[me] = Time.now
 
     return cpu_percent.ceil
   end
