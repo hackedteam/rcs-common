@@ -52,7 +52,6 @@ module CallEvidence
     raise EvidenceDeserializeError.new("invalid log version for voice call") unless header[:version] == LOG_VOICE_VERSION
     
     @channel = CHANNEL[header[:channel]]
-    puts "CHANNEL #{header[:channel]} => #{CHANNEL[header[:channel]]}"
     @made_using = PROGRAM[header[:software]]
     
     @sample_rate = header[:sample_rate]
