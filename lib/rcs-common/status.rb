@@ -57,6 +57,8 @@ class Status
     else
       # under windows there is only one value that is the percentage
       percentage = avg
+      # sometimes it returns nil under windows
+      percentage ||= 0
     end
 
     return percentage
