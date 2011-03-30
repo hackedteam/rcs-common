@@ -23,7 +23,7 @@ class TestStatus < Test::Unit::TestCase
   end
 
   def test_process_cpu
-    cpu = Status.my_cpu_load
+    cpu = Status.my_cpu_load('test')
 
     # it should return a number
     assert_kind_of Fixnum, cpu
