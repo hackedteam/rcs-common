@@ -20,7 +20,8 @@ class EvidenceManager
   SYNC_IDLE = 0
   SYNC_IN_PROGRESS = 1
   SYNC_TIMEOUTED = 2
-
+  SYNC_PROCESSING = 3
+  
   def sync_start(session, version, user, device, source, time, key=nil)
 
     # create the repository for this instance
@@ -59,17 +60,34 @@ class EvidenceManager
     # sanity check
     path = REPO_DIR + '/' + session[:instance]
     return unless File.exist?(path)
-
+    
     begin
       db = SQLite3::Database.open(path)
       # update only if the status in IN_PROGRESS
       # this will prevent erroneous overwrite of the IDLE status
-      db.execute("UPDATE info SET sync_status = #{SYNC_TIMEOUTED} WHERE bid = #{session[:bid]} AND sync_status = #{SYNC_IN_PROGRESS};")
+      db.execute("UPDATE info SET sync_status = #{SYNC_TIMEOUTED} WHERE sync_status = #{SYNC_IN_PROGRESS};")
       db.close
     rescue Exception => e
       trace :warn, "Cannot update the repository: #{e.message}"
     end
     trace :info, "[#{session[:instance]}] Sync has been timeouted"
+  end
+
+  def sync_status(session, status)
+
+    path = REPO_DIR + '/' + session[:instance]
+    return unless File.exist?(path)
+
+    begin
+      db = SQLite3::Database.open(path)
+      # update only if the status in IN_PROGRESS
+      # this will prevent erroneous overwrite of the IDLE status
+      db.execute("UPDATE info SET sync_status = #{status};")
+      db.close
+    rescue Exception => e
+      trace :warn, "Cannot update the repository: #{e.message}"
+    end
+
   end
 
   def sync_timeout_all
@@ -330,13 +348,13 @@ class EvidenceManager
 
     return 0
   end
-
+  
   private
   def status_to_s(status)
-    statuses = {SYNC_IDLE => "IDLE", SYNC_IN_PROGRESS => "IN PROGRESS", SYNC_TIMEOUTED => "TIMEOUT"}
+    statuses = {SYNC_IDLE => "IDLE", SYNC_IN_PROGRESS => "IN PROGRESS", SYNC_TIMEOUTED => "TIMEOUT", SYNC_PROCESSING => "PROCESSING"}
     return statuses[status]
   end
-
+  
   # executed from rcs-collector-status
   def self.run!(*argv)
     # reopen the class and declare any empty trace method
