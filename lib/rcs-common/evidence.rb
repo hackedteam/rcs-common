@@ -2,12 +2,17 @@
 # Evidence factory (backdoor logs)
 #
 
-require 'ffi'
+# relatives
+require_relative 'crypt'
+require_relative 'time'
+require_relative 'utf16le'
+
+# RCS::Common
+require 'rcs-common/crypt'
+
+# system
 require 'stringio'
 require 'securerandom'
-require 'rcs-common/crypt'
-require 'rcs-common/time'
-require 'rcs-common/utf16le'
 
 # evidence types
 require 'rcs-common/evidence/common'
@@ -16,17 +21,6 @@ require 'rcs-common/evidence/device'
 require 'rcs-common/evidence/info'
 
 module RCS
-
-class EvidenceHeader < FFI::Struct
-  layout :version, :uint32,
-         :type,    :uint32,
-         :time_h,  :uint32,
-         :time_l,  :uint32,
-         :deviceid_size, :uint32,
-         :userid_size, :uint32,
-         :sourceid_size, :uint32,
-         :additional_size, :uint32
-end
 
 class Evidence
   
@@ -41,20 +35,16 @@ class Evidence
   attr_reader :info
   attr_reader :version
   attr_reader :type
-  attr_reader :device_id
-  attr_reader :source_id
-  attr_reader :user_id
+  attr_reader :info
   
   def self.VERSION_ID
     2008121901
   end
-
+  
   def initialize(key, info = {})
     @key = key
-    info.each do |k,v|
-      self.instance_variable_set("@#{k}", v)
-    end
     @version = Evidence.VERSION_ID
+    @info = Hash.new.merge info
   end
   
   def extend_on_type(type)
@@ -66,10 +56,10 @@ class Evidence
   end
   
   def generate_header
-    thigh, tlow = @timestamp.to_filetime
-    deviceid_utf16 = @device_id.to_utf16le_binary
-    userid_utf16 = @user_id.to_utf16le_binary
-    sourceid_utf16 = @source_id.to_utf16le_binary
+    thigh, tlow = @info[:acquired].to_filetime
+    deviceid_utf16 = @info[:device_id].to_utf16le_binary
+    userid_utf16 = @info[:user_id].to_utf16le_binary
+    sourceid_utf16 = @info[:source_id].to_utf16le_binary
     
     add_header = ''
     if respond_to? :additional_header
@@ -110,11 +100,11 @@ class Evidence
   # factory to create a random evidence
   def generate(type)
     @name =  SecureRandom.hex(16)
-    @timestamp = Time.now.utc
-    @type = type
+    @info[:acquired] = Time.now.utc
+    @info[:type] = type
     
     # extend class on requested type
-    extend_on_type @type
+    extend_on_type @info[:type]
     
     # header
     @binary = append_data(generate_header)
@@ -171,27 +161,25 @@ class Evidence
     @type_id = read_uint32(header_string)
     time_h = read_uint32(header_string)
     time_l = read_uint32(header_string)
-    deviceid_size = read_uint32(header_string)
-    userid_size = read_uint32(header_string)
-    sourceid_size = read_uint32(header_string)
+    host_size = read_uint32(header_string)
+    user_size = read_uint32(header_string)
+    ip_size = read_uint32(header_string)
     additional_size = read_uint32(header_string)
-    
-    #header_string = StringIO.new decrypt(binary_string.read header_length)
-    #header_ptr = FFI::MemoryPointer.from_string header_string.read(EvidenceHeader.size)
-    #header = EvidenceHeader.new header_ptr
     
     # check that version is correct
     raise EvidenceDeserializeError.new("mismatching version [expected #{Evidence.VERSION_ID}, found #{@version}]") unless @version == Evidence.VERSION_ID
     
-    @timestamp = Time.from_filetime(time_h, time_l)
-    @device_id = header_string.read(deviceid_size).force_encoding('UTF-16LE') unless deviceid_size == 0
-    @user_id = header_string.read(userid_size).force_encoding('UTF-16LE') unless userid_size == 0
-    @source_id = header_string.read(sourceid_size).force_encoding('UTF-16LE') unless sourceid_size == 0
+    @info[:received] = Time.new.getgm
+    @info[:acquired] = Time.from_filetime(time_h, time_l).getgm
+    @info[:device_id] = header_string.read(host_size).force_encoding('UTF-16LE').encode('UTF-8') unless host_size == 0
+    @info[:user_id] = header_string.read(user_size).force_encoding('UTF-16LE').encode('UTF-8') unless user_size == 0
+    @info[:source_id] = header_string.read(ip_size).force_encoding('UTF-16LE').encode('UTF-8') unless ip_size == 0
+    @info[:source_id] ||= ''
     
     # extend class depending on evidence type
     begin
-      @type = EVIDENCE_TYPES[ @type_id ]
-      extend_on_type @type
+      @info[:type] = EVIDENCE_TYPES[ @type_id ]
+      extend_on_type @info[:type]
     rescue Exception => e
       raise EvidenceDeserializeError.new("unknown type")
     end
