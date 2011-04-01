@@ -8,6 +8,9 @@ require 'rcs-common/flatsingleton'
 require 'rcs-common/fixnum'
 require 'rcs-common/sqlite3'
 
+# system
+require 'pp'
+
 module RCS
 
 class EvidenceManager
@@ -344,6 +347,8 @@ class EvidenceManager
       entry.delete(:evidence)
       # cleanup the duplicates
       entry.delete_if { |key, value| key.class != String }
+
+      pp entry
     end
 
     return 0
