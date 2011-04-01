@@ -4,7 +4,7 @@
 class Hash
 
   def symbolize
-    self.inject({}){|out,(k,v)| out[k.to_sym] = v; out}
+    self.inject({}){|out,(k,v)| out[(k.class.eql? String) ? k.to_sym : k] = v; out}
   end
 
 end
