@@ -11,7 +11,7 @@ class String
     self.encode('UTF-16LE').to_binary
   end
 
-  def from_utf16le
+  def utf16le_to_utf8
     self.force_encoding('UTF-16LE').encode('UTF-8')
   end
 end

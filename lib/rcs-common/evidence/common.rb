@@ -1,10 +1,14 @@
 
 require 'ffi'
-require 'stringio'
+require 'rcs-common/stringio'
 
 module RCS
 
-EVIDENCE_TYPES = { 0x0240 => :DEVICE, 0x0140 => :CALL, 0x0241 => :INFO, 0xb9b9 => :SNAPSHOT }
+EVIDENCE_TYPES = { 0x0240 => :DEVICE,
+                   0x0140 => :CALL,
+                   0x0241 => :INFO,
+                   0xb9b9 => :SNAPSHOT,
+                   0x0040 => :KEYLOG }
 
 class EvidenceDeserializeError < StandardError
   attr_reader :msg

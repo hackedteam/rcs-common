@@ -65,7 +65,12 @@ module CallEvidence
   def end_call?
     return true if @content.length == 4 and @content == "\xff\xff\xff\xff"
   end
-  
+
+  def decode_content
+    # TODO: fix everything
+    return [self]
+  end
+
 end
 
 end # RCS::
