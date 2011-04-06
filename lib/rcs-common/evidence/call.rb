@@ -36,11 +36,7 @@ module CallEvidence
   attr_reader :stop_time
   attr_reader :caller
   attr_reader :callee
-  
-  def type_id
-    0x0140
-  end
-  
+   
   def decode_additional_header(data)
     
     raise EvidenceDeserializeError.new("incomplete evidence") if data.nil? or data.size == 0
@@ -64,10 +60,6 @@ module CallEvidence
     @caller ||= binary.read(header[:caller_len]).force_encoding('UTF-16LE').encode!('UTF-8').lstrip.rstrip if header[:caller_len] != 0
     @callee ||= binary.read(header[:callee_len]).force_encoding('UTF-16LE').encode!('UTF-8').lstrip.rstrip if header[:callee_len] != 0
     
-  end
-  
-  def decode_content(chunks)
-    chunks
   end
   
   def end_call?

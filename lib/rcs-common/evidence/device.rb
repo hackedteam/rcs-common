@@ -3,11 +3,6 @@ require 'rcs-common/evidence/common'
 module RCS
 
 module DeviceEvidence
-
-  def type_id
-    0x0240
-  end
-  
   def content
     "The time is #{Time.now} ;)".to_utf16le_binary
   end
@@ -15,9 +10,9 @@ module DeviceEvidence
   def generate_content
     [ content ]
   end
-  
-  def decode_content(chunks)
-    chunks.shift.force_encoding('UTF-16LE').encode('UTF-8') if not chunks.empty?
+
+  def decode_content
+    @info[:content] = @info[:content].from_utf16le
   end
 end
 

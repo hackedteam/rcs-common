@@ -138,7 +138,7 @@ class EvidenceManager
     end
     return ret
   end
-
+  
   def get_evidence(id, instance)
     # sanity check
     path = REPO_DIR + '/' + instance
@@ -253,7 +253,7 @@ class EvidenceManager
                                                     size INT,
                                                     content BLOB)"
              ]
-
+    
     # create all the tables
     schema.each do |query|
       begin

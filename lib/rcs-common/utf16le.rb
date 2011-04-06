@@ -3,7 +3,15 @@
 #
 
 class String
+  def to_binary
+    self.unpack("H*").pack("H*")
+  end
+
   def to_utf16le_binary
-    self.encode('UTF-16LE').unpack("H*").pack("H*")
+    self.encode('UTF-16LE').to_binary
+  end
+
+  def from_utf16le
+    self.force_encoding('UTF-16LE').encode('UTF-8')
   end
 end
