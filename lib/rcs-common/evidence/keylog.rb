@@ -13,7 +13,7 @@ module KeylogEvidence
     proc_name = "ruby\0".to_utf16le_binary
     window_name = "Ruby Backdoor!\0".to_utf16le_binary
     content = StringIO.new
-    t = Time.now
+    t = Time.now.getutc
     content.write [t.sec, t.min, t.hour, t.mday, t.mon, t.year, t.wday, t.yday, t.isdst ? 0 : 1].pack('l*')
     content.write proc_name
     content.write window_name

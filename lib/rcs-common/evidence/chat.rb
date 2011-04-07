@@ -14,7 +14,7 @@ module ChatEvidence
     topic = "Chatting...\0".to_utf16le_binary
     users = "ALoR, Daniel\0".to_utf16le_binary
     content = StringIO.new
-    t = Time.now
+    t = Time.now.getutc
     content.write [t.sec, t.min, t.hour, t.mday, t.mon, t.year, t.wday, t.yday, t.isdst ? 0 : 1].pack('l*')
     content.write program
     content.write topic
@@ -62,5 +62,27 @@ module ChatEvidence
     return evidences
   end
 end
+
+module ChatskypeEvidence
+  include ChatEvidence
+
+  def content
+    program = "SKYPE\0".to_utf16le_binary
+    topic = "Chatting...\0".to_utf16le_binary
+    users = "ALoR, Daniel\0".to_utf16le_binary
+    content = StringIO.new
+    t = Time.now.getutc
+    content.write [t.sec, t.min, t.hour, t.mday, t.mon, t.year, t.wday, t.yday, t.isdst ? 0 : 1].pack('l*')
+    content.write program
+    content.write topic
+    content.write users
+    content.write "chat da skype...\0".to_utf16le_binary
+    content.write [ ELEM_DELIMITER ].pack('L*')
+
+    content.string
+  end
+
+end
+
 
 end # ::RCS
