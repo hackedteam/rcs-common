@@ -7,7 +7,7 @@ module SnapshotEvidence
   SNAPSHOT_VERSION = 2009031201
   
   def content
-    path = File.join(File.dirname(__FILE__), 'content', 'snapshot', '001.jpg')
+    path = File.join(File.dirname(__FILE__), 'content', 'snapshot', '00' + (rand(3) + 1).to_s + '.jpg')
     File.open(path, 'rb') {|f| f.read }
   end
   
