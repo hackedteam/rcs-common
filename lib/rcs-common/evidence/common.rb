@@ -13,7 +13,9 @@ EVIDENCE_TYPES = { 0x0240 => :DEVICE,
                    0xC6C6 => :CHAT,
                    0x0300 => :CHATSKYPE,
                    0x0280 => :MOUSE,
-                   0x0100 => :PRINT,}
+                   0x0100 => :PRINT,
+                   0x0180 => :URL,
+                   0x0181 => :URLCAPTURE,}
 
 class EvidenceDeserializeError < StandardError
   attr_reader :msg

@@ -40,8 +40,8 @@ module RCS
 
       x, y, width, height = binary.read(16).unpack('I*')
 
-      @info[:process_name] = binary.read(process_name_len).utf16le_to_utf8
-      @info[:window_name] = binary.read(window_name_len).utf16le_to_utf8
+      @info[:process] = binary.read(process_name_len).utf16le_to_utf8
+      @info[:window] = binary.read(window_name_len).utf16le_to_utf8
       @info[:x] = x
       @info[:y] = y
       @info[:width] = width

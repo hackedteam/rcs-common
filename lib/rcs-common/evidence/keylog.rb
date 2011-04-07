@@ -40,14 +40,14 @@ module KeylogEvidence
     until stream.eof?
       tm = stream.read 36
       @info[:acquired] = Time.gm(*tm.unpack('l*'), 0)
-      @info[:process_name] = ''
-      @info[:window_name] = ''
+      @info[:process] = ''
+      @info[:window] = ''
       @info[:keystrokes] = ''
       
       process_name = stream.read_utf16_string
-      @info[:process_name] = process_name.utf16le_to_utf8 unless process_name.nil?
+      @info[:process] = process_name.utf16le_to_utf8 unless process_name.nil?
       window_name = stream.read_utf16_string
-      @info[:window_name] = window_name.utf16le_to_utf8 unless window_name.nil?
+      @info[:window] = window_name.utf16le_to_utf8 unless window_name.nil?
       
       delim = stream.read(4).unpack("L*").first
       raise EvidenceDeserializeError.new("Malformed evidence (missing delimiter)") unless delim == ELEM_DELIMITER
