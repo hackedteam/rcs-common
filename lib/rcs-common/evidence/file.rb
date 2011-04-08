@@ -25,7 +25,7 @@ module FileopenEvidence
   
   def generate_content
     ret = Array.new
-    (rand(9) + 1).times { ret << content() }
+    10.rand_times { ret << content() }
     ret
   end
   

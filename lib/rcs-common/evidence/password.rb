@@ -12,8 +12,6 @@ module PasswordEvidence
     user = ["ALoR", "test", "daniel", "naga"].sample.to_utf16le_binary_null
     pass = ["secret", "mario1", "ht123456"].sample.to_utf16le_binary_null
     content = StringIO.new
-    t = Time.now.getutc
-    content.write [t.sec, t.min, t.hour, t.mday, t.mon, t.year, t.wday, t.yday, t.isdst ? 0 : 1].pack('l*')
     content.write resource
     content.write user
     content.write pass
@@ -34,8 +32,6 @@ module PasswordEvidence
 
     evidences = Array.new
     until stream.eof?
-      tm = stream.read 36
-      @info[:acquired] = Time.gm(*tm.unpack('l*'), 0)
       @info[:resource] = ''
       @info[:service] = ''
       @info[:user] = ''
