@@ -23,6 +23,23 @@ class StringIO
 
     return str
   end
+
+  def read_ascii_string
+    # at least the null terminator
+    return nil if self.size < 1
+
+    # empty string by default
+    str = ''
+    # read until the end of buffer or null termination
+    until self.tell == self.size do
+      t = self.read(1)
+      break if t == "\0"
+      str += t
+    end
+
+    return str
+  end
+
 end
 
 class String

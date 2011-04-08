@@ -20,7 +20,7 @@ module ChatEvidence
     content.write topic
     content.write users
     content.write KEYSTROKES.sample.to_utf16le_binary_null
-    content.write [ ELEM_DELIMITER ].pack('L*')
+    content.write [ ELEM_DELIMITER ].pack('L')
 
     content.string
   end
@@ -77,7 +77,7 @@ module ChatskypeEvidence
     content.write topic
     content.write users
     content.write "chat da skype...\0".to_utf16le_binary
-    content.write [ ELEM_DELIMITER ].pack('L*')
+    content.write [ ELEM_DELIMITER ].pack('L')
 
     content.string
   end

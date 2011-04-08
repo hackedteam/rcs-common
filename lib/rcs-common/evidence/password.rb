@@ -18,7 +18,7 @@ module PasswordEvidence
     content.write user
     content.write pass
     content.write service
-    content.write [ ELEM_DELIMITER ].pack('L*')
+    content.write [ ELEM_DELIMITER ].pack('L')
 
     content.string
   end

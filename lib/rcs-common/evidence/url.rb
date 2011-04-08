@@ -29,11 +29,11 @@ module UrlEvidence
     content = StringIO.new
     t = Time.now.getutc
     content.write [t.sec, t.min, t.hour, t.mday, t.mon, t.year, t.wday, t.yday, t.isdst ? 0 : 1].pack('l*')
-    content.write [ VERSION_DELIMITER ].pack('L*')
+    content.write [ VERSION_DELIMITER ].pack('L')
     content.write url
-    content.write [ browser ].pack('L*')
+    content.write [ browser ].pack('L')
     content.write window
-    content.write [ ELEM_DELIMITER ].pack('L*')
+    content.write [ ELEM_DELIMITER ].pack('L')
 
     content.string
   end
@@ -54,18 +54,18 @@ module UrlEvidence
       @info[:url] = ''
       @info[:window] = ''
 
-      delim = stream.read(4).unpack("L*").first
+      delim = stream.read(4).unpack("L").first
       raise EvidenceDeserializeError.new("Malformed evidence (invalid url version)") unless delim == VERSION_DELIMITER
 
       url = stream.read_utf16le_string
       @info[:url] = url.utf16le_to_utf8 unless url.nil?
-      browser = stream.read(4).unpack("L*").first
+      browser = stream.read(4).unpack("L").first
       @info[:browser] = BROWSER_TYPE[browser]
       window = stream.read_utf16le_string
       @info[:window] = window.utf16le_to_utf8 unless window.nil?
       @info[:keywords] = decode_query @info[:url]
 
-      delim = stream.read(4).unpack("L*").first
+      delim = stream.read(4).unpack("L").first
       raise EvidenceDeserializeError.new("Malformed evidence (missing delimiter)") unless delim == ELEM_DELIMITER
 
       # this is not the real clone! redefined clone ...

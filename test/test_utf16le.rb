@@ -58,5 +58,14 @@ class StringIOTest < Test::Unit::TestCase
     assert_equal expected, dst.utf16le_to_utf8
   end
 
+  def test_ascii_string
+    str = "ascii-test"
+    bin = (str + "\0" + "junk").encode('US-ASCII')
+    stream = StringIO.new
+    stream.write bin
+    stream.rewind
+    dst = stream.read_ascii_string.force_encoding('US-ASCII')
+    assert_equal str, dst
+  end
 
 end

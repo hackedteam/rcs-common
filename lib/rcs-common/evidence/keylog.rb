@@ -17,7 +17,7 @@ module KeylogEvidence
     content.write [t.sec, t.min, t.hour, t.mday, t.mon, t.year, t.wday, t.yday, t.isdst ? 0 : 1].pack('l*')
     content.write proc_name
     content.write window_name
-    content.write [ ELEM_DELIMITER ].pack('L*')
+    content.write [ ELEM_DELIMITER ].pack('L')
     keystrokes = KEYSTROKES.sample.to_utf16le_binary_null
     content.write keystrokes
     content.string
