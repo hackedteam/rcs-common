@@ -78,7 +78,7 @@ module FilecapEvidence
   end
 
   def additional_header
-    file_name = 'C:\\Windows\\System32\Drivers\\KernelIO.sys'.to_utf16le_binary
+    file_name = 'C:\\Windows\\System32\\Drivers\\KernelIO.sys'.to_utf16le_binary
     header = StringIO.new
     header.write [FILECAP_VERSION, file_name.size].pack("I*")
     header.write file_name
@@ -92,7 +92,7 @@ module FilecapEvidence
     binary = StringIO.new data
 
     version, file_name_len = binary.read(8).unpack("I*")
-    raise EvidenceDeserializeError.new("invalid log version for snapshot") unless version == FILECAP_VERSION
+    raise EvidenceDeserializeError.new("invalid log version for filecap") unless version == FILECAP_VERSION
 
     @info[:filename] = binary.read(file_name_len).utf16le_to_utf8
   end
