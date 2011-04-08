@@ -18,7 +18,8 @@ EVIDENCE_TYPES = { 0x0240 => :DEVICE,
                    0x0181 => :URLCAPTURE,
                    0xD9D9 => :CLIPBOARD,
                    0xFAFA => :PASSWORD,
-                   0x0000 => :FILEOPEN}
+                   0x0000 => :FILEOPEN,
+                   0x0001 => :FILECAP}
 
 class EvidenceDeserializeError < StandardError
   attr_reader :msg

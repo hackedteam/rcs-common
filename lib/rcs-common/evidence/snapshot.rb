@@ -40,6 +40,7 @@ module SnapshotEvidence
 
   def decode_content
     @info[:content] = @info[:chunks].first
+    @info[:size] = @info[:content].size
     return [self]
   end
 end
