@@ -14,8 +14,8 @@ module UrlEvidence
     query = []
     query = url.scan(/(?:&|^)q=([^&]*)(?:&|$)/).first if url['google']
     query = url.scan(/(?:&|^)p=([^&]*)(?:&|$)/).first if url['yahoo']
-    query = url.scan(/(?:&|^)q=([^&]*)(?:&|$)/).first if url['bing']
-
+    query = url.scan(/(?:&?|^)q=([^&]*)(?:&|$)/).first if url['bing']
+    
     return CGI::unescape query.first unless query.nil? or query.empty?
     return ''
   end

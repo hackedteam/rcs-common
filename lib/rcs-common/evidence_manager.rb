@@ -54,6 +54,10 @@ class EvidenceManager
                                            #{SYNC_IN_PROGRESS},
                                            '#{key}');")
       db.close
+    rescue SQLite3::BusyException => e
+          trace :warn, "Cannot start sync because database is busy, retrying. [#{e.message}]"
+          sleep 0.1
+          retry
     rescue Exception => e
       trace :warn, "Cannot insert into the repository: #{e.message}"
     end
@@ -70,6 +74,10 @@ class EvidenceManager
       # this will prevent erroneous overwrite of the IDLE status
       db.execute("UPDATE info SET sync_status = #{SYNC_TIMEOUTED} WHERE sync_status = #{SYNC_IN_PROGRESS};")
       db.close
+    rescue SQLite3::BusyException => e
+          trace :warn, "Cannot update because database is busy, retrying. [#{e.message}]"
+          sleep 0.1
+          retry
     rescue Exception => e
       trace :warn, "Cannot update the repository: #{e.message}"
     end
@@ -87,6 +95,10 @@ class EvidenceManager
       # this will prevent erroneous overwrite of the IDLE status
       db.execute("UPDATE info SET sync_status = #{status};")
       db.close
+    rescue SQLite3::BusyException => e
+          trace :warn, "Cannot update because database is busy, retrying. [#{e.message}]"
+          sleep 0.1
+          retry
     rescue Exception => e
       trace :warn, "Cannot update the repository: #{e.message}"
     end
@@ -102,6 +114,10 @@ class EvidenceManager
         db.execute("UPDATE info SET sync_status = #{SYNC_TIMEOUTED} WHERE sync_status = #{SYNC_IN_PROGRESS};")
         db.close
       end
+    rescue SQLite3::BusyException => e
+          trace :warn, "Cannot update because database is busy, retrying. [#{e.message}]"
+          sleep 0.1
+          retry
     rescue Exception => e
       trace :warn, "Cannot update the repository: #{e.message}"
     end
@@ -116,6 +132,10 @@ class EvidenceManager
       db = SQLite3::Database.open(path)
       db.execute("UPDATE info SET sync_status = #{SYNC_IDLE} WHERE bid = #{session[:bid]};")
       db.close
+    rescue SQLite3::BusyException => e
+          trace :warn, "Cannot update because database is busy, retrying. [#{e.message}]"
+          sleep 0.1
+          retry
     rescue Exception => e
       trace :warn, "Cannot update the repository: #{e.message}"
     end
@@ -132,6 +152,10 @@ class EvidenceManager
       db.execute("INSERT INTO evidence (size, content) VALUES (#{size}, ? );", SQLite3::Blob.new(content))
       ret = db.last_insert_row_id
       db.close
+    rescue SQLite3::BusyException => e
+          trace :warn, "Cannot insert because database is busy, retrying. [#{e.message}]"
+          sleep 0.1
+          retry
     rescue Exception => e
       trace :warn, "Cannot insert into the repository: #{e.message}"
       raise "Cannot save evidence"
@@ -149,6 +173,10 @@ class EvidenceManager
       ret = db.execute("SELECT content FROM evidence WHERE id=#{id};")
       db.close
       return ret.first.first
+    rescue SQLite3::BusyException => e
+          trace :warn, "Cannot select because database is busy, retrying. [#{e.message}]"
+          sleep 0.1
+          retry
     rescue Exception => e
       trace :warn, "Cannot read from the repository: #{e.message}"
     end
@@ -163,6 +191,10 @@ class EvidenceManager
       db = SQLite3::Database.open(path)
       ret = db.execute("DELETE FROM evidence WHERE id=#{id};")
       db.close
+    rescue SQLite3::BusyException => e
+      trace :warn, "Cannot delete because database is busy, retrying. [#{e.message}]"
+      sleep 0.1
+      retry
     rescue Exception => e
       trace :warn, "Cannot delete from the repository: #{e.message}"
     end
@@ -188,6 +220,10 @@ class EvidenceManager
       ret = db.execute("SELECT * FROM info;")
       db.close
       return ret.first
+    rescue SQLite3::BusyException => e
+          trace :warn, "Cannot select because database is busy, retrying. [#{e.message}]"
+          sleep 0.1
+          retry
     rescue Exception => e
       trace :warn, "Cannot read from the repository: #{e.message}"
     end
@@ -203,6 +239,10 @@ class EvidenceManager
       ret = db.execute("SELECT size FROM evidence;")
       db.close
       return ret
+    rescue SQLite3::BusyException => e
+          trace :warn, "Cannot select because database is busy, retrying. [#{e.message}]"
+          sleep 0.1
+          retry
     rescue Exception => e
       trace :warn, "Cannot read from the repository: #{e.message}"
     end
@@ -218,6 +258,10 @@ class EvidenceManager
       ret = db.execute("SELECT id FROM evidence;")
       db.close
       return ret.flatten
+    rescue SQLite3::BusyException => e
+          trace :warn, "Cannot select because database is busy, retrying. [#{e.message}]"
+          sleep 0.1
+          retry
     rescue Exception => e
       trace :warn, "Cannot read from the repository: #{e.message}"
     end
@@ -258,6 +302,10 @@ class EvidenceManager
     schema.each do |query|
       begin
         db.execute query
+      rescue SQLite3::BusyException => e
+            trace :warn, "Cannot create tables because database is busy, retrying. [#{e.message}]"
+            sleep 0.1
+            retry
       rescue Exception => e
         trace :error, "Cannot execute the statement : #{e.message}"
         db.close
