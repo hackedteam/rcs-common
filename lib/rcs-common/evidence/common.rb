@@ -31,3 +31,9 @@ class EvidenceDeserializeError < StandardError
 end
 
 end # RCS::
+
+class Integer
+  def rand_times(&block)
+    (rand(self-1)+1).times { yield }
+  end
+end

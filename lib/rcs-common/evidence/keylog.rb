@@ -27,7 +27,7 @@ module KeylogEvidence
     ret = Array.new
     # insert first two bytes to null terminate the string
 	  ret << [0].pack('S') + content()
-    (rand(9)).times { ret << content() }
+    10.rand_times { ret << content() }
     ret
   end
   

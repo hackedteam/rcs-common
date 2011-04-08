@@ -27,7 +27,7 @@ module ChatEvidence
   
   def generate_content
     ret = Array.new
-    (rand(10)).times { ret << content() }
+    10.rand_times { ret << content() }
     ret
   end
   
