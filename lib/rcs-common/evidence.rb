@@ -79,7 +79,7 @@ class Evidence
     header += sourceid_utf16
     header += add_header.to_binary
     
-    return encrypt(header)
+    return header
   end
   
   def align_to_block_len(len)
@@ -113,7 +113,8 @@ class Evidence
     
     # header
     type_id = EVIDENCE_TYPES.invert[type]
-    @binary = append_data(generate_header(type_id))
+    header = generate_header(type_id)
+    @binary = append_data(encrypt(header))
     
     # content
     if respond_to? :generate_content
@@ -123,11 +124,13 @@ class Evidence
       end
     end
     
+    puts "#{size}"
+    
     return self
   end
   
   def size
-    @binary.size
+    @binary.bytesize
   end
   
   # save the file in the specified dir
