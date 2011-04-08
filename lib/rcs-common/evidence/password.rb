@@ -41,13 +41,13 @@ module PasswordEvidence
       @info[:user] = ''
       @info[:pass] = ''
 
-      resource = stream.read_utf16_string
+      resource = stream.read_utf16le_string
       @info[:resource] = resource.utf16le_to_utf8 unless resource.nil?
-      user = stream.read_utf16_string
+      user = stream.read_utf16le_string
       @info[:user] = user.utf16le_to_utf8 unless user.nil?
-      pass = stream.read_utf16_string
+      pass = stream.read_utf16le_string
       @info[:pass] = pass.utf16le_to_utf8 unless pass.nil?
-      service = stream.read_utf16_string
+      service = stream.read_utf16le_string
       @info[:service] = service.utf16le_to_utf8 unless service.nil?
 
       delim = stream.read(4).unpack("L*").first

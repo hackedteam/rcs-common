@@ -57,8 +57,8 @@ module CallEvidence
     
     raise RCS::EvidenceDeserializeError.new("invalid callee") if header [:callee_len] == 0
     
-    @caller ||= binary.read(header[:caller_len]).force_encoding('UTF-16LE').encode!('UTF-8').lstrip.rstrip if header[:caller_len] != 0
-    @callee ||= binary.read(header[:callee_len]).force_encoding('UTF-16LE').encode!('UTF-8').lstrip.rstrip if header[:callee_len] != 0
+    @caller ||= binary.read(header[:caller_len]).utf16le_to_utf8.lstrip.rstrip if header[:caller_len] != 0
+    @callee ||= binary.read(header[:callee_len]).utf16le_to_utf8.lstrip.rstrip if header[:callee_len] != 0
     
   end
   

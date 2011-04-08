@@ -7,14 +7,14 @@ module ClipboardEvidence
   ELEM_DELIMITER = 0xABADC0DE
 
   def content
-    process = "Notepad.exe\0".to_utf16le_binary
-    window = "New Document\0".to_utf16le_binary
+    process = "Notepad.exe".to_utf16le_binary_null
+    window = "New Document".to_utf16le_binary_null
     content = StringIO.new
     t = Time.now.getutc
     content.write [t.sec, t.min, t.hour, t.mday, t.mon, t.year, t.wday, t.yday, t.isdst ? 0 : 1].pack('l*')
     content.write process
     content.write window
-    content.write "1234567890\0".to_utf16le_binary
+    content.write "1234567890".to_utf16le_binary_null
     content.write [ ELEM_DELIMITER ].pack('L*')
 
     content.string
@@ -37,11 +37,11 @@ module ClipboardEvidence
       @info[:window] = ''
       @info[:clipboard] = ''
 
-      process = stream.read_utf16_string
+      process = stream.read_utf16le_string
       @info[:process] = process.utf16le_to_utf8 unless process.nil?
-      window = stream.read_utf16_string
+      window = stream.read_utf16le_string
       @info[:window] = window.utf16le_to_utf8 unless window.nil?
-      clipboard = stream.read_utf16_string
+      clipboard = stream.read_utf16le_string
       @info[:clipboard] = clipboard.utf16le_to_utf8 unless clipboard.nil?
 
       delim = stream.read(4).unpack("L*").first

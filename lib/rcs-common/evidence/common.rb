@@ -1,6 +1,6 @@
 
 require 'ffi'
-require 'rcs-common/stringio'
+require 'rcs-common/utf16le'
 
 module RCS
 
