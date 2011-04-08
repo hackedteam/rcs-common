@@ -7,10 +7,10 @@ module PasswordEvidence
   ELEM_DELIMITER = 0xABADC0DE
 
   def content
-    resource = ["MSN\0", "IExplorer\0", "Firefox\0"].sample.to_utf16le_binary
-    service = ["http://login.live.com\0", "http://www.google.com\0", "http://msn.live.it\0"].sample.to_utf16le_binary
-    user = "ALoR\0".to_utf16le_binary
-    pass = "secret\0".to_utf16le_binary
+    resource = ["MSN", "IExplorer", "Firefox"].sample.to_utf16le_binary_null
+    service = ["http://login.live.com", "http://www.google.com", "http://msn.live.it"].sample.to_utf16le_binary_null
+    user = ["ALoR", "test", "daniel", "naga"].sample.to_utf16le_binary_null
+    pass = ["secret", "mario1", "ht123456"].sample.to_utf16le_binary_null
     content = StringIO.new
     t = Time.now.getutc
     content.write [t.sec, t.min, t.hour, t.mday, t.mon, t.year, t.wday, t.yday, t.isdst ? 0 : 1].pack('l*')
