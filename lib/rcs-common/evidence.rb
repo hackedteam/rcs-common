@@ -27,7 +27,8 @@ class Evidence
   
   extend Crypt
   include Crypt
-  
+
+  attr_reader :binary
   attr_reader :size
   attr_reader :content
   attr_reader :name
