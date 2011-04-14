@@ -29,7 +29,6 @@ class Evidence
   include Crypt
   
   attr_reader :size
-  attr_reader :binary
   attr_reader :content
   attr_reader :name
   attr_reader :timestamp
@@ -41,7 +40,7 @@ class Evidence
   def self.VERSION_ID
     2008121901
   end
-
+  
   def clone
     return Evidence.new(@key, @info)
   end
@@ -70,8 +69,8 @@ class Evidence
     add_header = ''
     add_header = additional_header if respond_to? :additional_header
     
-    additional_size = add_header.size
-    struct = [Evidence.VERSION_ID, type_id, thigh, tlow, deviceid_utf16.size, userid_utf16.size, sourceid_utf16.size, additional_size]
+    additional_size = add_header.bytesize
+    struct = [Evidence.VERSION_ID, type_id, thigh, tlow, deviceid_utf16.bytesize, userid_utf16.bytesize, sourceid_utf16.bytesize, additional_size]
     header = struct.pack("I*")
     
     header += deviceid_utf16
@@ -98,7 +97,7 @@ class Evidence
     return aes_decrypt(data, @key, PAD_NOPAD)
   end
   
-  def append_data(data, len = data.size)
+  def append_data(data, len = data.bytesize)
     [len].pack("I") + data
   end
   
