@@ -163,9 +163,7 @@ class Evidence
   def deserialize(data)
     
     raise EvidenceDeserializeError.new("no content!") if data.nil?
-    
-    @binary = data
-    binary_string = StringIO.new @binary
+    binary_string = StringIO.new data
     
     # header
     header_length = read_uint32(binary_string)
