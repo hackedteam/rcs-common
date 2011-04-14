@@ -87,7 +87,7 @@ module FilecapEvidence
   end
 
   def decode_additional_header(data)
-    raise EvidenceDeserializeError.new("incomplete FILECAP") if data.nil? or data.size == 0
+    raise EvidenceDeserializeError.new("incomplete FILECAP") if data.nil? or data.bytesize == 0
 
     binary = StringIO.new data
 
@@ -100,7 +100,7 @@ module FilecapEvidence
   def decode_content
     @info[:content] = @info[:chunks].first
     @info[:md5] = Digest::MD5.hexdigest @info[:content]
-    @info[:size] = @info[:content].size
+    @info[:size] = @info[:content].bytesize
     return [self]
   end
 end

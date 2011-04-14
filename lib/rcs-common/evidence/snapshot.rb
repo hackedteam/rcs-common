@@ -27,7 +27,7 @@ module SnapshotEvidence
   end
   
   def decode_additional_header(data)
-    raise EvidenceDeserializeError.new("incomplete SNAPSHOT") if data.nil? or data.size == 0
+    raise EvidenceDeserializeError.new("incomplete SNAPSHOT") if data.nil? or data.bytesize == 0
 
     binary = StringIO.new data
 
@@ -40,7 +40,7 @@ module SnapshotEvidence
 
   def decode_content
     @info[:content] = @info[:chunks].first
-    @info[:size] = @info[:content].size
+    @info[:size] = @info[:content].bytesize
     return [self]
   end
 end

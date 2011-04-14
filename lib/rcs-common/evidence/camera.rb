@@ -15,7 +15,7 @@ module CameraEvidence
   
   def decode_content
     @info[:content] = @info[:chunks].first
-    @info[:size] = @info[:content].size
+    @info[:size] = @info[:content].bytesize
     return [self]
   end
 end
