@@ -49,7 +49,7 @@ module KeylogEvidence
       @info[:window] = window_name.utf16le_to_utf8 unless window_name.nil?
       
       delim = stream.read(4).unpack("L*").first
-      raise EvidenceDeserializeError.new("Malformed evidence (missing delimiter)") unless delim == ELEM_DELIMITER
+      raise EvidenceDeserializeError.new("Malformed KEYLOG (missing delimiter)") unless delim == ELEM_DELIMITER
       
       keystrokes = stream.read_utf16le_string
       @info[:keystrokes] = keystrokes.utf16le_to_utf8 unless keystrokes.nil?

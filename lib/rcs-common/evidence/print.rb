@@ -25,12 +25,12 @@ module PrintEvidence
   end
   
   def decode_additional_header(data)
-    raise EvidenceDeserializeError.new("incomplete evidence") if data.nil? or data.size == 0
+    raise EvidenceDeserializeError.new("incomplete PRINT") if data.nil? or data.size == 0
 
     binary = StringIO.new data
 
     version, name_len = binary.read(8).unpack("I*")
-    raise EvidenceDeserializeError.new("invalid log version for print") unless version == PRINT_VERSION
+    raise EvidenceDeserializeError.new("invalid log version for PRINT") unless version == PRINT_VERSION
 
     @info[:name] = binary.read(name_len).utf16le_to_utf8
   end
