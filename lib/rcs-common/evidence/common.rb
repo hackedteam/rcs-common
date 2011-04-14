@@ -21,10 +21,12 @@ EVIDENCE_TYPES = { 0x0240 => :DEVICE,
                    0x0000 => :FILEOPEN,
                    0x0001 => :FILECAP,
                    0x1011 => :APPLICATION,
-                   0xD0D0 => :DOWNLOAD}
+                   0xD0D0 => :DOWNLOAD,
+                   0x1220 => :LOCATION}
 
 class EvidenceDeserializeError < StandardError
   attr_reader :msg
+
   def initialize(msg)
     @msg = msg
   end

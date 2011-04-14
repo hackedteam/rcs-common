@@ -27,12 +27,12 @@ module DownloadEvidence
   end
 
   def decode_additional_header(data)
-    raise EvidenceDeserializeError.new("incomplete evidence") if data.nil? or data.size == 0
+    raise EvidenceDeserializeError.new("incomplete DOWNLOAD") if data.nil? or data.size == 0
 
     binary = StringIO.new data
 
     version, file_name_len = binary.read(8).unpack("I*")
-    raise EvidenceDeserializeError.new("invalid log version for download") unless version == FILECAP_VERSION
+    raise EvidenceDeserializeError.new("invalid log version for DOWNLOAD") unless version == FILECAP_VERSION
 
     @info[:filename] = binary.read(file_name_len).utf16le_to_utf8
   end

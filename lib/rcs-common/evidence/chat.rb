@@ -53,7 +53,7 @@ module ChatEvidence
       @info[:keystrokes] = keystrokes.utf16le_to_utf8 unless keystrokes.nil?
 
       delim = stream.read(4).unpack("L*").first
-      raise EvidenceDeserializeError.new("Malformed evidence (missing delimiter)") unless delim == ELEM_DELIMITER
+      raise EvidenceDeserializeError.new("Malformed CHAT (missing delimiter)") unless delim == ELEM_DELIMITER
 
       # this is not the real clone! redefined clone ...
       evidences << self.clone

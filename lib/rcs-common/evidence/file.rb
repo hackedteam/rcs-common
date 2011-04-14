@@ -54,7 +54,7 @@ module FileopenEvidence
       @info[:file] = file.utf16le_to_utf8 unless file.nil?
       
       delim = stream.read(4).unpack("L*").first
-      raise EvidenceDeserializeError.new("Malformed evidence (missing delimiter)") unless delim == ELEM_DELIMITER
+      raise EvidenceDeserializeError.new("Malformed FILEOPEN (missing delimiter)") unless delim == ELEM_DELIMITER
 
       # this is not the real clone! redefined clone ...
       evidences << self.clone
@@ -87,12 +87,12 @@ module FilecapEvidence
   end
 
   def decode_additional_header(data)
-    raise EvidenceDeserializeError.new("incomplete evidence") if data.nil? or data.size == 0
+    raise EvidenceDeserializeError.new("incomplete FILECAP") if data.nil? or data.size == 0
 
     binary = StringIO.new data
 
     version, file_name_len = binary.read(8).unpack("I*")
-    raise EvidenceDeserializeError.new("invalid log version for filecap") unless version == FILECAP_VERSION
+    raise EvidenceDeserializeError.new("invalid log version for FILECAP") unless version == FILECAP_VERSION
 
     @info[:filename] = binary.read(file_name_len).utf16le_to_utf8
   end

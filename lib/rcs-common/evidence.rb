@@ -120,11 +120,9 @@ class Evidence
     if respond_to? :generate_content
       chunks = generate_content
       chunks.each do | c |
-        @binary += append_data( encrypt(c), c.size )
+        @binary += append_data( encrypt(c), c.bytesize )
       end
     end
-    
-    puts "#{size}"
     
     return self
   end

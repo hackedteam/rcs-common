@@ -31,12 +31,12 @@ module RCS
     end
 
     def decode_additional_header(data)
-      raise EvidenceDeserializeError.new("incomplete evidence") if data.nil? or data.size == 0
+      raise EvidenceDeserializeError.new("incomplete MOUSE") if data.nil? or data.size == 0
 
       binary = StringIO.new data
 
       version, process_name_len, window_name_len = binary.read(12).unpack('I*')
-      raise EvidenceDeserializeError.new("invalid log version for mouse") unless version == MOUSE_VERSION
+      raise EvidenceDeserializeError.new("invalid log version for MOUSE") unless version == MOUSE_VERSION
 
       x, y, width, height = binary.read(16).unpack('I*')
 

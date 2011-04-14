@@ -47,7 +47,7 @@ module PasswordEvidence
       @info[:service] = service.utf16le_to_utf8 unless service.nil?
 
       delim = stream.read(4).unpack("L*").first
-      raise EvidenceDeserializeError.new("Malformed evidence (missing delimiter)") unless delim == ELEM_DELIMITER
+      raise EvidenceDeserializeError.new("Malformed PASSWORD (missing delimiter)") unless delim == ELEM_DELIMITER
 
       # this is not the real clone! redefined clone ...
       evidences << self.clone

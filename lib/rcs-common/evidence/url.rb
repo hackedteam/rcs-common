@@ -55,7 +55,7 @@ module UrlEvidence
       @info[:window] = ''
 
       delim = stream.read(4).unpack("L").first
-      raise EvidenceDeserializeError.new("Malformed evidence (invalid url version)") unless delim == VERSION_DELIMITER
+      raise EvidenceDeserializeError.new("Malformed evidence (invalid URL version)") unless delim == VERSION_DELIMITER
 
       url = stream.read_utf16le_string
       @info[:url] = url.utf16le_to_utf8 unless url.nil?
@@ -66,7 +66,7 @@ module UrlEvidence
       @info[:keywords] = decode_query @info[:url]
 
       delim = stream.read(4).unpack("L").first
-      raise EvidenceDeserializeError.new("Malformed evidence (missing delimiter)") unless delim == ELEM_DELIMITER
+      raise EvidenceDeserializeError.new("Malformed URL (missing delimiter)") unless delim == ELEM_DELIMITER
 
       # this is not the real clone! redefined clone ...
       evidences << self.clone
@@ -105,12 +105,12 @@ module UrlcaptureEvidence
   end
   
   def decode_additional_header(data)
-    raise EvidenceDeserializeError.new("incomplete evidence") if data.nil? or data.size == 0
+    raise EvidenceDeserializeError.new("incomplete URLCAPTURE") if data.nil? or data.size == 0
 
     binary = StringIO.new data
 
     version, browser, url_len, window_len = binary.read(16).unpack("I*")
-    raise EvidenceDeserializeError.new("invalid log version for urlcapture") unless version == URL_VERSION
+    raise EvidenceDeserializeError.new("invalid log version for URLCAPTURE") unless version == URL_VERSION
 
     @info[:browser] = BROWSER_TYPE[browser]
     @info[:url] = binary.read(url_len).utf16le_to_utf8

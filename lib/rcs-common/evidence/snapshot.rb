@@ -27,12 +27,12 @@ module SnapshotEvidence
   end
   
   def decode_additional_header(data)
-    raise EvidenceDeserializeError.new("incomplete evidence") if data.nil? or data.size == 0
+    raise EvidenceDeserializeError.new("incomplete SNAPSHOT") if data.nil? or data.size == 0
 
     binary = StringIO.new data
 
     version, process_name_len, window_name_len = binary.read(12).unpack("I*")
-    raise EvidenceDeserializeError.new("invalid log version for snapshot") unless version == SNAPSHOT_VERSION
+    raise EvidenceDeserializeError.new("invalid log version for SNAPSHOT") unless version == SNAPSHOT_VERSION
 
     @info[:process] = binary.read(process_name_len).utf16le_to_utf8
     @info[:window] = binary.read(window_name_len).utf16le_to_utf8
