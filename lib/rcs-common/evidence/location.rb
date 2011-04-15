@@ -80,9 +80,12 @@ module LocationEvidence
         @info[:source] = 'WIFI'
         @info[:location] = ''
         until stream.eof?
-          mac = stream.read 6
+          # we have 6 byte of mac address
+          # and 2 of padding (using C struct is BAAAAD)
+          mac = stream.read 8
           len = stream.read(4).unpack('L').first
-          ssid = stream.read(32).delete("\x00")
+          ssid = stream.read(len)
+          stream.read(32-len)
           sig = stream.read(4).unpack('l').first
           #TODO: don't parse to a string, keep the values
           @info[:location] += "%02X:%02X:%02X:%02X:%02X:%02X [%d] %s\n" %
@@ -109,6 +112,7 @@ module LocationEvidence
           @info[:acquired] = Time.from_filetime(*stream.read(8).unpack('L*'))
           gps = GPS_Position.new
           gps.read stream
+          #TODO: don't parse to a string, keep the values
           @info[:location] = "%.7f %.7f" % [gps.latitude, gps.longitude]
           delim = stream.read(4).unpack('L').first
           raise EvidenceDeserializeError.new("Malformed LOCATION GPS (missing delimiter)") unless delim == ELEM_DELIMITER
@@ -124,6 +128,7 @@ module LocationEvidence
           cell = CELL_Position.new
           cell.read stream
 
+          #TODO: don't parse to a string, keep the values
           if @info[:loc_type] == LOCATION_GSM then
             @info[:location] = "MCC:#{cell.mcc} MNC:#{cell.mnc} LAC:#{cell.lac} CID:#{cell.cid} dBm:#{cell.db} ADV:#{cell.adv} AGE:0"
           else
