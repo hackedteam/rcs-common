@@ -22,7 +22,8 @@ EVIDENCE_TYPES = { 0x0240 => :DEVICE,
                    0x0001 => :FILECAP,
                    0x1011 => :APPLICATION,
                    0xD0D0 => :DOWNLOAD,
-                   0x1220 => :LOCATION}
+                   0x1220 => :LOCATION,
+                   0xEDA1 => :FILESYSTEM}
 
 class EvidenceDeserializeError < StandardError
   attr_reader :msg
