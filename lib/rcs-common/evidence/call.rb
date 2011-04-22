@@ -7,7 +7,7 @@ module CallEvidence
   
   LOG_VOICE_VERSION = 2008121901
   CHANNEL = { 0 => :incoming, 1 => :outgoing }
-  PROGRAM = { 0x0141 => :skype,
+  SOFTWARE = { 0x0141 => :skype,
               0x0142 => :gtalk,
               0x0143 => :yahoo,
               0x0144 => :msn,
@@ -15,62 +15,44 @@ module CallEvidence
               0x0146 => :skype_wsapi,
               0X0147 => :msn_wsapi }
   
-  class CallAdditionalHeader < FFI::Struct
-    layout :version, :uint32,
-           :channel, :uint32,
-           :software, :uint32,
-           :sample_rate, :uint32,
-           :incoming, :uint32,
-           :starttime_l, :uint32,
-           :starttime_h, :uint32,
-           :stoptime_l, :uint32,
-           :stoptime_h, :uint32,
-           :caller_len, :uint32,
-           :callee_len, :uint32
-  end
-  
-  attr_reader :channel
-  attr_reader :made_using
-  attr_reader :sample_rate
-  attr_reader :start_time
-  attr_reader :stop_time
-  attr_reader :caller
-  attr_reader :callee
-   
   def decode_additional_header(data)
     
-    raise EvidenceDeserializeError.new("incomplete evidence") if data.nil? or data.size == 0
+    raise EvidenceDeserializeError.new("incomplete evidence") if data.nil? or data.bytesize == 0
     
     binary = StringIO.new data
-    header_ptr = FFI::MemoryPointer.from_string binary.read CallAdditionalHeader.size
-    header = CallAdditionalHeader.new header_ptr
+    version = read_uint32 binary
+    
+    raise EvidenceDeserializeError.new("invalid log version for voice call") unless version == LOG_VOICE_VERSION
+    
+    @info[:channel] = CHANNEL[read_uint32 binary]
+    @info[:software] = SOFTWARE[read_uint32 binary]
+    @info[:sample_rate] = read_uint32 binary
+    @info[:incoming] = read_uint32 binary
+    low = read_uint32 binary
+    high = read_uint32 binary
+    @info[:start_time] = Time.from_filetime high, low
+    low = read_uint32 binary
+    high = read_uint32 binary
+    @info[:stop_time] = Time.from_filetime high, low
 
-    raise EvidenceDeserializeError.new("invalid log version for voice call") unless header[:version] == LOG_VOICE_VERSION
+    caller_len = read_uint32 binary
+    callee_len = read_uint32 binary
     
-    @channel = CHANNEL[header[:channel]]
-    @made_using = PROGRAM[header[:software]]
+    raise RCS::EvidenceDeserializeError.new("invalid callee") if callee_len == 0
     
-    @sample_rate = header[:sample_rate]
-    
-    @start_time = Time.from_filetime header[:starttime_h], header[:starttime_l]
-    @stop_time = Time.from_filetime header[:stoptime_h], header[:stoptime_l]
-    
-    raise RCS::EvidenceDeserializeError.new("invalid callee") if header [:callee_len] == 0
-    
-    @caller ||= binary.read(header[:caller_len]).utf16le_to_utf8.lstrip.rstrip if header[:caller_len] != 0
-    @callee ||= binary.read(header[:callee_len]).utf16le_to_utf8.lstrip.rstrip if header[:callee_len] != 0
-    
+    @info[:caller] ||= binary.read(caller_len).utf16le_to_utf8.lstrip.rstrip if caller_len != 0
+    @info[:callee] ||= binary.read(callee_len).utf16le_to_utf8.lstrip.rstrip if callee_len != 0
   end
   
   def end_call?
-    return true if @content.length == 4 and @content == "\xff\xff\xff\xff"
+    return true if @content.bytesize == 4 and @content == "\xff\xff\xff\xff"
   end
-
+  
   def decode_content
-    # TODO: fix everything
+    @content = @info[:chunks].join
     return [self]
   end
-
+  
 end
 
 end # RCS::
