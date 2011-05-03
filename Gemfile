@@ -9,6 +9,7 @@ gem 'sys-filesystem'
 gem 'sys-cpu'
 gem 'sqlite3-ruby'
 gem 'ffi'
+gem 'mail'
 
 # Add dependencies to develop your gem here.
 # Include everything needed to run rake, tests, features, etc.
