@@ -167,18 +167,21 @@ class EvidenceManager
     # sanity check
     path = REPO_DIR + '/' + instance
     return unless File.exists?(path)
-
+    
+    query = "SELECT content FROM evidence WHERE id=#{id};"
     begin
       db = SQLite3::Database.open(path)
-      ret = db.execute("SELECT content FROM evidence WHERE id=#{id};")
+      ret = db.execute(query)
       db.close
       return ret.first.first
     rescue SQLite3::BusyException => e
           trace :warn, "Cannot select because database is busy, retrying. [#{e.message}]"
           sleep 0.1
           retry
+    rescue SQLite3::SQLException => e
+          trace :fatal, "SQL syntax error: #{e.message}, query was: #{query}"
     rescue Exception => e
-      trace :warn, "Cannot read from the repository: #{e.message}"
+      trace :warn, "Cannot read from the repository: #{e.message} [#{e.class}]"
     end
   end
 
