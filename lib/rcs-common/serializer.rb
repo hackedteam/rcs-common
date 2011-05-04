@@ -15,7 +15,7 @@ module Serialization
   end
 end
 
-class PoomSerializer
+class AddressBookSerializer
   attr_reader :name, :contact, :info
 
   POOM_V1_0_PROTO = 0x01000000
@@ -89,7 +89,6 @@ class PoomSerializer
       utf16le_str = str.to_utf16le_binary_null
       stream.write Serialization.prefix(POOM_TYPES.invert[type], utf16le_str.bytesize)
       stream.write utf16le_str
-      printf "writing @ %d\n", stream.pos + 12
     end
     header = [stream.pos, POOM_V1_0_PROTO, 0].pack('L*')
     return header + stream.string
@@ -105,7 +104,6 @@ class PoomSerializer
     
     @fields = {}
     until stream.eof? do
-      puts "reading @ #{stream.pos}"
       prefix = stream.read(4)
       type, size = Serialization.decode_prefix prefix
       @fields[POOM_TYPES[type]] = stream.read(size).utf16le_to_utf8
