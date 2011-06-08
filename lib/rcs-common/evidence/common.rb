@@ -1,6 +1,5 @@
 
-require 'ffi'
-require 'rcs-common/utf16le'
+require 'rcs-common'
 
 module RCS
 
@@ -23,15 +22,17 @@ EVIDENCE_TYPES = { 0x0240 => :DEVICE,
                    0x1011 => :APPLICATION,
                    0xD0D0 => :DOWNLOAD,
                    0x1220 => :LOCATION,
-                   0xEDA1 => :FILESYSTEM}
+                   0xEDA1 => :FILESYSTEM,
+                   0x1001 => :MAILRAW,
+                   0x0200 => :ADDRESSBOOK}
 
 class EvidenceDeserializeError < StandardError
   attr_reader :msg
-
+  
   def initialize(msg)
     @msg = msg
   end
-
+  
   def to_s
     @msg
   end

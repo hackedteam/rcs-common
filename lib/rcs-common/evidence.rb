@@ -27,7 +27,7 @@ class Evidence
   
   extend Crypt
   include Crypt
-
+  
   attr_reader :binary
   attr_reader :size
   attr_reader :content
@@ -197,7 +197,7 @@ class Evidence
       @info[:type] = EVIDENCE_TYPES[ @type_id ]
       extend_on_type @info[:type]
     rescue Exception => e
-      raise EvidenceDeserializeError.new("unknown type")
+      raise EvidenceDeserializeError.new("unknown type => #{@type_id}")
     end
     
     unless additional_size == 0
