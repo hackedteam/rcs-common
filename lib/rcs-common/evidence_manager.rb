@@ -4,7 +4,6 @@
 
 # from RCS::Common
 require 'rcs-common/trace'
-require 'rcs-common/flatsingleton'
 require 'rcs-common/fixnum'
 require 'rcs-common/sqlite3'
 
@@ -15,7 +14,6 @@ module RCS
 
 class EvidenceManager
   include Singleton
-  extend FlatSingleton
   include RCS::Tracer
 
   REPO_DIR = Dir.pwd + '/evidence'
