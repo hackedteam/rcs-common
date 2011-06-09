@@ -10,7 +10,7 @@ include Sys
 
 module RCS
 
-class Status
+class SystemStatus
 
   OK = "OK"
   WARN = "WARN"
