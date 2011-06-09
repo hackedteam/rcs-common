@@ -4,7 +4,6 @@
 
 # from RCS::Common
 require 'rcs-common/trace'
-require 'rcs-common/flatsingleton'
 require 'rcs-common/fixnum'
 require 'rcs-common/sqlite3'
 
@@ -15,7 +14,6 @@ module RCS
 
 class EvidenceManager
   include Singleton
-  extend FlatSingleton
   include RCS::Tracer
 
   REPO_DIR = Dir.pwd + '/evidence'
@@ -42,7 +40,7 @@ class EvidenceManager
         key = old.first.first unless old.empty?
       end
       db.execute("DELETE FROM info;")
-      db.execute("INSERT INTO info VALUES (#{session[:bid]},
+      db.execute("INSERT INTO info VALUES ('#{session[:bid]}',
                                            '#{session[:build]}',
                                            '#{session[:instance]}',
                                            '#{session[:subtype]}',
@@ -53,6 +51,8 @@ class EvidenceManager
                                            #{time},
                                            #{SYNC_IN_PROGRESS},
                                            '#{key}');")
+
+
       db.close
     rescue SQLite3::BusyException => e
           trace :warn, "Cannot start sync because database is busy, retrying. [#{e.message}]"
@@ -130,7 +130,7 @@ class EvidenceManager
         
     begin
       db = SQLite3::Database.open(path)
-      db.execute("UPDATE info SET sync_status = #{SYNC_IDLE} WHERE bid = #{session[:bid]};")
+      db.execute("UPDATE info SET sync_status = #{SYNC_IDLE} WHERE bid = '#{session[:bid]}';")
       db.close
     rescue SQLite3::BusyException => e
           trace :warn, "Cannot update because database is busy, retrying. [#{e.message}]"
@@ -285,7 +285,7 @@ class EvidenceManager
     end
 
     # the schema of repository
-    schema = ["CREATE TABLE IF NOT EXISTS info (bid INT,
+    schema = ["CREATE TABLE IF NOT EXISTS info (bid CHAR(32),
                                                 build CHAR(16),
                                                 instance CHAR(40),
                                                 subtype CHAR(16),

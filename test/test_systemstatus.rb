@@ -5,7 +5,7 @@ module RCS
 class TestStatus < Test::Unit::TestCase
 
   def test_disk
-    disk = Status.disk_free
+    disk = SystemStatus.disk_free
 
     # it should return a number
     assert_kind_of Fixnum, disk
@@ -14,7 +14,7 @@ class TestStatus < Test::Unit::TestCase
   end
 
   def test_load
-    load = Status.cpu_load
+    load = SystemStatus.cpu_load
 
     # it should return a number
     assert_kind_of Fixnum, load
@@ -23,7 +23,7 @@ class TestStatus < Test::Unit::TestCase
   end
 
   def test_process_cpu
-    cpu = Status.my_cpu_load('test')
+    cpu = SystemStatus.my_cpu_load('test')
 
     # it should return a number
     assert_kind_of Fixnum, cpu

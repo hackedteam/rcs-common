@@ -13,15 +13,15 @@ class TestEvidenceManager < Test::Unit::TestCase
 
   def setup
     @instance = "test-instance"
-    EvidenceManager.create_repository @instance
+    EvidenceManager.instance.create_repository @instance
     assert_true File.exist?(EvidenceManager::REPO_DIR + '/' + @instance)
-    @session = {:bid => 141178,
+    @session = {:bid => '141178',
                :build => 'test-build',
                :instance => @instance,
                :subtype => 'test-subtype'}
 
     @ident = [2011010101, 'test-user', 'test-device', 'test-source']
-    @now = Time.now
+    @now = Time.now.getutc.to_i
   end
 
   def teardown
@@ -30,9 +30,9 @@ class TestEvidenceManager < Test::Unit::TestCase
   end
 
   def test_sync_start
-    EvidenceManager.sync_start @session, *@ident, @now
+    EvidenceManager.instance.sync_start @session, *@ident, @now
 
-    info = EvidenceManager.instance_info @session[:instance]
+    info = EvidenceManager.instance.instance_info @session[:instance]
    
     assert_equal @session[:bid], info['bid']
     assert_equal @session[:build], info['build']
@@ -47,63 +47,63 @@ class TestEvidenceManager < Test::Unit::TestCase
   end
 
   def test_sync_timeout_after_start
-    EvidenceManager.sync_start @session, *@ident, @now
-    EvidenceManager.sync_timeout @session
-    info = EvidenceManager.instance_info @session[:instance]
+    EvidenceManager.instance.sync_start @session, *@ident, @now
+    EvidenceManager.instance.sync_timeout @session
+    info = EvidenceManager.instance.instance_info @session[:instance]
     assert_equal EvidenceManager::SYNC_TIMEOUTED, info['sync_status']
   end
 
   def test_sync_timeout_after_end
-    EvidenceManager.sync_start @session, *@ident, @now
-    EvidenceManager.sync_end @session
-    EvidenceManager.sync_timeout @session
-    info = EvidenceManager.instance_info @session[:instance]
+    EvidenceManager.instance.sync_start @session, *@ident, @now
+    EvidenceManager.instance.sync_end @session
+    EvidenceManager.instance.sync_timeout @session
+    info = EvidenceManager.instance.instance_info @session[:instance]
     assert_equal EvidenceManager::SYNC_IDLE, info['sync_status']
   end
 
   def test_sync_timeout_all
-    EvidenceManager.sync_start @session, *@ident, @now
-    EvidenceManager.sync_timeout_all
-    info = EvidenceManager.instance_info @session[:instance]
+    EvidenceManager.instance.sync_start @session, *@ident, @now
+    EvidenceManager.instance.sync_timeout_all
+    info = EvidenceManager.instance.instance_info @session[:instance]
     assert_equal EvidenceManager::SYNC_TIMEOUTED, info['sync_status']
   end
 
   def test_sync_timeout_all_idle
-    EvidenceManager.sync_start @session, *@ident, @now
-    EvidenceManager.sync_end @session
-    EvidenceManager.sync_timeout_all
-    info = EvidenceManager.instance_info @session[:instance]
+    EvidenceManager.instance.sync_start @session, *@ident, @now
+    EvidenceManager.instance.sync_end @session
+    EvidenceManager.instance.sync_timeout_all
+    info = EvidenceManager.instance.instance_info @session[:instance]
     assert_equal EvidenceManager::SYNC_IDLE, info['sync_status']
   end
 
   def test_sync_end
-    EvidenceManager.sync_start @session, *@ident, @now
-    EvidenceManager.sync_end @session
-    info = EvidenceManager.instance_info @session[:instance]
+    EvidenceManager.instance.sync_start @session, *@ident, @now
+    EvidenceManager.instance.sync_end @session
+    info = EvidenceManager.instance.instance_info @session[:instance]
     assert_equal EvidenceManager::SYNC_IDLE, info['sync_status']
   end
 
   def test_sync_not_existent
     File.delete(EvidenceManager::REPO_DIR + '/' + @instance)
-    EvidenceManager.sync_end @session
-    info = EvidenceManager.instance_info @session[:instance]
+    EvidenceManager.instance.sync_end @session
+    info = EvidenceManager.instance.instance_info @session[:instance]
     assert_nil info
   end
 
   def test_sync_start_start
-    EvidenceManager.sync_start @session, *@ident, @now
-    EvidenceManager.sync_start @session, *@ident, @now
-    info = EvidenceManager.instance_info @session[:instance]
+    EvidenceManager.instance.sync_start @session, *@ident, @now
+    EvidenceManager.instance.sync_start @session, *@ident, @now
+    info = EvidenceManager.instance.instance_info @session[:instance]
     assert_equal EvidenceManager::SYNC_IN_PROGRESS, info['sync_status']
   end
 
   def test_evidence
     evidence = "test-evidence"
-    EvidenceManager.sync_start @session, *@ident, @now
+    EvidenceManager.instance.sync_start @session, *@ident, @now
     # insert two fake evidences
-    id1 = EvidenceManager.store_evidence @session, evidence.length, evidence
-    id2 = EvidenceManager.store_evidence @session, evidence.length, evidence
-    info = EvidenceManager.evidence_info @session[:instance]
+    id1 = EvidenceManager.instance.store_evidence @session, evidence.length, evidence
+    id2 = EvidenceManager.instance.store_evidence @session, evidence.length, evidence
+    info = EvidenceManager.instance.evidence_info @session[:instance]
     assert_equal evidence.length, info[0].first
     assert_equal evidence.length, info[1].first
     assert_equal 2, info.length

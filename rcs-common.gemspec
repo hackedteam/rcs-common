@@ -29,10 +29,9 @@ Gem::Specification.new do |s|
     "lib/rcs-common/evidence/device.rb",
     "lib/rcs-common/evidence/info.rb",
     "lib/rcs-common/evidence_manager.rb",
-    "lib/rcs-common/flatsingleton.rb",
     "lib/rcs-common/mime.rb",
     "lib/rcs-common/pascalize.rb",
-    "lib/rcs-common/status.rb",
+    "lib/rcs-common/systemstatus.rb",
     "lib/rcs-common/time.rb",
     "lib/rcs-common/trace.rb",
     "lib/rcs-common/trace.yaml",
@@ -42,11 +41,10 @@ Gem::Specification.new do |s|
     "test/test_crypt.rb",
     "test/test_evidence.rb",
     "test/test_evidence_manager.rb",
-    "test/test_flatsingleton.rb",
     "test/test_mime.rb",
     "test/test_pascalize.rb",
     "test/test_rcs-common.rb",
-    "test/test_status.rb",
+    "test/test_systemstatus.rb",
     "test/test_time.rb",
     "test/test_trace.rb"
   ]
@@ -60,11 +58,10 @@ Gem::Specification.new do |s|
     "test/test_crypt.rb",
     "test/test_evidence.rb",
     "test/test_evidence_manager.rb",
-    "test/test_flatsingleton.rb",
     "test/test_mime.rb",
     "test/test_pascalize.rb",
     "test/test_rcs-common.rb",
-    "test/test_status.rb",
+    "test/test_systemstatus.rb",
     "test/test_time.rb",
     "test/test_trace.rb"
   ]

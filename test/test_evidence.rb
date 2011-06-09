@@ -1,5 +1,5 @@
 require "helper"
-
+require "rcs-common/evidence"
 module RCS
 
   # TODO: implement more test cases for Evidence class
