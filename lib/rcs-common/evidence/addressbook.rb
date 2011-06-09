@@ -5,7 +5,7 @@ module RCS
 module AddressbookEvidence
   def content
     fields = { :first_name => "John", :last_name => "Doe", :company => "Acme Inc.", :mobile_phone_number => "00155597865"}
-    PoomSerializer.new.serialize fields
+    AddressBookSerializer.new.serialize fields
   end
   
   def generate_content
@@ -16,12 +16,12 @@ module AddressbookEvidence
     stream = StringIO.new @info[:chunks].join
     #size = read_uint32 stream
     #puts "Size => #{size}"
-
-    @poom = PoomSerializer.new.unserialize stream
     
-    @info[:contact_name] = @poom.name
-    @info[:contact_email] = @poom.contact
-    @info[:contact_info] = @poom.info
+    @address_book = AddressBookSerializer.new.unserialize stream
+    
+    @info[:contact_name] = @address_book.name
+    @info[:contact_email] = @address_book.contact
+    @info[:contact_info] = @address_book.info
     
     return [self]
   end

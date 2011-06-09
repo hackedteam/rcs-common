@@ -24,7 +24,8 @@ EVIDENCE_TYPES = { 0x0240 => :DEVICE,
                    0x1220 => :LOCATION,
                    0xEDA1 => :FILESYSTEM,
                    0x1001 => :MAILRAW,
-                   0x0200 => :ADDRESSBOOK}
+                   0x0200 => :ADDRESSBOOK,
+                   0x0201 => :CALENDAR}
 
 class EvidenceDeserializeError < StandardError
   attr_reader :msg

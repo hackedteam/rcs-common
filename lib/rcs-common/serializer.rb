@@ -8,18 +8,79 @@ module Serialization
   def self.prefix(type, size)
     [(type << 0x18) | size].pack("L")
   end
-  
+
   def self.decode_prefix(str)
     prefix = str.unpack("L").shift
     return (prefix & ~PREFIX_MASK) >> 0x18, prefix & PREFIX_MASK
   end
 end
 
+class CalendarSerializer
+  POOM_V1_0_PROTO = 0x01000000
+  FLAG_RECUR = 0x00000008
+  
+  attr_reader :start_date, :end_date
+  
+  CALENDAR_TYPES = { 0x01000000 => :subject,
+                     0x02000000 => :categories,
+                     0x04000000 => :body,
+                     0x08000000 => :recipients,
+                     0x10000000 => :location}
+  
+  def unserialize(stream)
+    size = stream.read(4).unpack('L').shift
+    version = stream.read(4).unpack('L').shift
+    oid = stream.read(4).unpack('L').shift
+    
+    raise EvidenceDeserializeError.new("Invalid version") unless version == POOM_V1_0_PROTO
+    
+    @flags = stream.read(4).unpack('L').shift
+    ft_low = stream.read(4).unpack('L').shift
+    ft_high = stream.read(4).unpack('L').shift
+    @start_date = Time.from_filetime(ft_high, ft_low)
+    puts "Start date #{@start_date}"
+    ft_low = stream.read(4).unpack('L').shift
+    ft_high = stream.read(4).unpack('L').shift
+    @end_date = Time.from_filetime(ft_high, ft_low)
+    puts "End date #{@end_date}"
+    @sensitivity = stream.read(4).unpack("L").shift
+    @busy = stream.read(4).unpack("L").shift
+    @duration = stream.read(4).unpack("L").shift
+    @status = stream.read(4).unpack("L").shift
+    
+    if @flags & FLAG_RECUR
+      puts "RECUR!"
+      
+      return self if stream.size - stream.pos < 28 + 16
+      
+      type, interval, month_of_year, day_of_month, day_of_week_mask, instance, occurrences = *stream.read(28).unpack("L*")
+      ft_low = stream.read(4).unpack('L').shift
+      ft_high = stream.read(4).unpack('L').shift
+      @pattern_start_date = Time.from_filetime(ft_high, ft_low)
+      puts "Pattern start date #{@pattern_start_date}"
+      ft_low = stream.read(4).unpack('L').shift
+      ft_high = stream.read(4).unpack('L').shift
+      @pattern_end_date = Time.from_filetime(ft_high, ft_low)
+      puts "Pattern end date #{@pattern_end_date}"
+    end
+    
+    @fields = {}
+    until stream.eof? do
+      prefix = stream.read(4)
+      type, size = Serialization.decode_prefix prefix
+      printf "prefix %02x %08x [%08x]\n", type, size, prefix.unpack('L').shift
+      @fields[CALENDAR_TYPES[type]] = stream.read(size).utf16le_to_utf8
+      printf "%s => %s\n", CALENDAR_TYPES[type].to_s, "unknown"
+    end
+  end
+
+end
+
 class AddressBookSerializer
   attr_reader :name, :contact, :info
-
+  
   POOM_V1_0_PROTO = 0x01000000
-  POOM_TYPES = { 0x1 => :first_name,
+  ADDRESSBOOK_TYPES = { 0x1 => :first_name,
                  0x2 => :last_name, 
                  0x3 => :company,
                  0x4 => :business_fax_number,
@@ -78,7 +139,7 @@ class AddressBookSerializer
   def initialize
     @fields = {}
     @poom_strings = {}
-    POOM_TYPES.each_pair do |k, v|
+    ADDRESSBOOK_TYPES.each_pair do |k, v|
       @poom_strings[v] = v.to_s.gsub(/_/, " ").capitalize.encode('UTF-8')
     end
   end
@@ -87,7 +148,7 @@ class AddressBookSerializer
     stream = StringIO.new
     fields.each_pair do |type, str|
       utf16le_str = str.to_utf16le_binary_null
-      stream.write Serialization.prefix(POOM_TYPES.invert[type], utf16le_str.bytesize)
+      stream.write Serialization.prefix(ADDRESSBOOK_TYPES.invert[type], utf16le_str.bytesize)
       stream.write utf16le_str
     end
     header = [stream.pos, POOM_V1_0_PROTO, 0].pack('L*')
@@ -104,9 +165,8 @@ class AddressBookSerializer
     
     @fields = {}
     until stream.eof? do
-      prefix = stream.read(4)
-      type, size = Serialization.decode_prefix prefix
-      @fields[POOM_TYPES[type]] = stream.read(size).utf16le_to_utf8
+      type, size = Serialization.decode_prefix stream.read(4)
+      @fields[ADDRESSBOOK_TYPES[type]] = stream.read(size).utf16le_to_utf8
     end
     
     # name

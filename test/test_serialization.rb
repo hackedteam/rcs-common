@@ -16,5 +16,5 @@ class TestSerialization < Test::Unit::TestCase
     assert_equal type, 0xff
     assert_equal size, 0xaabbcc
   end
-  
+
 end
