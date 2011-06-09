@@ -51,6 +51,8 @@ class EvidenceManager
                                            #{time},
                                            #{SYNC_IN_PROGRESS},
                                            '#{key}');")
+
+
       db.close
     rescue SQLite3::BusyException => e
           trace :warn, "Cannot start sync because database is busy, retrying. [#{e.message}]"
