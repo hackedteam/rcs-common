@@ -39,7 +39,7 @@ module SnapshotEvidence
   end
 
   def decode_content
-    @info[:data][:grid_content] = @info[:chunks].first
+    @info[:grid_content] = @info[:chunks].first
     return [self]
   end
 end

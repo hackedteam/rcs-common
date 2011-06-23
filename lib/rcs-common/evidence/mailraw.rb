@@ -46,7 +46,7 @@ module MailrawEvidence
   end
 
   def decode_content
-    @info[:data][:grid_content] = @info[:chunks].join
+    @info[:grid_content] = @info[:chunks].join
     @info[:data][:status] = 0
 
     return [self]

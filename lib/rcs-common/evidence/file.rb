@@ -95,7 +95,7 @@ module FilecapEvidence
   end
 
   def decode_content
-    @info[:data][:grid_content] = @info[:chunks].first
+    @info[:grid_content] = @info[:chunks].first
     @info[:data][:md5] = Digest::MD5.hexdigest @info[:chunks].first
     return [self]
   end
