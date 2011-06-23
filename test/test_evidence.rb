@@ -9,7 +9,7 @@ class TestEvidence < Test::Unit::TestCase
   # to set up fixture information.
   def setup
     @key = ["000102030405060708090a0b0c0d0e0f"].pack('H*')
-    @info = { :device_id => "test-device", :user_id => "test-user", :source_id => "127.0.0.1" }
+    @info = { :device => "test-device", :user => "test-user", :source => "127.0.0.1" }
   end
   
   # Called after every test method runs. Can be used to tear

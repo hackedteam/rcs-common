@@ -19,9 +19,9 @@ module AddressbookEvidence
     
     @address_book = AddressBookSerializer.new.unserialize stream
     
-    @info[:contact_name] = @address_book.name
-    @info[:contact_email] = @address_book.contact
-    @info[:contact_info] = @address_book.info
+    @info[:data][:name] = @address_book.name
+    @info[:data][:contact] = @address_book.contact
+    @info[:data][:info] = @address_book.info
     
     return [self]
   end

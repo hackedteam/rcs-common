@@ -9,7 +9,7 @@ module ApplicationEvidence
   def content
     program = ["Safari", "Opera", "Firefox"].sample.to_utf16le_binary_null
     action = ['START', 'STOP'].sample.to_utf16le_binary_null
-    info = ['', 'ciao miao bau'].sample.to_utf16le_binary_null
+    info = ['qui quo qua', 'ciao miao bau'].sample.to_utf16le_binary_null
     content = StringIO.new
     t = Time.now.getutc
     content.write [t.sec, t.min, t.hour, t.mday, t.mon, t.year, t.wday, t.yday, t.isdst ? 0 : 1].pack('l*')
@@ -34,16 +34,16 @@ module ApplicationEvidence
     until stream.eof?
       tm = stream.read 36
       @info[:acquired] = Time.gm(*tm.unpack('l*'), 0)
-      @info[:program] = ''
-      @info[:action] = ''
-      @info[:info] = ''
+      @info[:data][:program] = ''
+      @info[:data][:action] = ''
+      @info[:data][:desc] = ''
       
       program = stream.read_utf16le_string
-      @info[:program] = program.utf16le_to_utf8 unless program.nil?
+      @info[:data][:program] = program.utf16le_to_utf8 unless program.nil?
       action = stream.read_utf16le_string
-      @info[:action] = action.utf16le_to_utf8 unless action.nil?
+      @info[:data][:action] = action.utf16le_to_utf8 unless action.nil?
       info = stream.read_utf16le_string
-      @info[:info] = info.utf16le_to_utf8 unless info.nil?
+      @info[:data][:desc] = info.utf16le_to_utf8 unless info.nil?
 
       delim = stream.read(4).unpack("L*").first
       raise EvidenceDeserializeError.new("Malformed APPLICATION (missing delimiter)") unless delim == ELEM_DELIMITER

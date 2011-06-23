@@ -13,7 +13,7 @@ module InfoEvidence
   end
 
   def decode_content
-    @info[:content] = @info[:chunks].first.utf16le_to_utf8
+    @info[:data][:content] = @info[:chunks].first.utf16le_to_utf8
     return [self]
   end
 end

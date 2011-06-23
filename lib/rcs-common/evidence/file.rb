@@ -36,22 +36,19 @@ module FileopenEvidence
     until stream.eof?
       tm = stream.read 36
       @info[:acquired] = Time.gm(*tm.unpack('l*'), 0)
-      @info[:process] = ''
-      @info[:file] = ''
+      @info[:data][:program] = ''
+      @info[:data][:path] = ''
 
       process_name = stream.read_ascii_string
-      @info[:process] = process_name.force_encoding('US-ASCII') unless process_name.nil?
+      @info[:data][:program] = process_name.force_encoding('US-ASCII') unless process_name.nil?
 
       size_hi = stream.read(4).unpack("L").first
       size_lo = stream.read(4).unpack("L").first
-      #TODO: remove hi and lo when mongo is in place
-      @info[:size_hi] = size_hi
-      @info[:size_lo] = size_lo
-      @info[:size] = size_hi << 32 | size_lo
-      @info[:mode] = stream.read(4).unpack("l").first
+      @info[:data][:size] = size_hi << 32 | size_lo
+      @info[:data][:access] = stream.read(4).unpack("l").first
 
       file = stream.read_utf16le_string
-      @info[:file] = file.utf16le_to_utf8 unless file.nil?
+      @info[:data][:path] = file.utf16le_to_utf8 unless file.nil?
       
       delim = stream.read(4).unpack("L*").first
       raise EvidenceDeserializeError.new("Malformed FILEOPEN (missing delimiter)") unless delim == ELEM_DELIMITER
@@ -94,13 +91,12 @@ module FilecapEvidence
     version, file_name_len = binary.read(8).unpack("I*")
     raise EvidenceDeserializeError.new("invalid log version for FILECAP") unless version == FILECAP_VERSION
 
-    @info[:filename] = binary.read(file_name_len).utf16le_to_utf8
+    @info[:data][:path] = binary.read(file_name_len).utf16le_to_utf8
   end
 
   def decode_content
-    @info[:content] = @info[:chunks].first
-    @info[:md5] = Digest::MD5.hexdigest @info[:content]
-    @info[:size] = @info[:content].bytesize
+    @info[:data][:grid_content] = @info[:chunks].first
+    @info[:data][:md5] = Digest::MD5.hexdigest @info[:chunks].first
     return [self]
   end
 end

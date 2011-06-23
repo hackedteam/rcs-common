@@ -38,19 +38,19 @@ module ChatEvidence
     until stream.eof?
       tm = stream.read 36
       @info[:acquired] = Time.gm(*tm.unpack('l*'), 0)
-      @info[:program] = ''
-      @info[:topic] = ''
-      @info[:users] = ''
-      @info[:keystrokes] = ''
+      @info[:data][:program] = ''
+      @info[:data][:topic] = ''
+      @info[:data][:users] = ''
+      @info[:data][:content] = ''
 
       program = stream.read_utf16le_string
-      @info[:program] = program.utf16le_to_utf8 unless program.nil?
+      @info[:data][:program] = program.utf16le_to_utf8 unless program.nil?
       topic = stream.read_utf16le_string
-      @info[:topic] = topic.utf16le_to_utf8 unless topic.nil?
+      @info[:data][:topic] = topic.utf16le_to_utf8 unless topic.nil?
       users = stream.read_utf16le_string
-      @info[:users] = users.utf16le_to_utf8 unless users.nil?
+      @info[:data][:users] = users.utf16le_to_utf8 unless users.nil?
       keystrokes = stream.read_utf16le_string
-      @info[:keystrokes] = keystrokes.utf16le_to_utf8 unless keystrokes.nil?
+      @info[:data][:content] = keystrokes.utf16le_to_utf8 unless keystrokes.nil?
 
       delim = stream.read(4).unpack("L*").first
       raise EvidenceDeserializeError.new("Malformed CHAT (missing delimiter)") unless delim == ELEM_DELIMITER

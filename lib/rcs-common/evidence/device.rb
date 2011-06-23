@@ -12,7 +12,7 @@ module DeviceEvidence
   end
 
   def decode_content
-    @info[:content] = @info[:chunks].join.utf16le_to_utf8
+    @info[:data][:content] = @info[:chunks].join.utf16le_to_utf8
     return [self]
   end
 end

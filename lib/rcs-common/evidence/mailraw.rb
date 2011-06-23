@@ -41,14 +41,13 @@ module MailrawEvidence
     version, flags, size, ft_low, ft_high = binary.read(20).unpack('I*')
     raise EvidenceDeserializeError.new("invalid log version for MOUSE") unless version == MAILRAW_VERSION
     
-    @info[:size] = size
+    @info[:data][:size] = size
     @info[:acquired] = Time.from_filetime(ft_high, ft_low)
   end
 
   def decode_content
-    @info[:content] = @info[:chunks].join
-    @info[:size] = @info[:content].bytesize
-    @info[:status] = 0
+    @info[:data][:grid_content] = @info[:chunks].join
+    @info[:data][:status] = 0
 
     return [self]
   end

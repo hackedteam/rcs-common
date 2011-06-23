@@ -33,16 +33,12 @@ module FilesystemEvidence
       raise EvidenceDeserializeError.new("invalid log version for FILESYSTEM") unless version == FILESYSTEM_VERSION
 
       @info[:acquired] = Time.from_filetime(*stream.read(8).unpack('L*'))
-      @info[:path] = ''
+      @info[:data][:path] = ''
 
       path = stream.read_utf16le_string
-      @info[:path] = path.utf16le_to_utf8 unless path.nil?
-
-      #TODO: remove hi and lo when mongo is in place
-      @info[:size_hi] = size_hi
-      @info[:size_lo] = size_lo
-      @info[:size] = size_hi << 32 | size_lo
-      @info[:attribute] = attribute
+      @info[:data][:path] = path.utf16le_to_utf8 unless path.nil?
+      @info[:data][:size] = size_hi << 32 | size_lo
+      @info[:data][:attr] = attribute
       
       # this is not the real clone! redefined clone ...
       evidences << self.clone

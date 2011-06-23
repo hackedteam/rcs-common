@@ -39,20 +39,20 @@ module KeylogEvidence
     until stream.eof?
       tm = stream.read 36
       @info[:acquired] = Time.gm(*tm.unpack('l*'), 0)
-      @info[:process] = ''
-      @info[:window] = ''
-      @info[:keystrokes] = ''
+      @info[:data][:process] = ''
+      @info[:data][:window] = ''
+      @info[:data][:content] = ''
       
       process_name = stream.read_utf16le_string
-      @info[:process] = process_name.utf16le_to_utf8 unless process_name.nil?
+      @info[:data][:process] = process_name.utf16le_to_utf8 unless process_name.nil?
       window_name = stream.read_utf16le_string
-      @info[:window] = window_name.utf16le_to_utf8 unless window_name.nil?
+      @info[:data][:window] = window_name.utf16le_to_utf8 unless window_name.nil?
       
       delim = stream.read(4).unpack("L*").first
       raise EvidenceDeserializeError.new("Malformed KEYLOG (missing delimiter)") unless delim == ELEM_DELIMITER
       
       keystrokes = stream.read_utf16le_string
-      @info[:keystrokes] = keystrokes.utf16le_to_utf8 unless keystrokes.nil?
+      @info[:data][:content] = keystrokes.utf16le_to_utf8 unless keystrokes.nil?
       
       # this is not the real clone! redefined clone ...
       evidences << self.clone

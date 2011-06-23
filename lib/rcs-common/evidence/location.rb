@@ -77,8 +77,8 @@ module LocationEvidence
 
     case @info[:loc_type]
       when LOCATION_WIFI
-        @info[:source] = 'WIFI'
-        @info[:location] = ''
+        @info[:data][:type] = 'WIFI'
+        @info[:data][:wifi] = []
         until stream.eof?
           # we have 6 byte of mac address
           # and 2 of padding (using C struct is BAAAAD)
@@ -87,33 +87,34 @@ module LocationEvidence
           ssid = stream.read(len)
           stream.read(32-len)
           sig = stream.read(4).unpack('l').first
-          #TODO: don't parse to a string, keep the values
-          @info[:location] += "%02X:%02X:%02X:%02X:%02X:%02X [%d] %s\n" %
+
+          mac_s = "%02X:%02X:%02X:%02X:%02X:%02X" %
                               [mac[0].unpack('C').first,
                                mac[1].unpack('C').first,
                                mac[2].unpack('C').first,
                                mac[3].unpack('C').first,
                                mac[4].unpack('C').first,
-                               mac[5].unpack('C').first,sig, ssid]
+                               mac[5].unpack('C').first]
+
+          @info[:data][:wifi] << {:mac => mac_s, :sig => sig, :bssid => ssid}
         end
         evidences << self.clone
 
       when LOCATION_IP
-        @info[:source] = 'IPv4'
+        @info[:data][:type] = 'IPv4'
         ip = stream.read_ascii_string
-        @info[:location] = ip unless ip.nil?
-        @info[:ipv4] = ip unless ip.nil?
+        @info[:data][:ip] = ip unless ip.nil?
         evidences << self.clone
 
       when LOCATION_GPS
-        @info[:source] = 'GPS'
+        @info[:data][:type] = 'GPS'
         until stream.eof?
           type, size, version = stream.read(12).unpack('L*')
           @info[:acquired] = Time.from_filetime(*stream.read(8).unpack('L*'))
           gps = GPS_Position.new
           gps.read stream
-          #TODO: don't parse to a string, keep the values
-          @info[:location] = "%.7f %.7f" % [gps.latitude, gps.longitude]
+          @info[:data][:latitude] = "%.7f" % gps.latitude
+          @info[:data][:longitude] = "%.7f" % gps.longitude
           delim = stream.read(4).unpack('L').first
           raise EvidenceDeserializeError.new("Malformed LOCATION GPS (missing delimiter)") unless delim == ELEM_DELIMITER
 
@@ -121,18 +122,17 @@ module LocationEvidence
           evidences << self.clone
         end
       when LOCATION_GSM, LOCATION_CDMA
-        @info[:source] = (@info[:loc_type] == LOCATION_GSM) ? 'GSM' : 'CDMA'
+        @info[:data][:type] = (@info[:loc_type] == LOCATION_GSM) ? 'GSM' : 'CDMA'
         until stream.eof?
           type, size, version = stream.read(12).unpack('L*')
           @info[:acquired] = Time.from_filetime(*stream.read(8).unpack('L*'))
           cell = CELL_Position.new
           cell.read stream
 
-          #TODO: don't parse to a string, keep the values
           if @info[:loc_type] == LOCATION_GSM then
-            @info[:location] = "MCC:#{cell.mcc} MNC:#{cell.mnc} LAC:#{cell.lac} CID:#{cell.cid} dBm:#{cell.db} ADV:#{cell.adv} AGE:0"
+            @info[:data][:cell] = {:mcc => cell.mcc, :mnc => cell.mnc, :lac => cell.lac, :cid => cell.cid, :db => cell.db, :adv => cell.adv, :age => 0}
           else
-            @info[:location] = "MCC:#{cell.mcc} SID:#{cell.mnc} NID:#{cell.lac} BID:#{cell.cid} dBm:#{cell.db} ADV:#{cell.adv} AGE:0"
+            @info[:data][:cell] = {:mcc => cell.mcc, :sid => cell.mnc, :nid => cell.lac, :bid => cell.cid, :db => cell.db, :adv => cell.adv, :age => 0}
           end
 
           delim = stream.read(4).unpack('L').first

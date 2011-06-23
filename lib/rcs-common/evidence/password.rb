@@ -32,19 +32,19 @@ module PasswordEvidence
 
     evidences = Array.new
     until stream.eof?
-      @info[:resource] = ''
-      @info[:service] = ''
-      @info[:user] = ''
-      @info[:pass] = ''
+      @info[:data][:program] = ''
+      @info[:data][:service] = ''
+      @info[:data][:user] = ''
+      @info[:data][:pass] = ''
 
       resource = stream.read_utf16le_string
-      @info[:resource] = resource.utf16le_to_utf8 unless resource.nil?
+      @info[:data][:program] = resource.utf16le_to_utf8 unless resource.nil?
       user = stream.read_utf16le_string
-      @info[:user] = user.utf16le_to_utf8 unless user.nil?
+      @info[:data][:user] = user.utf16le_to_utf8 unless user.nil?
       pass = stream.read_utf16le_string
-      @info[:pass] = pass.utf16le_to_utf8 unless pass.nil?
+      @info[:data][:pass] = pass.utf16le_to_utf8 unless pass.nil?
       service = stream.read_utf16le_string
-      @info[:service] = service.utf16le_to_utf8 unless service.nil?
+      @info[:data][:service] = service.utf16le_to_utf8 unless service.nil?
 
       delim = stream.read(4).unpack("L*").first
       raise EvidenceDeserializeError.new("Malformed PASSWORD (missing delimiter)") unless delim == ELEM_DELIMITER

@@ -185,16 +185,17 @@ class Evidence
     @info[:received] = Time.new.getgm
     @info[:acquired] = Time.from_filetime(time_h, time_l).getgm
 
-    @info[:device_id] = header_string.read(host_size).utf16le_to_utf8 unless host_size == 0
-    @info[:device_id] ||= ''
-    @info[:user_id] = header_string.read(user_size).utf16le_to_utf8 unless user_size == 0
-    @info[:user_id] ||= ''
-    @info[:source_id] = header_string.read(ip_size).utf16le_to_utf8 unless ip_size == 0
-    @info[:source_id] ||= ''
+    @info[:device] = header_string.read(host_size).utf16le_to_utf8 unless host_size == 0
+    @info[:device] ||= ''
+    @info[:user] = header_string.read(user_size).utf16le_to_utf8 unless user_size == 0
+    @info[:user] ||= ''
+    @info[:source] = header_string.read(ip_size).utf16le_to_utf8 unless ip_size == 0
+    @info[:source] ||= ''
+    @info[:data] = {}
     
     # extend class depending on evidence type
     begin
-      @info[:type] = EVIDENCE_TYPES[ @type_id ]
+      @info[:type] = EVIDENCE_TYPES[ @type_id ].to_s.downcase
       extend_on_type @info[:type]
     rescue Exception => e
       raise EvidenceDeserializeError.new("unknown type => #{@type_id}")

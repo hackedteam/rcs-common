@@ -32,12 +32,11 @@ module PrintEvidence
     version, name_len = binary.read(8).unpack("I*")
     raise EvidenceDeserializeError.new("invalid log version for PRINT") unless version == PRINT_VERSION
 
-    @info[:name] = binary.read(name_len).utf16le_to_utf8
+    @info[:data][:spool] = binary.read(name_len).utf16le_to_utf8
   end
 
   def decode_content
-    @info[:content] = @info[:chunks].first
-    @info[:size] = @info[:content].bytesize
+    @info[:data][:grid_content] = @info[:chunks].first
     return [self]
   end
 end

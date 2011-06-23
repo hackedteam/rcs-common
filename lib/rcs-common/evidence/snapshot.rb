@@ -34,13 +34,12 @@ module SnapshotEvidence
     version, process_name_len, window_name_len = binary.read(12).unpack("I*")
     raise EvidenceDeserializeError.new("invalid log version for SNAPSHOT") unless version == SNAPSHOT_VERSION
 
-    @info[:process] = binary.read(process_name_len).utf16le_to_utf8
-    @info[:window] = binary.read(window_name_len).utf16le_to_utf8
+    @info[:data][:program] = binary.read(process_name_len).utf16le_to_utf8
+    @info[:data][:window] = binary.read(window_name_len).utf16le_to_utf8
   end
 
   def decode_content
-    @info[:content] = @info[:chunks].first
-    @info[:size] = @info[:content].bytesize
+    @info[:data][:grid_content] = @info[:chunks].first
     return [self]
   end
 end

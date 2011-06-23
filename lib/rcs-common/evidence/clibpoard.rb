@@ -33,16 +33,16 @@ module ClipboardEvidence
     until stream.eof?
       tm = stream.read 36
       @info[:acquired] = Time.gm(*tm.unpack('l*'), 0)
-      @info[:process] = ''
-      @info[:window] = ''
-      @info[:clipboard] = ''
+      @info[:data][:program] = ''
+      @info[:data][:window] = ''
+      @info[:data][:content] = ''
 
       process = stream.read_utf16le_string
-      @info[:process] = process.utf16le_to_utf8 unless process.nil?
+      @info[:data][:program] = process.utf16le_to_utf8 unless process.nil?
       window = stream.read_utf16le_string
-      @info[:window] = window.utf16le_to_utf8 unless window.nil?
+      @info[:data][:window] = window.utf16le_to_utf8 unless window.nil?
       clipboard = stream.read_utf16le_string
-      @info[:clipboard] = clipboard.utf16le_to_utf8 unless clipboard.nil?
+      @info[:data][:content] = clipboard.utf16le_to_utf8 unless clipboard.nil?
 
       delim = stream.read(4).unpack("L*").first
       raise EvidenceDeserializeError.new("Malformed CLIPBOARD (missing delimiter)") unless delim == ELEM_DELIMITER
