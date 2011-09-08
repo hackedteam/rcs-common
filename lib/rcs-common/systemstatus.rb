@@ -27,6 +27,14 @@ class SystemStatus
     @@status = status
   end
 
+  def self.my_error_msg
+    return @@errmsg
+  end
+
+  def self.my_error_msg=(status)
+    @@errmsg = status
+  end
+
   # returns the percentage of free space
   def self.disk_free
     # check the filesystem containing the current dir
