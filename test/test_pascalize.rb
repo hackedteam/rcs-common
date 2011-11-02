@@ -11,7 +11,7 @@ class TestRcsCommon < Test::Unit::TestCase
     pascal = source.pascalize
     assert_equal dest, pascal
     # this is a stream of bytes represented as ASCII
-    assert_equal 'ASCII-8BIT', pascal.encoding.to_s,
+    assert_equal 'ASCII-8BIT', pascal.encoding.to_s
   end
 
   def test_unpascalize
