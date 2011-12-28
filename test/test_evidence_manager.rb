@@ -1,5 +1,6 @@
 require 'helper'
 
+=begin
 module RCS
 
 # dirty hack to fake the trace function
@@ -10,7 +11,7 @@ class EvidenceManager
 end
 
 class TestEvidenceManager < Test::Unit::TestCase
-
+  
   def setup
     @instance = "test-instance"
     EvidenceManager.instance.create_repository @instance
@@ -115,3 +116,4 @@ class TestEvidenceManager < Test::Unit::TestCase
 end
 
 end #RCS::
+=end

@@ -11,7 +11,7 @@ class TestSerialization < Test::Unit::TestCase
   end
 
   def test_decode_prefix
-    type, size = RCS::Serialization::read_prefix("\xCC\xBB\xAA\xFF")
+    type, size = RCS::Serialization::decode_prefix("\xCC\xBB\xAA\xFF")
 
     assert_equal type, 0xff
     assert_equal size, 0xaabbcc

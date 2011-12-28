@@ -23,9 +23,8 @@ class TestEvidence < Test::Unit::TestCase
   def test_generate
     piece = RCS::Evidence.new(@key, @info).generate(:DEVICE)
     evidence = RCS::Evidence.new(@key).deserialize(piece.binary)
-        
-    assert_equal piece.content.force_encoding('UTF-16LE').encode('UTF-8'), evidence.content.force_encoding('UTF-16LE').encode('UTF-8')
-    assert_equal piece.binary, evidence.binary
+    
+    assert_equal piece.content.force_encoding('UTF-16LE').encode('UTF-8'), evidence[0].content.force_encoding('UTF-16LE').encode('UTF-8')
   end
   
   def test_align_to_block_len
@@ -41,7 +40,7 @@ class TestEvidence < Test::Unit::TestCase
     test_string = ['00112233445566778899aabbccddeeff'].pack('H*')
     assert_equal('69c4e0d86a7b0430d8cdb78070b4c55a', evidence.encrypt(test_string).unpack('H*').shift)
   end
-
+  
   def test_decrypt
     evidence = RCS::Evidence.new(@key)
     test_string = ['69c4e0d86a7b0430d8cdb78070b4c55a'].pack('H*')
