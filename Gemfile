@@ -7,7 +7,7 @@ gem "log4r", ">= 1.1.9"
 gem 'mime-types'
 gem 'sys-filesystem'
 gem 'sys-cpu'
-gem 'sqlite3-ruby'
+gem 'sqlite3'
 gem 'ffi'
 gem 'mail'
 
