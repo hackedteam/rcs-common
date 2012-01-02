@@ -63,9 +63,9 @@ class Evidence
   
   def generate_header(type_id)
     thigh, tlow = @info[:acquired].to_filetime
-    deviceid_utf16 = @info[:device].to_utf16le_binary
-    userid_utf16 = @info[:user].to_utf16le_binary
-    sourceid_utf16 = @info[:source].to_utf16le_binary
+    deviceid_utf16 = @info[:device_id].to_utf16le_binary
+    userid_utf16 = @info[:user_id].to_utf16le_binary
+    sourceid_utf16 = @info[:source_id].to_utf16le_binary
     
     add_header = ''
     add_header = additional_header if respond_to? :additional_header
