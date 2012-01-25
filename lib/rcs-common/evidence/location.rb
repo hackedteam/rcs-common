@@ -17,7 +17,7 @@ module LocationEvidence
   
   def content
     content = StringIO.new
-
+    
     case @loc_type
       when LOCATION_GPS
         content.write [@loc_type, 0, 0].pack('L*')
@@ -82,7 +82,7 @@ module LocationEvidence
         until stream.eof?
           # we have 6 byte of mac address
           # and 2 of padding (using C struct is BAAAAD)
-          mac = stream.read 8
+          mac = stream.read 6
           len = stream.read(4).unpack('L').first
           ssid = stream.read(len)
           stream.read(32-len)
