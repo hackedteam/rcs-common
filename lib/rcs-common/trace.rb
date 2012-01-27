@@ -64,7 +64,10 @@ module Tracer
     
     log = Logger['rcslogger']
     #log.send(level, "#{self.class}: #{msg}")
-    log.send(level, "#{msg}")
+    log.send(level, "#{msg}") unless log.nil?
+
+    # fallback if the logger is not initialized
+    puts "#{Time.now} [#{level.to_s.upcase}]: #{msg}" if log.nil?
     
   end
 
