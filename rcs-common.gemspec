@@ -56,7 +56,7 @@ Gem::Specification.new do |s|
     "lib/rcs-common/evidence/mouse.rb",
     "lib/rcs-common/evidence/password.rb",
     "lib/rcs-common/evidence/print.rb",
-    "lib/rcs-common/evidence/snapshot.rb",
+    "lib/rcs-common/evidence/screenshot.rb",
     "lib/rcs-common/evidence/url.rb",
     "lib/rcs-common/fixnum.rb",
     "lib/rcs-common/mime.rb",
