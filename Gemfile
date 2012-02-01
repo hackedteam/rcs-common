@@ -7,7 +7,7 @@ gem "log4r", ">= 1.1.9"
 gem 'mime-types'
 gem 'sys-filesystem'
 gem 'sys-cpu'
-gem 'sqlite3-ruby'
+gem 'sqlite3'
 gem 'ffi'
 gem 'mail'
 
@@ -16,6 +16,6 @@ gem 'mail'
 group :development do
   gem "bundler", "~> 1.0.0"
   gem "jeweler", "~> 1.5.2"
-  gem "rcov", ">= 0"
+  gem "simplecov"
   gem 'test-unit'
 end
