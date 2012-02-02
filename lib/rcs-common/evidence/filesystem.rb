@@ -25,18 +25,21 @@ module FilesystemEvidence
   
   def decode_content
     stream = StringIO.new @info[:chunks].join
-
+    
     evidences = Array.new
     until stream.eof?
-
+      
       version, path_len, attribute, size_hi, size_lo = stream.read(20).unpack("I*")
-      raise EvidenceDeserializeError.new("invalid log version for FILESYSTEM") unless version == FILESYSTEM_VERSION
-
+      
       @info[:acquired] = Time.from_filetime(*stream.read(8).unpack('L*'))
       @info[:data][:path] = ''
+      
+      path = stream.read(path_len)
+      break if path.nil?
 
-      path = stream.read_utf16le_string
-      @info[:data][:path] = path.utf16le_to_utf8 unless path.nil?
+      raise EvidenceDeserializeError.new("invalid log version for FILESYSTEM [#{version} != #{FILESYSTEM_VERSION}]") unless version == FILESYSTEM_VERSION
+      
+      @info[:data][:path] = path.utf16le_to_utf8
       @info[:data][:size] = size_hi << 32 | size_lo
       @info[:data][:attr] = attribute
       
