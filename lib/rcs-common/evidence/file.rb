@@ -66,7 +66,7 @@ module FilecapEvidence
   FILECAP_VERSION = 2008122901
 
   def content
-    path = File.join(File.dirname(__FILE__), 'content', ['snapshot', 'print', 'camera', 'mouse', 'url'].sample, '001.jpg')
+    path = File.join(File.dirname(__FILE__), 'content', ['screenshot', 'print', 'camera', 'mouse', 'url'].sample, '001.jpg')
     File.open(path, 'rb') {|f| f.read }
   end
 
