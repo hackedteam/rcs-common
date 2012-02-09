@@ -2,6 +2,8 @@
 require 'rcs-common/time'
 require 'rcs-common/utf16le'
 
+require "rcs-common/version"
+
 # gem modules
 require 'rcs-common/crypt'
 require 'rcs-common/pascalize'
