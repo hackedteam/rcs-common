@@ -165,7 +165,6 @@ class Evidence
     
     # header
     header_length = read_uint32(binary_string)
-    
     @info[:empty] = (binary_string.size == header_length + 4)
     
     # decrypt header
@@ -184,7 +183,7 @@ class Evidence
     
     @info[:received] = Time.new.getgm
     @info[:acquired] = Time.from_filetime(time_h, time_l).getgm
-
+    
     @info[:device] = header_string.read(host_size).utf16le_to_utf8 unless host_size == 0
     @info[:device] ||= ''
     @info[:user] = header_string.read(user_size).utf16le_to_utf8 unless user_size == 0
@@ -213,6 +212,7 @@ class Evidence
       content = binary_string.read align_to_block_len(len)
       @info[:chunks] << StringIO.new( decrypt(content) ).read(len)
     end
+    yield @info[:chunks].join if block_given?
     
     return @info[:empty] ? [self] : decode_content
   end
