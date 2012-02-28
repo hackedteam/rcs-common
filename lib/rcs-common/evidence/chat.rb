@@ -61,7 +61,7 @@ module ChatEvidence
     
     return evidences
   end
-end
+end # ChatEvidence
 
 module ChatskypeEvidence
   include ChatEvidence
@@ -81,8 +81,26 @@ module ChatskypeEvidence
 
     content.string
   end
+end # ChatskypeEvidence
 
-end
+module SocialEvidence
+  include ChatEvidence
 
+  def content
+    program = "Facebook\0".to_utf16le_binary
+    topic = "\0".to_utf16le_binary
+    users = "ALoR Daniel\0".to_utf16le_binary
+    content = StringIO.new
+    t = Time.now.getutc
+    content.write [t.sec, t.min, t.hour, t.mday, t.mon, t.year, t.wday, t.yday, t.isdst ? 0 : 1].pack('l*')
+    content.write program
+    content.write topic
+    content.write users
+    content.write "messaggio su facebook\0".to_utf16le_binary
+    content.write [ ELEM_DELIMITER ].pack('L')
+
+    content.string
+  end
+end # SocialEvidence
 
 end # ::RCS
