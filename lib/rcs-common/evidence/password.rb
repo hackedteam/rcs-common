@@ -27,33 +27,31 @@ module PasswordEvidence
     ret
   end
   
-  def decode_content
-    stream = StringIO.new @info[:chunks].join
+  def decode_content(common_info, chunks)
+    stream = StringIO.new chunks.join
 
-    evidences = Array.new
+    info = Hash[common_info]
     until stream.eof?
-      @info[:data][:program] = ''
-      @info[:data][:service] = ''
-      @info[:data][:user] = ''
-      @info[:data][:pass] = ''
+      info[:data][:program] = ''
+      info[:data][:service] = ''
+      info[:data][:user] = ''
+      info[:data][:pass] = ''
 
       resource = stream.read_utf16le_string
-      @info[:data][:program] = resource.utf16le_to_utf8 unless resource.nil?
+      info[:data][:program] = resource.utf16le_to_utf8 unless resource.nil?
       user = stream.read_utf16le_string
-      @info[:data][:user] = user.utf16le_to_utf8 unless user.nil?
+      info[:data][:user] = user.utf16le_to_utf8 unless user.nil?
       pass = stream.read_utf16le_string
-      @info[:data][:pass] = pass.utf16le_to_utf8 unless pass.nil?
+      info[:data][:pass] = pass.utf16le_to_utf8 unless pass.nil?
       service = stream.read_utf16le_string
-      @info[:data][:service] = service.utf16le_to_utf8 unless service.nil?
+      info[:data][:service] = service.utf16le_to_utf8 unless service.nil?
 
       delim = stream.read(4).unpack("L*").first
       raise EvidenceDeserializeError.new("Malformed PASSWORD (missing delimiter)") unless delim == ELEM_DELIMITER
 
       # this is not the real clone! redefined clone ...
-      evidences << self.clone
+      yield info if block_given?
     end
-    
-    return evidences
   end
 end
 

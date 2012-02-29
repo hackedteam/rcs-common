@@ -12,9 +12,11 @@ module InfoEvidence
     [ content ]
   end
 
-  def decode_content
-    @info[:data][:content] = @info[:chunks].first.utf16le_to_utf8
-    return [self]
+  def decode_content(common_info, chunks)
+    info = Hash[common_info]
+    info[:data] = Hash.new
+    info[:data][:content] = chunks.first.utf16le_to_utf8
+    yield info
   end
 end
 

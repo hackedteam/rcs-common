@@ -23,31 +23,29 @@ module FilesystemEvidence
     [ content ]
   end
   
-  def decode_content
-    stream = StringIO.new @info[:chunks].join
-    
-    evidences = Array.new
-    until stream.eof?
-      
-      version, path_len, attribute, size_hi, size_lo = stream.read(20).unpack("I*")
-      
-      @info[:acquired] = Time.from_filetime(*stream.read(8).unpack('L*'))
-      @info[:data][:path] = ''
-      
-      path = stream.read(path_len)
-      break if path.nil?
+  def decode_content(common_info, chunks)
+    stream = StringIO.new chunks.join
 
+    until stream.eof?
+
+      info = Hash[common_info]
+
+      version, path_len, attribute, size_hi, size_lo = stream.read(20).unpack("I*")
       raise EvidenceDeserializeError.new("invalid log version for FILESYSTEM [#{version} != #{FILESYSTEM_VERSION}]") unless version == FILESYSTEM_VERSION
-      
-      @info[:data][:path] = path.utf16le_to_utf8
-      @info[:data][:size] = size_hi << 32 | size_lo
-      @info[:data][:attr] = attribute
-      
+
+      info[:data] = Hash.new
+      info[:data][:size] = size_hi << 32 | size_lo
+      info[:data][:attr] = attribute
+      info[:acquired] = Time.from_filetime(*stream.read(8).unpack('L*'))
+
+      path = stream.read(path_len)
+      next if path.nil?
+
+      info[:data][:path] = path.to_utf16le_binary_null.utf16le_to_utf8
+
       # this is not the real clone! redefined clone ...
-      evidences << self.clone
+      yield info if block_given?
     end
-    
-    return evidences
   end
 end
 

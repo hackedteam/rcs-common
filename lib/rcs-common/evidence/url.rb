@@ -44,35 +44,34 @@ module UrlEvidence
     ret
   end
   
-  def decode_content
-    stream = StringIO.new @info[:chunks].join
+  def decode_content(chunks, common_info)
+    stream = StringIO.new chunks.join
 
-    evidences = Array.new
     until stream.eof?
+      info = Hash[common_info]
+      info[:data] = Hash.new
+
       tm = stream.read 36
-      @info[:acquired] = Time.gm(*tm.unpack('l*'), 0)
-      @info[:data][:url] = ''
-      @info[:data][:title] = ''
+      info[:acquired] = Time.gm(*tm.unpack('l*'), 0)
+      info[:data][:url] = ''
+      info[:data][:title] = ''
 
       delim = stream.read(4).unpack("L").first
       raise EvidenceDeserializeError.new("Malformed evidence (invalid URL version)") unless delim == VERSION_DELIMITER
 
       url = stream.read_utf16le_string
-      @info[:data][:url] = url.utf16le_to_utf8 unless url.nil?
+      info[:data][:url] = url.utf16le_to_utf8 unless url.nil?
       browser = stream.read(4).unpack("L").first
-      @info[:data][:browser] = BROWSER_TYPE[browser]
+      info[:data][:browser] = BROWSER_TYPE[browser]
       window = stream.read_utf16le_string
-      @info[:data][:title] = window.utf16le_to_utf8 unless window.nil?
-      @info[:data][:keywords] = decode_query @info[:data][:url]
+      info[:data][:title] = window.utf16le_to_utf8 unless window.nil?
+      info[:data][:keywords] = decode_query @info[:data][:url]
 
       delim = stream.read(4).unpack("L").first
       raise EvidenceDeserializeError.new("Malformed URL (missing delimiter)") unless delim == ELEM_DELIMITER
 
-      # this is not the real clone! redefined clone ...
-      evidences << self.clone
+      yield info if block_given?
     end
-
-    return evidences
   end
 
 end

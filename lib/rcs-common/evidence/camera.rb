@@ -13,9 +13,11 @@ module CameraEvidence
     [ content ]
   end
   
-  def decode_content
-    @info[:grid_content] = @info[:chunks].first
-    return [self]
+  def decode_content(common_info, chunks)
+    info = Hash[common_info]
+    info[:data] = Hash.new
+    info[:grid_content] = chunks.first
+    yield info
   end
 end
 

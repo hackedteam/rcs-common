@@ -40,18 +40,22 @@ module RCS
 
       x, y, width, height = binary.read(16).unpack('I*')
 
-      @info[:data][:program] = binary.read(process_name_len).utf16le_to_utf8
-      @info[:data][:window] = binary.read(window_name_len).utf16le_to_utf8
-      @info[:data][:x] = x
-      @info[:data][:y] = y
-      @info[:data][:resolution] = "#{width} x #{height}"
+      ret = Hash.new
+      ret[:data] = Hash.new if ret[:data].nil?
+      ret[:data][:program] = binary.read(process_name_len).utf16le_to_utf8
+      ret[:data][:window] = binary.read(window_name_len).utf16le_to_utf8
+      ret[:data][:x] = x
+      ret[:data][:y] = y
+      ret[:data][:resolution] = "#{width} x #{height}"
+      return ret
     end
 
-    def decode_content
-      @info[:grid_content] = @info[:chunks].first
-      return [self]
+    def decode_content(chunks, common_info)
+      info = Hash[common_info]
+      info[:data] = Hash.new if info[:data].nil?
+      info[:grid_content] = chunks.first
+      yield info if block_given?
     end
   end
-
 
 end # ::RCS

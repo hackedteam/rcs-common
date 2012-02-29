@@ -48,6 +48,18 @@ class EvidenceDeserializeError < StandardError
   end
 end
 
+class EmptyEvidenceError < StandardError
+  attr_reader :msg
+
+  def initialize(msg)
+    @msg = msg
+  end
+
+  def to_s
+    @msg
+  end
+end
+
 end # RCS::
 
 class Integer

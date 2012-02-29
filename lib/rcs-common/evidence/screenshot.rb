@@ -38,9 +38,11 @@ module ScreenshotEvidence
     @info[:data][:window] = binary.read(window_name_len).utf16le_to_utf8
   end
 
-  def decode_content
-    @info[:grid_content] = @info[:chunks].first
-    return [self]
+  def decode_content(chunks, common_info)
+    info = Hash[common_info]
+    info[:data] = Hash.new
+    info[:grid_content] = chunks.first
+    yield info if block_given?
   end
 end
 
