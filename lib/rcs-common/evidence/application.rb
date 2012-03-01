@@ -44,8 +44,8 @@ module ApplicationEvidence
       info[:data][:program] = program.utf16le_to_utf8 unless program.nil?
       action = stream.read_utf16le_string
       info[:data][:action] = action.utf16le_to_utf8 unless action.nil?
-      info = stream.read_utf16le_string
-      info[:data][:desc] = info.utf16le_to_utf8 unless info.nil?
+      desc = stream.read_utf16le_string
+      info[:data][:desc] = desc.utf16le_to_utf8 unless desc.nil?
 
       delim = stream.read(4).unpack("L*").first
       raise EvidenceDeserializeError.new("Malformed APPLICATION (missing delimiter)") unless delim == ELEM_DELIMITER
