@@ -4,7 +4,7 @@ require 'digest/md5'
 
 module RCS
 
-module LocationEvidence
+module PositionEvidence
 
   ELEM_DELIMITER = 0xABADC0DE
 

@@ -34,11 +34,14 @@ module ScreenshotEvidence
     version, process_name_len, window_name_len = binary.read(12).unpack("I*")
     raise EvidenceDeserializeError.new("invalid log version for SCREENSHOT") unless version == SCREENSHOT_VERSION
 
-    @info[:data][:program] = binary.read(process_name_len).utf16le_to_utf8
-    @info[:data][:window] = binary.read(window_name_len).utf16le_to_utf8
+    ret = Hash.new
+    ret[:data] = Hash.new
+    ret[:data][:program] = binary.read(process_name_len).utf16le_to_utf8
+    ret[:data][:window] = binary.read(window_name_len).utf16le_to_utf8
+    return ret
   end
 
-  def decode_content(chunks, common_info)
+  def decode_content(common_info, chunks)
     info = Hash[common_info]
     info[:data] = Hash.new
     info[:grid_content] = chunks.first

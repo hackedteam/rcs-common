@@ -197,21 +197,16 @@ class Evidence
     # extend class depending on evidence type
     begin
       common_info[:type] = EVIDENCE_TYPES[ @type_id ].to_s.downcase
-      puts "Extending evidence on type #{common_info[:type]}"
       extend_on_type common_info[:type]
     rescue Exception => e
       puts e.message
       raise EvidenceDeserializeError.new("unknown type => #{@type_id.to_s(16)}")
     end
 
-    puts "Evidence (1) type #{common_info[:type]}"
-
     unless additional_size == 0
       additional_data = header_string.read additional_size
       common_info.merge(decode_additional_header(additional_data)) if respond_to? :decode_additional_header
     end
-
-    puts "Evidence (2) type #{common_info[:type]}"
 
     # split content to chunks
     chunks = Array.new
@@ -220,15 +215,10 @@ class Evidence
       content = binary_string.read align_to_block_len(len)
       chunks << StringIO.new( decrypt(content) ).read(len)
     end
-    yield chunks.join if block_given?
-
-    puts "Evidence (3) type #{common_info[:type]}"
 
     # decode evidences
     evidences = Array.new
     decode_content(common_info, chunks) {|ev| evidences << ev}
-
-    puts "Evidence (4) type #{common_info[:type]}"
 
     return evidences
   end
