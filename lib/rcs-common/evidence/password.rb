@@ -30,8 +30,9 @@ module PasswordEvidence
   def decode_content(common_info, chunks)
     stream = StringIO.new chunks.join
 
-    info = Hash[common_info]
     until stream.eof?
+      info = Hash[common_info]
+      info[:data] = Hash.new if info[:data].nil?
       info[:data][:program] = ''
       info[:data][:service] = ''
       info[:data][:user] = ''

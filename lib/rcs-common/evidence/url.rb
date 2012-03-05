@@ -44,12 +44,12 @@ module UrlEvidence
     ret
   end
   
-  def decode_content(chunks, common_info)
+  def decode_content(common_info, chunks)
     stream = StringIO.new chunks.join
 
     until stream.eof?
       info = Hash[common_info]
-      info[:data] = Hash.new
+      info[:data] = Hash.new if info[:data].nil?
 
       tm = stream.read 36
       info[:acquired] = Time.gm(*tm.unpack('l*'), 0)

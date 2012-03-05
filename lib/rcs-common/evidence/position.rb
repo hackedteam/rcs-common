@@ -70,7 +70,7 @@ module PositionEvidence
     @info[:loc_type] = type
   end
 
-  def decode_content(chunks, common_info)
+  def decode_content(common_info, chunks)
     stream = StringIO.new chunks.join
 
     case @info[:loc_type]
@@ -95,14 +95,14 @@ module PositionEvidence
                                mac[5].unpack('C').first]
 
           info = Hash[common_info]
-          info[:data] = Hash.new
+          info[:data] = Hash.new if info[:data].nil?
           info[:data][:wifi] << {:mac => mac_s, :sig => sig, :bssid => ssid}
         end
         yield info if block_given?
 
       when LOCATION_IP
         info = Hash[common_info]
-        info[:data] = Hash.new
+        info[:data] = Hash.new if info[:data].nil?
         info[:data][:type] = 'IPv4'
         ip = stream.read_ascii_string
         info[:data][:ip] = ip unless ip.nil?
@@ -111,7 +111,7 @@ module PositionEvidence
       when LOCATION_GPS
         until stream.eof?
           info = Hash[common_info]
-          info[:data] = Hash.new
+          info[:data] = Hash.new if info[:data].nil?
           info[:data][:type] = 'GPS'
           type, size, version = stream.read(12).unpack('L*')
           info[:acquired] = Time.from_filetime(*stream.read(8).unpack('L*'))
@@ -127,7 +127,7 @@ module PositionEvidence
       when LOCATION_GSM, LOCATION_CDMA
         until stream.eof?
           info = Hash[common_info]
-          info[:data] = Hash.new
+          info[:data] = Hash.new if info[:data].nil?
           info[:data][:type] = (info[:loc_type] == LOCATION_GSM) ? 'GSM' : 'CDMA'
           type, size, version = stream.read(12).unpack('L*')
           info[:acquired] = Time.from_filetime(*stream.read(8).unpack('L*'))

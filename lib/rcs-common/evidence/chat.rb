@@ -41,7 +41,7 @@ module ChatEvidence
       trace :info, "CHAT Time.gm #{tm.unpack('l*')}"
       info = Hash[common_info]
       info[:acquired] = Time.gm(*(tm.unpack('l*')), 0)
-      info[:data] = Hash.new
+      info[:data] = Hash.new if info[:data].nil?
       info[:data][:program] = ''
       info[:data][:topic] = ''
       info[:data][:users] = ''

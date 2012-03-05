@@ -11,7 +11,7 @@ module CalendarEvidence
     raise "Not implemented!"
   end
 
-  def decode_content
+  def decode_content(common_info, chunks)
     stream = StringIO.new @info[:chunks].join
 
     @calendar = CalendarSerializer.new.unserialize stream

@@ -16,7 +16,7 @@ module AddressbookEvidence
     stream = StringIO.new chunks.join
 
     info = Hash[common_info]
-    info[:data] = Hash.new
+    info[:data] = Hash.new if info[:data].nil?
 
     @address_book = AddressBookSerializer.new.unserialize stream
     

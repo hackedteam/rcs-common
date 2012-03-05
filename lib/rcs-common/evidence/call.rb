@@ -48,7 +48,7 @@ module CallEvidence
     return true if @content.bytesize == 4 and @content == "\xff\xff\xff\xff"
   end
   
-  def decode_content
+  def decode_content(common_info, chunks)
     @content = @info[:chunks].join
     return [self]
   end

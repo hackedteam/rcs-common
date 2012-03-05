@@ -14,7 +14,7 @@ module InfoEvidence
 
   def decode_content(common_info, chunks)
     info = Hash[common_info]
-    info[:data] = Hash.new
+    info[:data] = Hash.new if info[:data].nil?
     info[:data][:content] = chunks.first.utf16le_to_utf8
     yield info
   end

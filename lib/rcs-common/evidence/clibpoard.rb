@@ -31,7 +31,7 @@ module ClipboardEvidence
 
     until stream.eof?
       info = Hash[common_info]
-      info[:data] = Hash.new
+      info[:data] = Hash.new if info[:data].nil?
 
       tm = stream.read 36
       info[:acquired] = Time.gm(*tm.unpack('l*'), 0)

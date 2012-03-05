@@ -46,7 +46,7 @@ module KeylogEvidence
 
       info = Hash[common_info]
       info[:acquired] = Time.gm(*timestamp, 0)
-      info[:data] = Hash.new
+      info[:data] = Hash.new if info[:data].nil?
       info[:data][:process] = ''
       info[:data][:window] = ''
       info[:data][:content] = ''

@@ -12,7 +12,7 @@ module CalllistEvidence
     
   end
   
-  def decode_content
+  def decode_content(common_info, chunks)
     
   end
   
