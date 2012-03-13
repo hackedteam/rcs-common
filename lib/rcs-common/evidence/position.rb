@@ -67,16 +67,21 @@ module PositionEvidence
     version, type, number = binary.read(12).unpack("I*")
     raise EvidenceDeserializeError.new("invalid log version for LOCATION") unless version == LOCATION_VERSION
 
-    @info[:loc_type] = type
+    ret = Hash.new
+    ret[:loc_type] = type
+    return ret
   end
 
   def decode_content(common_info, chunks)
     stream = StringIO.new chunks.join
-
-    case @info[:loc_type]
+    
+    info = Hash[common_info]
+    info[:data] = Hash.new if info[:data].nil?
+    
+    case info[:loc_type]
       when LOCATION_WIFI
-        @info[:data][:type] = 'WIFI'
-        @info[:data][:wifi] = []
+        info[:data][:type] = 'WIFI'
+        info[:data][:wifi] = []
         until stream.eof?
           # we have 6 byte of mac address
           # and 2 of padding (using C struct is BAAAAD)
