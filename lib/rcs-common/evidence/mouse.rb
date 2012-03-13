@@ -52,7 +52,6 @@ module RCS
 
     def decode_content(common_info, chunks)
       info = Hash[common_info]
-      puts "DECODE_CONTENT #{info[:type]}"
       info[:data] = Hash.new if info[:data].nil?
       info[:grid_content] = chunks.first
       yield info if block_given?
