@@ -38,8 +38,9 @@ module MailrawEvidence
     
     binary = StringIO.new data
 
+    # flags indica se abbiamo tutto il body o solo header
     version, flags, size, ft_low, ft_high = binary.read(20).unpack('I*')
-    raise EvidenceDeserializeError.new("invalid log version for MOUSE") unless version == MAILRAW_VERSION
+    raise EvidenceDeserializeError.new("invalid log version for MAILRAW") unless version == MAILRAW_VERSION
 
     ret = Hash.new
     ret[:data] = Hash.new
@@ -50,9 +51,19 @@ module MailrawEvidence
 
   def decode_content(common_info, chunks)
     info = Hash[common_info]
+    eml = chunks.join
     info[:data] = Hash.new if info[:data].nil?
-    info[:grid_content] = chunks.join
+    info[:grid_content] = eml
+
     info[:data][:status] = 0
+
+    m = Mail.read_from_string eml
+    info[:data][:from] = m.from.addresses
+    info[:data][:to] = m.to
+    info[:data][:cc] = m.cc
+    info[:data][:subject] = m.subject
+    info[:data][:date] = m.date.to_s
+    info[:data][:body] = m.body.decoded
 
     yield info if block_given?
   end
