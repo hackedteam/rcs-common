@@ -38,7 +38,7 @@ module ChatEvidence
 
     until stream.eof?
       tm = stream.read 36
-      trace :info, "CHAT Time.gm #{tm.unpack('l*')}"
+      #trace :info, "CHAT Time.gm #{tm.unpack('l*')}"
       info = Hash[common_info]
       info[:acquired] = Time.gm(*(tm.unpack('l*')), 0)
       info[:data] = Hash.new if info[:data].nil?
@@ -49,21 +49,21 @@ module ChatEvidence
 
       program = stream.read_utf16le_string
       info[:data][:program] = program.utf16le_to_utf8 unless program.nil?
-      trace :info, "CHAT Program #{info[:data][:program]}"
+      #trace :info, "CHAT Program #{info[:data][:program]}"
       topic = stream.read_utf16le_string
       info[:data][:topic] = topic.utf16le_to_utf8 unless topic.nil?
-      trace :info, "CHAT Topic #{info[:data][:topic]}"
+      #trace :info, "CHAT Topic #{info[:data][:topic]}"
       users = stream.read_utf16le_string
       info[:data][:users] = users.utf16le_to_utf8 unless users.nil?
-      trace :info, "CHAT Users #{info[:data][:users]}"
+      #trace :info, "CHAT Users #{info[:data][:users]}"
       keystrokes = stream.read_utf16le_string
       info[:data][:content] = keystrokes.utf16le_to_utf8 unless keystrokes.nil?
-      trace :info, "CHAT Content #{info[:data][:content]}"
+      #trace :info, "CHAT Content #{info[:data][:content]}"
 
       delim = stream.read(4).unpack("L*").first
       raise EvidenceDeserializeError.new("Malformed CHAT (missing delimiter)") unless delim == ELEM_DELIMITER
 
-      puts "decode_content #{info}"
+      #puts "decode_content #{info}"
 
       yield info if block_given?
     end
