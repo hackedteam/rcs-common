@@ -41,8 +41,8 @@ module KeylogEvidence
       tm = stream.read 36
       timestamp = tm.unpack('l*')
       
-      puts "STREAM POS #{stream.pos} SIZE #{stream.size}"
-      puts "TIMESTAMP #{timestamp.inspect} OBJECT_ID #{self.object_id}"
+      #puts "STREAM POS #{stream.pos} SIZE #{stream.size}"
+      #puts "TIMESTAMP #{timestamp.inspect} OBJECT_ID #{self.object_id}"
 
       info = Hash[common_info]
       info[:acquired] = Time.gm(*timestamp, 0)
@@ -52,26 +52,26 @@ module KeylogEvidence
       info[:data][:content] = ''
       
       process_name = stream.read_utf16le_string
-      puts "PROCESS NAME UTF-16LE #{process_name}"
+      #puts "PROCESS NAME UTF-16LE #{process_name}"
       info[:data][:process] = process_name.utf16le_to_utf8 unless process_name.nil?
 
-      puts "PROCESS NAME UTF-8 #{info[:data][:process]}"
+      #puts "PROCESS NAME UTF-8 #{info[:data][:process]}"
 
       window_name = stream.read_utf16le_string
       info[:data][:window] = window_name.utf16le_to_utf8 unless window_name.nil?
       
-      puts "WINDOW NAME #{info[:data][:window]}"
+      #puts "WINDOW NAME #{info[:data][:window]}"
       
       delim = stream.read(4).unpack("L*").first
       raise EvidenceDeserializeError.new("Malformed KEYLOG (missing delimiter)") unless delim == ELEM_DELIMITER
       
-      puts "DELIM #{delim.to_s(16)}"
+      #puts "DELIM #{delim.to_s(16)}"
       
       keystrokes = stream.read_utf16le_string
-      puts "KEYSTROKES UTF-16LE #{keystrokes}"
+      #puts "KEYSTROKES UTF-16LE #{keystrokes}"
       info[:data][:content] = keystrokes.utf16le_to_utf8 unless keystrokes.nil?
       
-      puts "KEYSTROKES UTF-8 #{info[:data][:content]}"
+      #puts "KEYSTROKES UTF-8 #{info[:data][:content]}"
       
       yield info if block_given?
     end
