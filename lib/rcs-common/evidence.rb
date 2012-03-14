@@ -58,7 +58,6 @@ class Evidence
   end
   
   def generate_header(type_id, info)
-    puts info
     thigh, tlow = info[:acquired].to_filetime
     deviceid_utf16 = info[:device_id].to_utf16le_binary
     userid_utf16 = info[:user_id].to_utf16le_binary
