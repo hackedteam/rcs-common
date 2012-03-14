@@ -86,8 +86,11 @@ module PositionEvidence
           # we have 6 byte of mac address
           # and 2 of padding (using C struct is BAAAAD)
           mac = stream.read 6
+          stream.read 2
+          
           len = stream.read(4).unpack('L').first
           ssid = stream.read(len)
+          
           stream.read(32-len)
           sig = stream.read(4).unpack('l').first
 
@@ -152,7 +155,7 @@ module PositionEvidence
         end
 
       else
-        raise EvidenceDeserializeError.new("Unsupported LOCATION type")
+        raise EvidenceDeserializeError.new("Unsupported LOCATION type (#{info[:loc_type]})")
     end
   end
 end
