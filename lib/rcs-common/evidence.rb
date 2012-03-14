@@ -201,9 +201,10 @@ class Evidence
       raise EvidenceDeserializeError.new("unknown type => #{@type_id.to_s(16)}")
     end
 
-    unless additional_size == 0
+    if respond_to? :decode_additional_header and additional_size != 0
       additional_data = header_string.read additional_size
-      common_info.merge(decode_additional_header(additional_data)) if respond_to? :decode_additional_header
+      additional_info = decode_additional_header(additional_data)
+      common_info.merge!(additional_info)
     end
 
     # split content to chunks
