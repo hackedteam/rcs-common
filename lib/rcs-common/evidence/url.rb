@@ -8,7 +8,7 @@ module UrlEvidence
 
   VERSION_DELIMITER = 0x20100713
   ELEM_DELIMITER = 0xABADC0DE
-  BROWSER_TYPE = ['Unknown', 'Internet Explorer', 'Firefox', 'Opera', 'Safari', 'Chrome', 'Mobile Safari']
+  BROWSER_TYPE = ['Unknown', 'Internet Explorer', 'Firefox', 'Opera', 'Safari', 'Chrome', 'Mobile Safari', 'Browser']
 
   def decode_query(url)
     query = []
@@ -65,7 +65,7 @@ module UrlEvidence
       info[:data][:browser] = BROWSER_TYPE[browser]
       window = stream.read_utf16le_string
       info[:data][:title] = window.utf16le_to_utf8 unless window.nil?
-      info[:data][:keywords] = decode_query @info[:data][:url]
+      info[:data][:keywords] = decode_query info[:data][:url]
 
       delim = stream.read(4).unpack("L").first
       raise EvidenceDeserializeError.new("Malformed URL (missing delimiter)") unless delim == ELEM_DELIMITER
