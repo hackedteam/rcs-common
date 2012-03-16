@@ -76,7 +76,7 @@ module PositionEvidence
     stream = StringIO.new chunks.join
     
     info = Hash[common_info]
-    info[:data] = Hash.new if info[:data].nil?
+    info[:data] ||= Hash.new
     
     case info[:loc_type]
       when LOCATION_WIFI
@@ -102,15 +102,11 @@ module PositionEvidence
                                mac[4].unpack('C').first,
                                mac[5].unpack('C').first]
 
-          info = Hash[common_info]
-          info[:data] = Hash.new if info[:data].nil?
           info[:data][:wifi] << {:mac => mac_s, :sig => sig, :bssid => ssid}
         end
         yield info if block_given?
 
       when LOCATION_IP
-        info = Hash[common_info]
-        info[:data] = Hash.new if info[:data].nil?
         info[:data][:type] = 'IPv4'
         ip = stream.read_ascii_string
         info[:data][:ip] = ip unless ip.nil?
@@ -118,8 +114,6 @@ module PositionEvidence
 
       when LOCATION_GPS
         until stream.eof?
-          info = Hash[common_info]
-          info[:data] = Hash.new if info[:data].nil?
           info[:data][:type] = 'GPS'
           type, size, version = stream.read(12).unpack('L*')
           info[:acquired] = Time.from_filetime(*stream.read(8).unpack('L*'))
@@ -134,8 +128,6 @@ module PositionEvidence
         end
       when LOCATION_GSM, LOCATION_CDMA
         until stream.eof?
-          info = Hash[common_info]
-          info[:data] = Hash.new if info[:data].nil?
           info[:data][:type] = (info[:loc_type] == LOCATION_GSM) ? 'GSM' : 'CDMA'
           type, size, version = stream.read(12).unpack('L*')
           info[:acquired] = Time.from_filetime(*stream.read(8).unpack('L*'))
@@ -261,17 +253,17 @@ class CELL_Position
   end
 
   def read(stream)
-    stream.read(2*4)
+    stream.read(2*4) #size/params
     @mcc = stream.read(4).unpack('l').first
     @mnc = stream.read(4).unpack('l').first
     @lac = stream.read(4).unpack('l').first
     @cid = stream.read(4).unpack('l').first
-    stream.read(2*4)
-    @db = stream.read(4).unpack('l').first
-    stream.read(6*4)
-    @adv = stream.read(4).unpack('l').first
-    stream.read(3*4)
-    stream.read(64+16)
+    stream.read(2*4) # basestationid/broadcastcontrolchannel
+    @db = stream.read(4).unpack('l').first # rxlevel
+    stream.read(6*4) #rxlevelfull/rxlevelsub/rxquality/rxqualityfull/rxqualitysub/idletimeslot
+    @adv = stream.read(4).unpack('l').first # timingadvance
+    stream.read(3*4) # gprscellid / gprsbasestationid / dwnumbcch
+    stream.read(48+16) # BCCH[48] / NMR[16]
   end
 
 end
