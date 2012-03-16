@@ -205,7 +205,7 @@ class Evidence
       additional_info = decode_additional_header(additional_data)
       common_info.merge!(additional_info)
     end
-
+    
     # split content to chunks
     chunks = Array.new
     while not binary_string.eof?
@@ -213,6 +213,8 @@ class Evidence
       content = binary_string.read align_to_block_len(len)
       chunks << StringIO.new( decrypt(content) ).read(len)
     end
+
+    yield chunks.join
 
     # decode evidences
     evidences = Array.new
