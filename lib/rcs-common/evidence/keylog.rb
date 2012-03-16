@@ -47,13 +47,13 @@ module KeylogEvidence
       info = Hash[common_info]
       info[:acquired] = Time.gm(*timestamp, 0)
       info[:data] = Hash.new if info[:data].nil?
-      info[:data][:process] = ''
+      info[:data][:program] = ''
       info[:data][:window] = ''
       info[:data][:content] = ''
       
       process_name = stream.read_utf16le_string
       #puts "PROCESS NAME UTF-16LE #{process_name}"
-      info[:data][:process] = process_name.utf16le_to_utf8 unless process_name.nil?
+      info[:data][:program] = process_name.utf16le_to_utf8 unless process_name.nil?
 
       #puts "PROCESS NAME UTF-8 #{info[:data][:process]}"
 
