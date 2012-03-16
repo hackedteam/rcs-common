@@ -44,7 +44,7 @@ module ChatEvidence
       info[:data] = Hash.new if info[:data].nil?
       info[:data][:program] = ''
       info[:data][:topic] = ''
-      info[:data][:users] = ''
+      info[:data][:peer] = ''
       info[:data][:content] = ''
 
       program = stream.read_utf16le_string
@@ -54,7 +54,7 @@ module ChatEvidence
       info[:data][:topic] = topic.utf16le_to_utf8 unless topic.nil?
       #trace :info, "CHAT Topic #{info[:data][:topic]}"
       users = stream.read_utf16le_string
-      info[:data][:users] = users.utf16le_to_utf8 unless users.nil?
+      info[:data][:peer] = users.utf16le_to_utf8 unless users.nil?
       #trace :info, "CHAT Users #{info[:data][:users]}"
       keystrokes = stream.read_utf16le_string
       info[:data][:content] = keystrokes.utf16le_to_utf8 unless keystrokes.nil?
