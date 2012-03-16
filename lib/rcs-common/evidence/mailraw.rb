@@ -5,6 +5,9 @@ module RCS
 module MailrawEvidence
 
   MAILRAW_VERSION = 2009070301
+  MAILRAW_2_VERSION = 2012030601
+
+  PROGRAM_GMAIL = 0x00000000
 
   ADDRESSES = ['ciccio.pasticcio@google.com', 'billg@microsoft.com', 'john.doe@nasa.gov', 'mario.rossi@italy.it']
   SUBJECTS = ['drugs', 'bust me!', 'police here']
@@ -35,20 +38,30 @@ module MailrawEvidence
 
   def decode_additional_header(data)
     raise EvidenceDeserializeError.new("incomplete MAILRAW") if data.nil? or data.bytesize == 0
-    
+
+    ret = Hash.new
+    ret[:data] = Hash.new
+
     binary = StringIO.new data
 
     # flags indica se abbiamo tutto il body o solo header
     version, flags, size, ft_low, ft_high = binary.read(20).unpack('I*')
-    raise EvidenceDeserializeError.new("invalid log version for MAILRAW") unless version == MAILRAW_VERSION
 
-    ret = Hash.new
-    ret[:data] = Hash.new
+    case version
+      when MAILRAW_VERSION
+        ret[:data][:program] = 'outlook'
+      when MAILRAW_2_VERSION
+        program = binary.read(4).unpack('I*')
+        ret[:data][:program] = 'gmail' if program & PROGRAM_GMAIL
+      else
+        raise EvidenceDeserializeError.new("invalid log version for MAILRAW")
+    end
+
     ret[:data][:size] = size
     ret[:acquired] = Time.from_filetime(ft_high, ft_low)
     return ret
   end
-
+  
   def decode_content(common_info, chunks)
     info = Hash[common_info]
     eml = chunks.join
@@ -66,6 +79,10 @@ module MailrawEvidence
     info[:data][:body] = m.body.decoded
 
     yield info if block_given?
+  end
+
+  def decode_2_content
+
   end
 
 end # ::Mailraw
