@@ -53,6 +53,7 @@ module PasswordEvidence
       # this is not the real clone! redefined clone ...
       yield info if block_given?
     end
+    :delete_raw
   end
 end
 

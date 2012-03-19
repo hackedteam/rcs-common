@@ -104,14 +104,10 @@ module PositionEvidence
 
           info[:data][:wifi] << {:mac => mac_s, :sig => sig, :bssid => ssid}
         end
-        yield info if block_given?
-
       when LOCATION_IP
         info[:data][:type] = 'IPv4'
         ip = stream.read_ascii_string
         info[:data][:ip] = ip unless ip.nil?
-        yield info if block_given?
-
       when LOCATION_GPS
         until stream.eof?
           info[:data][:type] = 'GPS'
@@ -123,8 +119,6 @@ module PositionEvidence
           info[:data][:longitude] = "%.7f" % gps.longitude
           delim = stream.read(4).unpack('L').first
           raise EvidenceDeserializeError.new("Malformed LOCATION GPS (missing delimiter)") unless delim == ELEM_DELIMITER
-
-          yield info if block_given?
         end
       when LOCATION_GSM, LOCATION_CDMA
         until stream.eof?
@@ -142,13 +136,13 @@ module PositionEvidence
 
           delim = stream.read(4).unpack('L').first
           raise EvidenceDeserializeError.new("Malformed LOCATION CELL (missing delimiter)") unless delim == ELEM_DELIMITER
-
-          yield info if block_given?
         end
-
       else
         raise EvidenceDeserializeError.new("Unsupported LOCATION type (#{info[:loc_type]})")
     end
+    
+    yield info if block_given?
+    :delete_raw
   end
 end
 

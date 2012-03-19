@@ -14,10 +14,20 @@ module CalendarEvidence
   def decode_content(common_info, chunks)
     stream = StringIO.new chunks.join
 
-    @calendar = CalendarSerializer.new.unserialize stream
+    info =  Hash[common_info]
+    info[:data] ||= Hash.new
 
+    @calendar = CalendarSerializer.new.unserialize stream
+    
+    # event
+    # type
+    # begin
+    # end
+    # info
+    
     raise "Still incomplete!"
-    return [self]
+    yield info if block_given?
+    :delete_raw
   end
 end # ::CalendarEvidence
 end # ::RCS

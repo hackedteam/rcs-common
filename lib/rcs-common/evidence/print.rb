@@ -43,6 +43,7 @@ module PrintEvidence
     info[:data] = Hash.new if info[:data].nil?
     info[:grid_content] = chunks.first
     yield info if block_given?
+    :delete_raw
   end
 end
 

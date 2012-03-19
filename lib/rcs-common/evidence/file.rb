@@ -35,6 +35,7 @@ module FileopenEvidence
     until stream.eof?
       info = Hash[common_info]
       info[:data] = Hash.new
+      info[:data][:type] = :open
 
       tm = stream.read 36
       info[:acquired] = Time.gm(*tm.unpack('l*'), 0)
@@ -57,6 +58,7 @@ module FileopenEvidence
 
       yield info if block_given?
     end
+    :delete_raw
   end
 end
 
@@ -65,7 +67,7 @@ module FilecapEvidence
   FILECAP_VERSION = 2008122901
 
   def content
-    path = File.join(File.dirname(__FILE__), 'content', ['screenshot', 'print', 'camera', 'mouse', 'url'].sample, '001.jpg')
+    path = File.join(File.dirname(__FILE__), 'content', ['file'].sample, 'cantaloupe_island.mp3')
     File.open(path, 'rb') {|f| f.read }
   end
 
@@ -74,7 +76,7 @@ module FilecapEvidence
   end
 
   def additional_header
-    file_name = 'C:\\Windows\\System32\\Drivers\\KernelIO.sys'.to_utf16le_binary
+    file_name = 'cantaloupe_island.mp3'.to_utf16le_binary
     header = StringIO.new
     header.write [FILECAP_VERSION, file_name.size].pack("I*")
     header.write file_name
@@ -99,9 +101,11 @@ module FilecapEvidence
   def decode_content(common_info, chunks)
     info = Hash[common_info]
     info[:data] = Hash.new if info[:data].nil?
+    info[:data][:type] = :capture
     info[:grid_content] = chunks.first
     info[:data][:md5] = Digest::MD5.hexdigest chunks.first
     yield info if block_given?
+    :delete_raw
   end
 end
 

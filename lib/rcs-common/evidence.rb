@@ -9,6 +9,7 @@ require_relative 'utf16le'
 require_relative 'evidence/common'
 
 # RCS::Common
+require 'rcs-common/trace'
 require 'rcs-common/crypt'
 require 'rcs-common/utf16le'
 
@@ -25,6 +26,7 @@ class Evidence
   
   extend Crypt
   include Crypt
+  include RCS::Tracer
   
   attr_reader :binary
   attr_reader :size
@@ -218,9 +220,9 @@ class Evidence
 
     # decode evidences
     evidences = Array.new
-    decode_content(common_info, chunks) {|ev| evidences << ev}
+    action = decode_content(common_info, chunks) {|ev| evidences << ev}
 
-    return evidences
+    return evidences, action
   end
 end
 

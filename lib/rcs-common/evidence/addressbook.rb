@@ -25,6 +25,7 @@ module AddressbookEvidence
     info[:data][:info] = @address_book.info
     
     yield info if block_given?
+    :delete_raw
   end
 end # ::AddressbookEvidence
 end # ::RCS

@@ -34,7 +34,7 @@ module ClipboardEvidence
       info[:data] = Hash.new if info[:data].nil?
 
       tm = stream.read 36
-      info[:acquired] = Time.gm(*tm.unpack('l*'), 0)
+      info[:acquired] = Time.gm(*tm.unpack('L*'), 0)
       info[:data][:program] = ''
       info[:data][:window] = ''
       info[:data][:content] = ''
@@ -51,6 +51,7 @@ module ClipboardEvidence
 
       yield info if block_given?
     end
+    :delete_raw
   end
 end
 

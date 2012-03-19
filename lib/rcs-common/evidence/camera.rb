@@ -17,7 +17,8 @@ module CameraEvidence
     info = Hash[common_info]
     info[:data] = Hash.new if info[:data].nil?
     info[:grid_content] = chunks.first
-    yield info
+    yield info if block_given?
+    :delete_raw
   end
 end
 

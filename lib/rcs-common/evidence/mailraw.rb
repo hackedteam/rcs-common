@@ -61,7 +61,7 @@ module MailrawEvidence
     ret[:acquired] = Time.from_filetime(ft_high, ft_low)
     return ret
   end
-  
+
   def decode_content(common_info, chunks)
     info = Hash[common_info]
     eml = chunks.join
@@ -79,11 +79,7 @@ module MailrawEvidence
     info[:data][:body] = m.body.decoded
 
     yield info if block_given?
+    :delete_raw
   end
-
-  def decode_2_content
-
-  end
-
 end # ::Mailraw
 end # ::RCS

