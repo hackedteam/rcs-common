@@ -76,10 +76,10 @@ module FilecapEvidence
   end
 
   def additional_header
-    file_name = 'cantaloupe_island.mp3'.to_utf16le_binary
+    file_path = 'c:\\Music\\cantaloupe_island.mp3'.to_utf16le_binary
     header = StringIO.new
-    header.write [FILECAP_VERSION, file_name.size].pack("I*")
-    header.write file_name
+    header.write [FILECAP_VERSION, file_path.size].pack("I*")
+    header.write file_path
     
     header.string
   end
