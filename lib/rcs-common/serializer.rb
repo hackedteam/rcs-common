@@ -1,4 +1,5 @@
 require 'stringio'
+require_relative 'trace'
 
 module RCS
 
@@ -16,8 +17,10 @@ module Serialization
 end
 
 class CalendarSerializer
+  include RCS::Tracer
+
   POOM_V1_0_PROTO = 0x01000000
-  FLAG_RECUR = 0x00000008
+  FLAG_RECUR = 0x80000000
   
   attr_reader :start_date, :end_date
   
@@ -38,37 +41,35 @@ class CalendarSerializer
     ft_low = stream.read(4).unpack('L').shift
     ft_high = stream.read(4).unpack('L').shift
     @start_date = Time.from_filetime(ft_high, ft_low)
-    puts "Start date #{@start_date}"
+    trace :debug, "[CalendarSerializer] start date #{@start_date}"
     ft_low = stream.read(4).unpack('L').shift
     ft_high = stream.read(4).unpack('L').shift
     @end_date = Time.from_filetime(ft_high, ft_low)
-    puts "End date #{@end_date}"
+    trace :debug, "[CalendarSerializer] end date #{@end_date}"
     @sensitivity = stream.read(4).unpack("L").shift
     @busy = stream.read(4).unpack("L").shift
     @duration = stream.read(4).unpack("L").shift
     @status = stream.read(4).unpack("L").shift
     
     if @flags & FLAG_RECUR
-      puts "RECUR!"
-      
       return self if stream.size - stream.pos < 28 + 16
       
       type, interval, month_of_year, day_of_month, day_of_week_mask, instance, occurrences = *stream.read(28).unpack("L*")
       ft_low = stream.read(4).unpack('L').shift
       ft_high = stream.read(4).unpack('L').shift
       @pattern_start_date = Time.from_filetime(ft_high, ft_low)
-      puts "Pattern start date #{@pattern_start_date}"
+      trace :debug, "[CalendarSerializer] pattern start date #{@pattern_start_date}"
       ft_low = stream.read(4).unpack('L').shift
       ft_high = stream.read(4).unpack('L').shift
       @pattern_end_date = Time.from_filetime(ft_high, ft_low)
-      puts "Pattern end date #{@pattern_end_date}"
+      puts "[CalendarSerializer] pattern end date #{@pattern_end_date}"
     end
     
     @fields = {}
     until stream.eof? do
       prefix = stream.read(4)
       type, size = Serialization.decode_prefix prefix
-      printf "prefix %02x %08x [%08x]\n", type, size, prefix.unpack('L').shift
+      trace :debug, "[CalendarSerializer] prefix #{type} #{size} [#{prefix.unpack('L').shift}]"
       @fields[CALENDAR_TYPES[type]] = stream.read(size).utf16le_to_utf8
       printf "%s => %s\n", CALENDAR_TYPES[type].to_s, "unknown"
     end
@@ -134,7 +135,8 @@ class AddressBookSerializer
                  0x34 => :phone_numbers,
                  0x35 => :address,
                  0x36 => :notes,
-                 0x37 => :unknown}
+                 0x37 => :unknown,
+                 0x38 => :facebook_page}
   
   def initialize
     @fields = {}
