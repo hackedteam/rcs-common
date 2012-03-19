@@ -150,13 +150,13 @@ class Evidence
   end
 
   def read_uint32(data)
-    data.read(4).unpack("I").shift
+    data.read(4).unpack("L").shift
   end
 
   def empty?(binary_string, header_length)
     (binary_string.size == header_length + 4)
   end
-  
+
   def deserialize(data)
     
     raise EvidenceDeserializeError.new("no content!") if data.nil?
