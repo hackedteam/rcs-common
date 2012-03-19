@@ -198,8 +198,7 @@ class AddressBookSerializer
     @fields.each_pair do |k, v|
       next if omitted_fields.include? k
       str = @poom_strings[k]
-      @info += str.nil? ? "unknown" : str
-      @info += ": "
+      @info += str.nil? ? "" : "#{str}: "
       @info += v
       @info += "\n"
     end
