@@ -35,7 +35,7 @@ class BinaryPatchTest < Test::Unit::TestCase
   def test_not_found
     input = "ciao"
 
-    assert_raise RuntimeError do
+    assert_raise MatchNotFound do
       input.binary_patch "miao", "bau"
     end
   end
