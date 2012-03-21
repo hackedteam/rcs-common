@@ -32,4 +32,12 @@ class BinaryPatchTest < Test::Unit::TestCase
     assert_equal output, input
   end
 
+  def test_not_found
+    input = "ciao"
+
+    assert_raise RuntimeError do
+      input.binary_patch "miao", "bau"
+    end
+  end
+
 end
