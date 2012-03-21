@@ -14,7 +14,7 @@ class TestRcsCommon < Test::Unit::TestCase
     enc = aes_encrypt(clear, key)
 
     # must be multiple of block_len
-    assert_true enc.length % 16 == 0
+    assert_equal true, enc.length % 16 == 0
 
     dec = aes_decrypt(enc, key)
 
@@ -30,7 +30,7 @@ class TestRcsCommon < Test::Unit::TestCase
     enc = aes_encrypt(clear, key)
 
     # must be multiple of block_len
-    assert_true enc.length % 16 == 0
+    assert_equal true, enc.length % 16 == 0
 
     dec = aes_decrypt(enc, key)
 
@@ -46,7 +46,7 @@ class TestRcsCommon < Test::Unit::TestCase
     enc = aes_encrypt(clear, key, PAD_NOPAD)
 
     # must be exactly the same size
-    assert_true enc.length == clear.length
+    assert_equal true, enc.length == clear.length
 
     dec = aes_decrypt(enc, key, PAD_NOPAD)
 
@@ -73,7 +73,7 @@ class TestRcsCommon < Test::Unit::TestCase
     enc = aes_encrypt(clear, key, PAD_NOPAD)
 
     # must be exactly the same size
-    assert_true enc.length == clear.length
+    assert_equal true, enc.length == clear.length
 
     assert_raise(OpenSSL::Cipher::CipherError) do
       aes_decrypt(enc, key)
@@ -117,7 +117,7 @@ class TestRcsCommon < Test::Unit::TestCase
     enc = aes_encrypt(clear_check, key)
 
     # this will fail to validate the sha1
-    assert_raise do
+    assert_raise RuntimeError do
       aes_decrypt_integrity(enc, key)
     end
   end

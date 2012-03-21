@@ -21,7 +21,7 @@ class TestEvidence < Test::Unit::TestCase
   
   # TODO: this test is not really a good one ... tests both generation and deserialization of evidence :(
   def test_generate
-    piece = RCS::Evidence.new(@key, @info).generate(:DEVICE)
+    piece = RCS::Evidence.new(@key).generate(:DEVICE, @info)
     evidence = RCS::Evidence.new(@key).deserialize(piece.binary)
     
     assert_equal piece.content.force_encoding('UTF-16LE').encode('UTF-8'), evidence[0].content.force_encoding('UTF-16LE').encode('UTF-8')

@@ -10,7 +10,7 @@ class TestStatus < Test::Unit::TestCase
     # it should return a number
     assert_kind_of Fixnum, disk
     # it is a percentage
-    assert_true (disk >= 0 and disk <= 100)
+    assert_equal true, (disk >= 0 and disk <= 100)
   end
 
   def test_load
@@ -19,7 +19,7 @@ class TestStatus < Test::Unit::TestCase
     # it should return a number
     assert_kind_of Fixnum, load
     # it could be even greater than 100 on high load
-    assert_true (load >= 0)
+    assert_equal true, (load >= 0)
   end
 
   def test_process_cpu
@@ -28,7 +28,7 @@ class TestStatus < Test::Unit::TestCase
     # it should return a number
     assert_kind_of Fixnum, cpu
     # it is a percentage
-    assert_true (cpu >= 0 and cpu <= 100)
+    assert_equal true, (cpu >= 0 and cpu <= 100)
   end
 end
 
