@@ -102,8 +102,9 @@ module FilecapEvidence
     info = Hash[common_info]
     info[:data] = Hash.new if info[:data].nil?
     info[:data][:type] = :capture
-    info[:grid_content] = chunks.first
-    info[:data][:md5] = Digest::MD5.hexdigest chunks.first
+    info[:grid_content] = chunks.join
+    info[:data][:size] = info[:grid_content].bytesize
+    info[:data][:md5] = Digest::MD5.hexdigest info[:grid_content]
     yield info if block_given?
     :delete_raw
   end

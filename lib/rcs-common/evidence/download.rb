@@ -43,7 +43,9 @@ module DownloadEvidence
   def decode_content(common_info, chunks)
     info = Hash[common_info]
     info[:data] = Hash.new if info[:data].nil?
-    info[:grid_content] = chunks.first
+    info[:data][:type] = :capture
+    info[:grid_content] = chunks.join
+    info[:data][:size] = info[:grid_content].bytesize
     yield info if block_given?
     :delete_raw
   end
