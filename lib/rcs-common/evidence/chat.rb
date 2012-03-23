@@ -40,7 +40,7 @@ module ChatEvidence
       tm = stream.read 36
       #trace :info, "CHAT Time.gm #{tm.unpack('l*')}"
       info = Hash[common_info]
-      info[:acquired] = Time.gm(*(tm.unpack('l*')), 0)
+      info[:da] = Time.gm(*(tm.unpack('L*')), 0)
       info[:data] = Hash.new if info[:data].nil?
       info[:data][:program] = ''
       info[:data][:topic] = ''
