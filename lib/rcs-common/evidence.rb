@@ -104,7 +104,7 @@ class Evidence
   def generate(type, common_info)
     @name =  SecureRandom.hex(16)
     info = Hash[common_info]
-    info[:acquired] = Time.now.utc
+    info[:da] = Time.now.utc
     info[:type] = type
     
     # extend class on requested type
@@ -183,8 +183,8 @@ class Evidence
     raise EvidenceDeserializeError.new("mismatching version [expected #{Evidence.VERSION_ID}, found #{@version}]") unless @version == Evidence.VERSION_ID
 
     common_info = Hash.new
-    common_info[:received] = Time.new.getgm
-    common_info[:acquired] = Time.from_filetime(time_h, time_l).getgm
+    common_info[:dr] = Time.new.getgm
+    common_info[:da] = Time.from_filetime(time_h, time_l).getgm
 
     common_info[:device] = header_string.read(host_size).utf16le_to_utf8 unless host_size == 0
     common_info[:device] ||= ''
@@ -192,7 +192,7 @@ class Evidence
     common_info[:user] ||= ''
     common_info[:source] = header_string.read(ip_size).utf16le_to_utf8 unless ip_size == 0
     common_info[:source] ||= ''
-    
+
     # extend class depending on evidence type
     begin
       common_info[:type] = EVIDENCE_TYPES[ @type_id ].to_s.downcase
