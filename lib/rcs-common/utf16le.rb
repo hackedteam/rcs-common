@@ -14,7 +14,7 @@ class StringIO
     # read until the end of buffer or null termination
     until self.eof? do
       t = self.read(2)
-      break if t.unpack('S') == 0
+      break if t == "\0\0"
       str += t
     end
 
