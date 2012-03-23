@@ -45,13 +45,13 @@ module MailrawEvidence
     binary = StringIO.new data
 
     # flags indica se abbiamo tutto il body o solo header
-    version, flags, size, ft_low, ft_high = binary.read(20).unpack('I*')
+    version, flags, size, ft_low, ft_high = binary.read(20).unpack('L*')
 
     case version
       when MAILRAW_VERSION
         ret[:data][:program] = 'outlook'
       when MAILRAW_2_VERSION
-        program = binary.read(4).unpack('I*')
+        program = binary.read(4).unpack('L*')
         case program
           when PROGRAM_GMAIL
             ret[:data][:program] = 'gmail'
@@ -63,7 +63,6 @@ module MailrawEvidence
     end
 
     ret[:data][:size] = size
-    ret[:acquired] = Time.from_filetime(ft_high, ft_low)
     return ret
   end
 
@@ -81,8 +80,9 @@ module MailrawEvidence
     info[:data][:cc] = m.cc
     info[:data][:subject] = m.subject
     info[:data][:date] = m.date.to_s
+    info[:da] = m.date.to_time.getgm
     info[:data][:body] = m.body.decoded
-
+    
     yield info if block_given?
     :delete_raw
   end
