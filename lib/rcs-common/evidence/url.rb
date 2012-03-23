@@ -117,7 +117,7 @@ module UrlcaptureEvidence
     ret[:data][:browser] = BROWSER_TYPE[browser]
     ret[:data][:url] = binary.read(url_len).utf16le_to_utf8
     ret[:data][:title] = binary.read(window_len).utf16le_to_utf8
-    ret[:data][:keywords] = decode_query @info[:data][:url]
+    ret[:data][:keywords] = decode_query ret[:data][:url]
     return ret
   end
 
