@@ -38,10 +38,10 @@ module FilesystemEvidence
       info[:data][:attr] = attribute
       info[:da] = Time.from_filetime(*stream.read(8).unpack('L*'))
 
-      path = stream.read(path_len)
+      path = stream.read(path_len).terminate_utf16le
       next if path.nil?
-
-      info[:data][:path] = path.to_utf16le_binary_null.utf16le_to_utf8
+      
+      info[:data][:path] = path.utf16le_to_utf8
 
       # this is not the real clone! redefined clone ...
       yield info if block_given?

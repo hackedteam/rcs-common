@@ -7,26 +7,26 @@ require 'stringio'
 class StringIO
   def read_utf16le_string
     # at least the null terminator
-    return nil if self.size < 2
+    return '' if self.size < 2
 
     # empty string by default
     str = ''
     # read until the end of buffer or null termination
-    until self.tell == self.size do
+    until self.eof? do
       t = self.read(2)
-      break if t == "\0\0"
+      break if t.unpack('S') == 0
       str += t
     end
 
     # misaligned string
-    return nil if str.bytesize % 2 != 0
+    return '' if str.bytesize % 2 != 0
 
     return str
   end
 
   def read_ascii_string
     # at least the null terminator
-    return nil if self.size < 1
+    return '' if self.size < 1
 
     # empty string by default
     str = ''
@@ -54,6 +54,10 @@ class String
   def to_utf16le_binary_null
     # with null termination
     (self + "\0").to_utf16le_binary
+  end
+
+  def terminate_utf16le
+    self + "\0\0"
   end
 
   def to_utf16le
