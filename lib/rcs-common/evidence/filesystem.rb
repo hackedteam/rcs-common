@@ -10,7 +10,8 @@ module FilesystemEvidence
 	FILESYSTEM_IS_EMPTY     = 2
 
   def content
-    path = "C:\\miao".to_utf16le_binary_null
+    path = ["C:\\miao", "C:\\miao\\bau", "C:\\pippo\\pluto\\paperino"].sample
+    path = path.to_utf16le_binary_null
     content = StringIO.new
     content.write [FILESYSTEM_VERSION, path.bytesize, FILESYSTEM_IS_FILE, 0, 0].pack("I*")
     content.write Time.now.getutc.to_filetime.pack('L*')
