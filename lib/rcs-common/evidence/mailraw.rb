@@ -52,7 +52,12 @@ module MailrawEvidence
         ret[:data][:program] = 'outlook'
       when MAILRAW_2_VERSION
         program = binary.read(4).unpack('I*')
-        ret[:data][:program] = 'gmail' if program & PROGRAM_GMAIL
+        case program
+          when PROGRAM_GMAIL
+            ret[:data][:program] = 'gmail'
+          else
+            ret[:data][:program] = 'unknown'
+        end
       else
         raise EvidenceDeserializeError.new("invalid log version for MAILRAW")
     end
@@ -71,7 +76,7 @@ module MailrawEvidence
     info[:data][:status] = 0
 
     m = Mail.read_from_string eml
-    info[:data][:from] = m.from.addresses
+    info[:data][:from] = m.from
     info[:data][:to] = m.to
     info[:data][:cc] = m.cc
     info[:data][:subject] = m.subject
