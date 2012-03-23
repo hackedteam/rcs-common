@@ -30,13 +30,13 @@ module FilesystemEvidence
 
       info = Hash[common_info]
 
-      version, path_len, attribute, size_hi, size_lo = stream.read(20).unpack("I*")
+      version, path_len, attribute, size_hi, size_lo = stream.read(20).unpack("L*")
       raise EvidenceDeserializeError.new("invalid log version for FILESYSTEM [#{version} != #{FILESYSTEM_VERSION}]") unless version == FILESYSTEM_VERSION
 
       info[:data] = Hash.new if info[:data].nil?
-      info[:data][:size] = size_hi << 32 | size_lo
+      info[:data][:size] = Float((size_hi << 32) | size_lo)
       info[:data][:attr] = attribute
-      info[:acquired] = Time.from_filetime(*stream.read(8).unpack('L*'))
+      info[:da] = Time.from_filetime(*stream.read(8).unpack('L*'))
 
       path = stream.read(path_len)
       next if path.nil?
