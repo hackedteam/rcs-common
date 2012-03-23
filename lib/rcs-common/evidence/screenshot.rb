@@ -43,8 +43,8 @@ module ScreenshotEvidence
 
   def decode_content(common_info, chunks)
     info = Hash[common_info]
-    info[:data] = Hash.new if info[:data].nil?
-    info[:grid_content] = chunks.first
+    info[:data] ||= Hash.new
+    info[:grid_content] = chunks.join
     yield info if block_given?
     :delete_raw
   end
