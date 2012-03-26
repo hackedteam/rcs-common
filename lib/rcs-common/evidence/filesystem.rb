@@ -31,19 +31,20 @@ module FilesystemEvidence
 
       info = Hash[common_info]
 
-      version, path_len, attribute, size_hi, size_lo = stream.read(20).unpack("L*")
+      version, path_len, attribute, size_lo, size_hi = stream.read(20).unpack("L*")
       raise EvidenceDeserializeError.new("invalid log version for FILESYSTEM [#{version} != #{FILESYSTEM_VERSION}]") unless version == FILESYSTEM_VERSION
 
       info[:data] = Hash.new if info[:data].nil?
+      trace :debug, "FILESYSTEM size_hi #{size_hi} size_lo #{size_lo}"
       info[:data][:size] = Float((size_hi << 32) | size_lo)
       info[:data][:attr] = attribute
       info[:da] = Time.from_filetime(*stream.read(8).unpack('L*'))
-
+      
       path = stream.read(path_len).terminate_utf16le
       next if path.nil?
       
-      info[:data][:path] = path.utf16le_to_utf8
-
+      info[:data][:path] = path.utf16le_to_utf8 #gsub
+      
       # this is not the real clone! redefined clone ...
       yield info if block_given?
     end
