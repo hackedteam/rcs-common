@@ -168,7 +168,7 @@ class AddressBookSerializer
     @fields = {}
     until stream.eof? do
       type, size = Serialization.decode_prefix stream.read(4)
-      @fields[ADDRESSBOOK_TYPES[type]] = stream.read(size).utf16le_to_utf8
+      @fields[ADDRESSBOOK_TYPES[type]] = stream.read(size).terminate_utf16le.utf16le_to_utf8
     end
     
     # name
