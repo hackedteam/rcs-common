@@ -57,7 +57,7 @@ class String
   end
 
   def terminate_utf16le
-    self.force_encoding('UTF-16LE') + "\0"
+    self.force_encoding('UTF-16LE') + "\0".encode('UTF-16LE')
   end
 
   def to_utf16le
