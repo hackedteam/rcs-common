@@ -11,20 +11,22 @@ module AddressbookEvidence
   def generate_content
     [ content ]
   end
-  
+
   def decode_content(common_info, chunks)
     stream = StringIO.new chunks.join
 
-    info = Hash[common_info]
-    info[:data] = Hash.new if info[:data].nil?
+    until stream.eof?
+      info = Hash[common_info]
+      info[:data] = Hash.new if info[:data].nil?
 
-    @address_book = AddressBookSerializer.new.unserialize stream
-    
-    info[:data][:name] = @address_book.name
-    info[:data][:contact] = @address_book.contact
-    info[:data][:info] = @address_book.info
-    
-    yield info if block_given?
+      contact = AddressBookSerializer.new.unserialize stream
+
+      info[:data][:name] = contact.name
+      info[:data][:contact] = contact.contact
+      info[:data][:info] = contact.info
+
+      yield info if block_given?
+    end
     :delete_raw
   end
 end # ::AddressbookEvidence
