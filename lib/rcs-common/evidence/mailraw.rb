@@ -31,11 +31,11 @@ module MailrawEvidence
 
     binary.string
   end
-
+  
   def generate_content
     [ content ]
   end
-
+  
   def decode_additional_header(data)
     raise EvidenceDeserializeError.new("incomplete MAILRAW") if data.nil? or data.bytesize == 0
 
@@ -46,7 +46,7 @@ module MailrawEvidence
 
     # flags indica se abbiamo tutto il body o solo header
     version, flags, size, ft_low, ft_high = binary.read(20).unpack('L*')
-
+    
     case version
       when MAILRAW_VERSION
         ret[:data][:program] = 'outlook'
@@ -61,27 +61,33 @@ module MailrawEvidence
       else
         raise EvidenceDeserializeError.new("invalid log version for MAILRAW")
     end
-
+    
     ret[:data][:size] = size
     return ret
   end
-
+  
   def decode_content(common_info, chunks)
     info = Hash[common_info]
     eml = chunks.join
     info[:data] = Hash.new if info[:data].nil?
     info[:grid_content] = eml
-
+    
     info[:data][:status] = 0
-
+    
     m = Mail.read_from_string eml
     info[:data][:from] = m.from
     info[:data][:to] = m.to
     info[:data][:cc] = m.cc
+    info[:data][:cc] ||= []
     info[:data][:subject] = m.subject
     info[:data][:date] = m.date.to_s
-    info[:da] = m.date.to_time.getgm
+    info[:data][:date] ||= Time.now.to_s
     info[:data][:body] = m.body.decoded
+    begin
+      info[:da] = m.date.to_time.getgm
+    rescue Exception
+      info[:da] = Time.now.getutc
+    end
     
     yield info if block_given?
     :delete_raw
