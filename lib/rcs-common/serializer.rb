@@ -33,51 +33,54 @@ module RCS
                        0x10000000 => :location}
 
     def unserialize(stream)
-      size = stream.read(4).unpack('L').shift
+      tot_size = stream.read(4).unpack('L').shift
       version = stream.read(4).unpack('L').shift
       oid = stream.read(4).unpack('L').shift
 
       raise EvidenceDeserializeError.new("Invalid version") unless version == POOM_V1_0_PROTO
 
-      @flags = stream.read(4).unpack('L').shift
-      ft_low = stream.read(4).unpack('L').shift
-      ft_high = stream.read(4).unpack('L').shift
-      @start_date = Time.from_filetime(ft_high, ft_low)
-      trace :debug, "[CalendarSerializer] start date #{@start_date}"
-      ft_low = stream.read(4).unpack('L').shift
-      ft_high = stream.read(4).unpack('L').shift
-      @end_date = Time.from_filetime(ft_high, ft_low)
-      trace :debug, "[CalendarSerializer] end date #{@end_date}"
-      @sensitivity = stream.read(4).unpack("L").shift
-      @busy = stream.read(4).unpack("L").shift
-      @duration = stream.read(4).unpack("L").shift
-      @status = stream.read(4).unpack("L").shift
+      content = stream.read(tot_size - 12)
+      until content.empty?
+        @flags = content.slice!(0, 4)
+        ft_low = content.slice!(0, 4)
+        ft_high = content.slice!(0, 4)
+        @start_date = Time.from_filetime(ft_high, ft_low)
+        trace :debug, "[CalendarSerializer] start date #{@start_date}"
+        ft_low = content.slice!(0, 4)
+        ft_high = content.slice!(0, 4)
+        @end_date = Time.from_filetime(ft_high, ft_low)
+        trace :debug, "[CalendarSerializer] end date #{@end_date}"
+        @sensitivity = content.slice!(0, 4)
+        @busy = content.slice!(0, 4)
+        @duration = content.slice!(0, 4)
+        @status = content.slice!(0, 4)
 
-      if @flags & FLAG_RECUR
-        return self if stream.size - stream.pos < 28 + 16
+        if @flags & FLAG_RECUR
+          return self if content.bytesize < 28 + 16
 
-        type, interval, month_of_year, day_of_month, day_of_week_mask, instance, occurrences = *stream.read(28).unpack("L*")
-        ft_low = stream.read(4).unpack('L').shift
-        ft_high = stream.read(4).unpack('L').shift
-        @pattern_start_date = Time.from_filetime(ft_high, ft_low)
-        trace :debug, "[CalendarSerializer] pattern start date #{@pattern_start_date}"
-        ft_low = stream.read(4).unpack('L').shift
-        ft_high = stream.read(4).unpack('L').shift
-        @pattern_end_date = Time.from_filetime(ft_high, ft_low)
-        puts "[CalendarSerializer] pattern end date #{@pattern_end_date}"
-      end
+          type, interval, month_of_year, day_of_month, day_of_week_mask, instance, occurrences = *content.slice!(0, 28).unpack("L*")
+          ft_low = content.slice!(0, 4)
+          ft_high = content.slice!(0, 4)
+          @pattern_start_date = Time.from_filetime(ft_high, ft_low)
+          trace :debug, "[CalendarSerializer] pattern start date #{@pattern_start_date}"
+          ft_low = content.slice!(0, 4)
+          ft_high = content.slice!(0, 4)
+          @pattern_end_date = Time.from_filetime(ft_high, ft_low)
+          puts "[CalendarSerializer] pattern end date #{@pattern_end_date}"
+        end
 
-      @fields = {}
-      until stream.eof? do
-        prefix = stream.read(4)
-        type, size = Serialization.decode_prefix prefix
-        trace :debug, "[CalendarSerializer] prefix #{type} #{size} [#{prefix.unpack('L').shift}]"
-        @fields[CALENDAR_TYPES[type]] = stream.read(size).utf16le_to_utf8
-        printf "%s => %s\n", CALENDAR_TYPES[type].to_s, "unknown"
+        @fields = {}
+        until content.empty? do
+          prefix = content.slice!(0, 4)
+          type, size = Serialization.decode_prefix prefix
+          trace :debug, "[CalendarSerializer] prefix #{type} #{size}"
+          @fields[CALENDAR_TYPES[type]] = content.slice!(0, size).utf16le_to_utf8
+          printf "%s => %s\n", CALENDAR_TYPES[type].to_s, "unknown"
+        end
       end
     end
 
-  end
+  end #CalendarSerializer
 
   class AddressBookSerializer
     include RCS::Tracer
