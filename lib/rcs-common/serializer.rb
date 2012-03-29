@@ -9,11 +9,11 @@ module RCS
     PREFIX_MASK = 0x00FFFFFF
 
     def self.prefix(type, size)
-      [(type << 0x18) | size].pack("L")
+      [(type << 0x18) | size].pack('L')
     end
 
     def self.decode_prefix(str)
-      prefix = str.unpack("L").shift
+      prefix = str.unpack('L').shift
       return (prefix & ~PREFIX_MASK) >> 0x18, prefix & PREFIX_MASK
     end
   end
@@ -22,15 +22,21 @@ module RCS
     include RCS::Tracer
 
     POOM_V1_0_PROTO = 0x01000000
-    FLAG_RECUR = 0x80000000
+    FLAG_RECUR = 0x00000008
 
-    attr_reader :start_date, :end_date
+    attr_reader :start_date, :end_date, :fields
 
-    CALENDAR_TYPES = { 0x01000000 => :subject,
-                       0x02000000 => :categories,
-                       0x04000000 => :body,
-                       0x08000000 => :recipients,
-                       0x10000000 => :location}
+    CALENDAR_TYPES = { 0x01 => :subject,
+                       0x02 => :categories,
+                       0x04 => :body,
+                       0x08 => :recipients,
+                       0x10 => :location}
+
+    def initialize
+      @fields = {}
+      @start_date = nil
+      @end_date = nil
+    end
 
     def unserialize(stream)
       tot_size = stream.read(4).unpack('L').shift
@@ -41,43 +47,42 @@ module RCS
 
       content = stream.read(tot_size - 12)
       until content.empty?
-        @flags = content.slice!(0, 4)
-        ft_low = content.slice!(0, 4)
-        ft_high = content.slice!(0, 4)
+        @flags = content.slice!(0, 4).unpack('L').shift
+        ft_low = content.slice!(0, 4).unpack('L').shift
+        ft_high = content.slice!(0, 4).unpack('L').shift
         @start_date = Time.from_filetime(ft_high, ft_low)
         trace :debug, "[CalendarSerializer] start date #{@start_date}"
-        ft_low = content.slice!(0, 4)
-        ft_high = content.slice!(0, 4)
+        ft_low = content.slice!(0, 4).unpack('L').shift
+        ft_high = content.slice!(0, 4).unpack('L').shift
         @end_date = Time.from_filetime(ft_high, ft_low)
         trace :debug, "[CalendarSerializer] end date #{@end_date}"
-        @sensitivity = content.slice!(0, 4)
-        @busy = content.slice!(0, 4)
-        @duration = content.slice!(0, 4)
-        @status = content.slice!(0, 4)
+        @sensitivity = content.slice!(0, 4).unpack('L').shift
+        @busy = content.slice!(0, 4).unpack('L').shift
+        @duration = content.slice!(0, 4).unpack('L').shift
+        @status = content.slice!(0, 4).unpack('L').shift
 
-        if @flags & FLAG_RECUR
-          return self if content.bytesize < 28 + 16
+        if @flags == FLAG_RECUR
+          return self if content.bytesize < 28 + 16 # struct _TaskRecur
 
           type, interval, month_of_year, day_of_month, day_of_week_mask, instance, occurrences = *content.slice!(0, 28).unpack("L*")
-          ft_low = content.slice!(0, 4)
-          ft_high = content.slice!(0, 4)
+          ft_low = content.slice!(0, 4).unpack('L').shift
+          ft_high = content.slice!(0, 4).unpack('L').shift
           @pattern_start_date = Time.from_filetime(ft_high, ft_low)
           trace :debug, "[CalendarSerializer] pattern start date #{@pattern_start_date}"
-          ft_low = content.slice!(0, 4)
-          ft_high = content.slice!(0, 4)
+          ft_low = content.slice!(0, 4).unpack('L').shift
+          ft_high = content.slice!(0, 4).unpack('L').shift
           @pattern_end_date = Time.from_filetime(ft_high, ft_low)
-          puts "[CalendarSerializer] pattern end date #{@pattern_end_date}"
+          trace :debug, "[CalendarSerializer] pattern end date #{@pattern_end_date}"
         end
 
-        @fields = {}
         until content.empty? do
           prefix = content.slice!(0, 4)
           type, size = Serialization.decode_prefix prefix
-          trace :debug, "[CalendarSerializer] prefix #{type} #{size}"
           @fields[CALENDAR_TYPES[type]] = content.slice!(0, size).utf16le_to_utf8
-          printf "%s => %s\n", CALENDAR_TYPES[type].to_s, "unknown"
+          trace :debug, "[CalendarSerializer] type: #{type.to_s(16)} field: #{CALENDAR_TYPES[type]} => #{@fields[CALENDAR_TYPES[type]]}"
         end
       end
+      return self
     end
 
   end #CalendarSerializer
