@@ -52,22 +52,22 @@ module UrlEvidence
       info[:data] = Hash.new if info[:data].nil?
 
       tm = stream.read 36
-      info[:acquired] = Time.gm(*tm.unpack('l*'), 0)
+      info[:acquired] = Time.gm(*tm.unpack('L*'), 0)
       info[:data][:url] = ''
       info[:data][:title] = ''
 
-      delim = stream.read(4).unpack("L").first
+      delim = stream.read(4).unpack('L').first
       raise EvidenceDeserializeError.new("Malformed evidence (invalid URL version)") unless delim == VERSION_DELIMITER
       
       url = stream.read_utf16le_string
       info[:data][:url] = url.utf16le_to_utf8 unless url.nil?
-      browser = stream.read(4).unpack("L").first
+      browser = stream.read(4).unpack('L').first
       info[:data][:browser] = BROWSER_TYPE[browser]
       window = stream.read_utf16le_string
       info[:data][:title] = window.utf16le_to_utf8 unless window.nil?
       info[:data][:keywords] = decode_query info[:data][:url]
       
-      delim = stream.read(4).unpack("L").first
+      delim = stream.read(4).unpack('L').first
       raise EvidenceDeserializeError.new("Malformed URL (missing delimiter)") unless delim == ELEM_DELIMITER
 
       yield info if block_given?

@@ -35,7 +35,7 @@ module ApplicationEvidence
       info[:data] = Hash.new if info[:data].nil?
 
       tm = stream.read 36
-      info[:acquired] = Time.gm(*tm.unpack('l*'), 0)
+      info[:acquired] = Time.gm(*tm.unpack('L*'), 0)
       info[:data][:program] = ''
       info[:data][:action] = ''
       info[:data][:desc] = ''
@@ -47,7 +47,7 @@ module ApplicationEvidence
       desc = stream.read_utf16le_string
       info[:data][:desc] = desc.utf16le_to_utf8 unless desc.nil?
 
-      delim = stream.read(4).unpack("L*").first
+      delim = stream.read(4).unpack('L').first
       raise EvidenceDeserializeError.new("Malformed APPLICATION (missing delimiter)") unless delim == ELEM_DELIMITER
 
       yield info if block_given?
