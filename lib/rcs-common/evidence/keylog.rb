@@ -45,7 +45,7 @@ module KeylogEvidence
       #puts "TIMESTAMP #{timestamp.inspect} OBJECT_ID #{self.object_id}"
 
       info = Hash[common_info]
-      info[:acquired] = Time.gm(*timestamp, 0)
+      info[:da] = Time.gm(*timestamp, 0)
       info[:data] = Hash.new if info[:data].nil?
       info[:data][:program] = ''
       info[:data][:window] = ''

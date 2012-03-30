@@ -112,7 +112,7 @@ module PositionEvidence
         until stream.eof?
           info[:data][:type] = 'GPS'
           type, size, version = stream.read(12).unpack('L*')
-          info[:acquired] = Time.from_filetime(*stream.read(8).unpack('L*'))
+          info[:da] = Time.from_filetime(*stream.read(8).unpack('L*'))
           gps = GPS_Position.new
           gps.read stream
           info[:data][:latitude] = "%.7f" % gps.latitude
@@ -124,7 +124,7 @@ module PositionEvidence
         until stream.eof?
           info[:data][:type] = (info[:loc_type] == LOCATION_GSM) ? 'GSM' : 'CDMA'
           type, size, version = stream.read(12).unpack('L*')
-          info[:acquired] = Time.from_filetime(*stream.read(8).unpack('L*'))
+          info[:da] = Time.from_filetime(*stream.read(8).unpack('L*'))
           cell = CELL_Position.new
           cell.read stream
 

@@ -52,7 +52,7 @@ module UrlEvidence
       info[:data] = Hash.new if info[:data].nil?
 
       tm = stream.read 36
-      info[:acquired] = Time.gm(*tm.unpack('L*'), 0)
+      info[:da] = Time.gm(*tm.unpack('L*'), 0)
       info[:data][:url] = ''
       info[:data][:title] = ''
 

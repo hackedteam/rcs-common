@@ -38,7 +38,7 @@ module FileopenEvidence
       info[:data][:type] = :open
 
       tm = stream.read 36
-      info[:acquired] = Time.gm(*tm.unpack('l*'), 0)
+      info[:da] = Time.gm(*tm.unpack('l*'), 0)
       info[:data][:program] = ''
       info[:data][:path] = ''
 
