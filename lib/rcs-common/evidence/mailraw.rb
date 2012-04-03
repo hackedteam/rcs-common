@@ -72,8 +72,6 @@ module MailrawEvidence
     info[:data] = Hash.new if info[:data].nil?
     info[:grid_content] = eml
 
-    info[:data][:status] = 0
-
     m = Mail.read_from_string eml
     info[:data][:from] = m.from.join(',') unless m.from.nil?
     info[:data][:to] = m.to.join(',') unless m.to.nil?
