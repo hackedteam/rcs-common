@@ -1,10 +1,12 @@
 # encoding: utf-8
 
+require 'rcs-common/trace'
 require 'rcs-common/evidence/common'
 
 module RCS
 
 module KeylogEvidence
+  extend RCS::Tracer
 
   ELEM_DELIMITER = 0xABADC0DE
   KEYSTROKES = ["привет мир", "こんにちは世界", "Hello world!", "Ciao mondo!"]
@@ -52,26 +54,26 @@ module KeylogEvidence
       info[:data][:content] = ''
       
       process_name = stream.read_utf16le_string
-      #puts "PROCESS NAME UTF-16LE #{process_name}"
+      #trace :debug, "PROGRAM NAME UTF-16LE #{process_name}"
       info[:data][:program] = process_name.utf16le_to_utf8 unless process_name.nil?
 
-      #puts "PROCESS NAME UTF-8 #{info[:data][:process]}"
+      #trace :debug, "PROGRAM NAME UTF-8 #{info[:data][:program]}"
 
       window_name = stream.read_utf16le_string
       info[:data][:window] = window_name.utf16le_to_utf8 unless window_name.nil?
-      
-      #puts "WINDOW NAME #{info[:data][:window]}"
+
+      #trace :debug, "WINDOW NAME #{info[:data][:window]}"
       
       delim = stream.read(4).unpack("L*").first
       raise EvidenceDeserializeError.new("Malformed KEYLOG (missing delimiter)") unless delim == ELEM_DELIMITER
-      
-      #puts "DELIM #{delim.to_s(16)}"
+
+      #trace :debug, "DELIM #{delim.to_s(16)}"
       
       keystrokes = stream.read_utf16le_string
-      #puts "KEYSTROKES UTF-16LE #{keystrokes}"
+      #trace :debug, "KEYSTROKES UTF-16LE #{keystrokes}"
       info[:data][:content] = keystrokes.utf16le_to_utf8 unless keystrokes.nil?
-      
-      #puts "KEYSTROKES UTF-8 #{info[:data][:content]}"
+
+      #trace :debug, "KEYSTROKES UTF-8 #{info[:data][:content]}"
       
       yield info if block_given?
     end
