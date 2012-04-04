@@ -39,8 +39,8 @@ module CallEvidence
     caller_len = read_uint32 stream
     callee_len = read_uint32 stream
     
-    raise RCS::EvidenceDeserializeError.new("invalid callee") if callee_len == 0
-    
+    ret[:data][:peer] = "<unknown>" if callee_len == 0
+
     ret[:data][:caller] ||= stream.read(caller_len).utf16le_to_utf8.lstrip.rstrip if caller_len != 0
     ret[:data][:peer] ||= stream.read(callee_len).utf16le_to_utf8.lstrip.rstrip if callee_len != 0
     return ret
