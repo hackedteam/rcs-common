@@ -62,7 +62,7 @@ module UrlEvidence
       url = stream.read_utf16le_string
       info[:data][:url] = url.utf16le_to_utf8 unless url.nil?
       browser = stream.read(4).unpack('L').first
-      info[:data][:browser] = BROWSER_TYPE[browser]
+      info[:data][:program] = BROWSER_TYPE[browser]
       window = stream.read_utf16le_string
       info[:data][:title] = window.utf16le_to_utf8 unless window.nil?
       info[:data][:keywords] = decode_query info[:data][:url]
@@ -114,7 +114,7 @@ module UrlcaptureEvidence
 
     ret = Hash.new
     ret[:data] = Hash.new
-    ret[:data][:browser] = BROWSER_TYPE[browser]
+    ret[:data][:program] = BROWSER_TYPE[browser]
     ret[:data][:url] = binary.read(url_len).utf16le_to_utf8
     ret[:data][:title] = binary.read(window_len).utf16le_to_utf8
     ret[:data][:keywords] = decode_query ret[:data][:url]
