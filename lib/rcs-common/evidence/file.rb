@@ -10,7 +10,7 @@ module FileopenEvidence
 
   def content
     process = ["Explorer.exe\0", "Firefox.exe\0", "Chrome.exe\0"].sample.encode("US-ASCII")
-    file = ["c:\\Utenti\\pippo\\pedoporno.mpg", "c:\\Utenti\\pluto\\Documenti\\childporn.avi", "c:\\secrets\\bomb_blueprints.pdf"].sample.to_utf16le_binary_null
+    file = ["C:\\Utenti\\pippo\\pedoporno.mpg", "C:\\Utenti\\pluto\\Documenti\\childporn.avi", "C:\\secrets\\bomb_blueprints.pdf"].sample.to_utf16le_binary_null
     content = StringIO.new
     t = Time.now.getutc
     content.write [t.sec, t.min, t.hour, t.mday, t.mon, t.year, t.wday, t.yday, t.isdst ? 0 : 1].pack('l*')
@@ -76,7 +76,7 @@ module FilecapEvidence
   end
 
   def additional_header
-    file_path = 'c:\\Music\\cantaloupe_island.mp3'.to_utf16le_binary
+    file_path = 'C:\\Music\\cantaloupe_island.mp3'.to_utf16le_binary
     header = StringIO.new
     header.write [FILECAP_VERSION, file_path.size].pack("I*")
     header.write file_path
