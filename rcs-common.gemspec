@@ -28,7 +28,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency(%q<ffi>, [">= 0"])
   s.add_runtime_dependency(%q<mail>, [">= 0"])
   
-  s.add_development_dependency(%q<bundler>, ["~> 1.0.0"])
+  s.add_development_dependency(%q<bundler>, [">= 0"])
   s.add_development_dependency(%q<rcov>, [">= 0"])
   s.add_development_dependency(%q<test-unit>, [">= 0"])
 
