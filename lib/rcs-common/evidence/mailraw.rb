@@ -69,25 +69,26 @@ module MailrawEvidence
   def decode_content(common_info, chunks)
     info = Hash[common_info]
     info[:data] ||= Hash.new
+    info[:data][:type] = :mail
 
     eml = chunks.join
     info[:grid_content] = eml
 
     m = Mail.read_from_string eml
     info[:data][:from] = m.from.join(',') unless m.from.nil?
-    info[:data][:to] = m.to.join(',') unless m.to.nil?
+    info[:data][:rcpt] = m.to.join(',') unless m.to.nil?
     info[:data][:cc] = m.cc.join(',') unless m.cc.nil?
     info[:data][:subject] = m.subject
-    info[:data][:date] = m.date.to_s
+    info[:data][:date] = m.date.to_time.to_s
     info[:data][:date] ||= Time.now.to_s
-    info[:data][:body] = m.body.decoded.force_encoding 'UTF-8'
-    begin
-      info[:da] = m.date.to_time.getgm
-    rescue Exception
-      info[:da] = Time.now.getutc
-    end
+    info[:data][:content] = m.body.decoded.force_encoding 'UTF-8'
 
-    info[:data][:type] = :mail
+    info[:da] = nil
+    unless m.date.nil?
+      info[:da] = m.date.to_time.to_time.getutc if m.date.to_time.is_a? DateTime
+      info[:da] ||= m.date.to_time.getutc
+    end
+    info[:da] ||= Time.now.to_s
 
     yield info if block_given?
     :delete_raw
