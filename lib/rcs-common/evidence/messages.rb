@@ -29,5 +29,5 @@ module MessageEvidence
     yield info if block_given?
     :delete_raw
   end
-end # ::CalendarEvidence
+end # ::MessageEvidence
 end # ::RCS
