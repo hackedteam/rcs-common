@@ -52,8 +52,7 @@ module PositionEvidence
   end
 
   def additional_header
-    #@loc_type = [LOCATION_GPS, LOCATION_GSM, LOCATION_CDMA, LOCATION_WIFI, LOCATION_IP].sample
-    @loc_type = LOCATION_WIFI
+    @loc_type = [LOCATION_GPS, LOCATION_GSM, LOCATION_CDMA, LOCATION_WIFI, LOCATION_IP].sample
     @nstruct = (@loc_type == LOCATION_IP) ? 1 : rand(5) + 1
     header = StringIO.new
     header.write [LOCATION_VERSION, @loc_type, @nstruct].pack("I*")
