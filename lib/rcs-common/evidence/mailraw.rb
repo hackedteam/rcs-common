@@ -1,3 +1,5 @@
+# encoding: UTF-8
+
 require 'rcs-common/evidence/common'
 require 'mail'
 
@@ -66,6 +68,21 @@ module MailrawEvidence
     return ret
   end
 
+  def ct(parts)
+    content_types = parts.map { |p| p.content_type.split(';')[0] }
+    body = {}
+    content_types.each_with_index do |ct, i|
+      case ct
+        when 'multipart/alternative'
+          body = ct(parts[i].parts)
+        else
+          body ||= {}
+          body[ct] = parts[i].body.decoded.safe_utf8_encode
+      end
+    end
+    body
+  end
+
   def decode_content(common_info, chunks)
     info = Hash[common_info]
     info[:data] ||= Hash.new
@@ -75,20 +92,34 @@ module MailrawEvidence
     info[:grid_content] = eml
 
     m = Mail.read_from_string eml
-    info[:data][:from] = m.from.join(',') unless m.from.nil?
-    info[:data][:rcpt] = m.to.join(',') unless m.to.nil?
-    info[:data][:cc] = m.cc.join(',') unless m.cc.nil?
-    info[:data][:subject] = m.subject
-    info[:data][:date] = m.date.to_time.to_s
-    info[:data][:date] ||= Time.now.to_s
-    info[:data][:content] = m.body.decoded.force_encoding 'UTF-8'
+    info[:data][:from] = m.from.join(',').safe_utf8_encode unless m.from.nil?
+    info[:data][:rcpt] = m.to.join(',').safe_utf8_encode unless m.to.nil?
+    info[:data][:cc] = m.cc.join(',').safe_utf8_encode unless m.cc.nil?
+    info[:data][:subject] = m.subject.safe_utf8_encode
 
-    info[:da] = nil
-    unless m.date.nil?
-      info[:da] = m.date.to_time.to_time.getutc if m.date.to_time.is_a? DateTime
-      info[:da] ||= m.date.to_time.getutc
+    body = ct(m.parts) if m.multipart?
+    # if not multipart, take body
+    body ||= {}
+    body['text/plain'] ||= m.body.decoded.safe_utf8_encode
+
+    if body.has_key? 'text/html'
+      info[:data][:content] = body['text/html']
+    else
+      info[:data][:content] = body['text/plain']
     end
-    info[:da] ||= Time.now.to_s
+
+    info[:data][:attach] = m.attachments.length if m.attachments.length > 0
+    
+    date = m.date.to_time unless m.date.nil?
+    date ||= Time.now
+    info[:data][:date] = date.getutc
+    info[:da] = date.getutc
+
+    trace :debug, "info[:data][:date] #{info[:data][:date].class}"
+    trace :debug, "info[:da] #{info[:da].class}"
+
+    info[:data][:date] = info[:data][:date].to_time if info[:data][:date].is_a? DateTime
+    info[:da] = info[:da].to_time if info[:da].is_a? DateTime
 
     yield info if block_given?
     :delete_raw

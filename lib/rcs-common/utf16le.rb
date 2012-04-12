@@ -67,4 +67,8 @@ class String
   def utf16le_to_utf8
     self.force_encoding('UTF-16LE').encode('UTF-8').chomp("\0")
   end
+
+  def safe_utf8_encode
+    self.encode! 'UTF-8', invalid: :replace, undef: :replace, replace: ''
+  end
 end
