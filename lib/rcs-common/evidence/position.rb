@@ -126,7 +126,8 @@ module PositionEvidence
         until stream.eof?
           info[:data][:type] = (info[:loc_type] == LOCATION_GSM) ? 'GSM' : 'CDMA'
           type, size, version = stream.read(12).unpack('L*')
-          info[:da] = Time.from_filetime(*stream.read(8).unpack('L*'))
+          low, high = *stream.read(8).unpack('L*')
+          info[:da] = Time.from_filetime(high, low)
           cell = CELL_Position.new
           cell.read stream
 
