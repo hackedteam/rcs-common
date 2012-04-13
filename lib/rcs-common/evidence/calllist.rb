@@ -1,9 +1,9 @@
-require 'rcs-common/evidence/common'
+require_relative 'common'
+require_relative '../serializer'
 
 module RCS
-
 module CalllistEvidence
-  
+
   def content
     
   end
@@ -11,25 +11,25 @@ module CalllistEvidence
   def generate_content
     
   end
-  
+
   def decode_content(common_info, chunks)
-    stream = StringIO.new chunks.join
-    
+
     info = Hash[common_info]
-    info[:data] = Hash.new if info[:data].nil?
-    
-    until stream.eof?
-      size, version, ft_start_low, ft_start_high, ft_end_low, ft_end_high, props = binary.read(28).unpack('I*')
-    
-      start_time = Time.from_filetime(ft_start_high, ft_start_low)
-      end_time = Time.from_filetime(ft_end_high, ft_end_low)
-      info[:duration] = end_time - start_time
-    end
-    
+    info[:data] ||= Hash.new
+
+    stream = StringIO.new chunks.join
+
+    @call_list = CallListSerializer.new.unserialize stream
+
+    info[:data][:peer] = @call_list.fields[:number]
+    info[:data][:peer] += " (#{@call_list.fields[:name]})" unless @call_list.fields[:name].nil?
+    info[:data][:program] = @call_list.properties
+    info[:data][:status] = :history
+    info[:data][:duration] = @call_list.end_time - @call_list.start_time
+
     yield info if block_given?
     :delete_raw
   end
   
-end
-
+end # ::CalllistEvidence
 end # ::RCS

@@ -199,7 +199,7 @@ class Evidence
       extend_on_type common_info[:type]
     rescue Exception => e
       puts e.message
-      raise EvidenceDeserializeError.new("unknown type => #{@type_id.to_s(16)}")
+      raise EvidenceDeserializeError.new("unknown type => #{@type_id.to_s(16)}, #{e.message}")
     end
 
     if respond_to? :decode_additional_header and additional_size != 0
