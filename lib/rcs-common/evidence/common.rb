@@ -5,7 +5,7 @@ module RCS
 
 EVIDENCE_TYPES = { 0x0240 => :DEVICE,
                    0x0140 => :CALL,
-                   0x0230 => :CALLLIST,     #missing
+                   0x0230 => :CALLLIST,
                    0xC2C2 => :MIC,
                    0x0241 => :INFO,
                    0xB9B9 => :SCREENSHOT,
@@ -29,7 +29,7 @@ EVIDENCE_TYPES = { 0x0240 => :DEVICE,
                    0x1001 => :MAILRAW,
                    0x0210 => :MAIL,        #missing  #message
                    0x0211 => :SMS,         #missing  #message
-                   0x0213 => :SMS_NEW,     #missing  #message
+                   0x0213 => :SMSNEW,      #missing  #message
                    0x0212 => :MMS,         #missing  #message
                    0x0200 => :ADDRESSBOOK,
                    0x0250 => :IADDRESSBOOK,#missing
