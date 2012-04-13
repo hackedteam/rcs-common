@@ -33,6 +33,7 @@ module PositionEvidence
 
       when LOCATION_WIFI
         content.write ["\xAA\xBB\xCC\xDD\xEE\xFF", "\x00\x11\x22\x33\x44\x55", "\xAB\xCD\xEF\x01\x23\x45"].sample
+        content.write [0, 0].pack('C*') # dummy for the C struck packing
         content.write [4].pack('L')
         content.write ["ciao", "miao", "blau"].sample.ljust(32, "\x00")
         content.write [rand(100) * -1].pack('l')
@@ -87,7 +88,7 @@ module PositionEvidence
           # and 2 of padding (using C struct is BAAAAD)
           mac = stream.read 6
           stream.read 2
-          
+
           len = stream.read(4).unpack('L').first
           ssid = stream.read(len)
           
@@ -242,7 +243,7 @@ class CELL_Position
     str += [0].pack('l')    # DWORD dwGPRSCellID;                 // @field TBD
     str += [0].pack('l')    # DWORD dwGPRSBaseStationID;          // @field TBD
     str += [0].pack('l')    # DWORD dwNumBCCH;                    // @field TBD
-    str += Array.new(64,0).pack('C*')  # BYTE rgbBCCH[MAXLENGTH_BCCH];       // @field TBD
+    str += Array.new(48,0).pack('C*')  # BYTE rgbBCCH[MAXLENGTH_BCCH];       // @field TBD
     str += Array.new(16,0).pack('C*')  # BYTE rgbNMR[MAXLENGTH_NMR];         // @field TBD
     return str  
   end
