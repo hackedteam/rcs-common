@@ -103,20 +103,17 @@ module MailrawEvidence
     body['text/plain'] ||= m.body.decoded.safe_utf8_encode
 
     if body.has_key? 'text/html'
-      info[:data][:content] = body['text/html']
+      info[:data][:body] = body['text/html']
     else
-      info[:data][:content] = body['text/plain']
+      info[:data][:body] = body['text/plain']
     end
 
     info[:data][:attach] = m.attachments.length if m.attachments.length > 0
-    
+
     date = m.date.to_time unless m.date.nil?
     date ||= Time.now
     info[:data][:date] = date.getutc
     info[:da] = date.getutc
-
-    trace :debug, "info[:data][:date] #{info[:data][:date].class}"
-    trace :debug, "info[:da] #{info[:da].class}"
 
     info[:data][:date] = info[:data][:date].to_time if info[:data][:date].is_a? DateTime
     info[:da] = info[:da].to_time if info[:da].is_a? DateTime
