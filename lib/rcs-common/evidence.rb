@@ -202,12 +202,10 @@ class Evidence
       raise EvidenceDeserializeError.new("unknown type => #{@type_id.to_s(16)}, #{e.message}")
     end
 
-    if respond_to? :decode_additional_header and additional_size != 0
-      additional_data = header_string.read additional_size
-      additional_info = decode_additional_header(additional_data)
-      common_info.merge!(additional_info)
-    end
-    
+    additional_data = header_string.read additional_size if additional_size > 0
+
+    yield additional_data
+
     # split content to chunks
     chunks = Array.new
     while not binary_string.eof?
@@ -218,7 +216,13 @@ class Evidence
 
     yield chunks.join
 
-    # decode evidences
+    # decode additional header
+    if respond_to? :decode_additional_header and additional_size != 0
+      additional_info = decode_additional_header(additional_data)
+      common_info.merge!(additional_info)
+    end
+
+    # decode evidence body
     evidences = Array.new
     action = decode_content(common_info, chunks) {|ev| evidences << ev}
 

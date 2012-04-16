@@ -28,11 +28,11 @@ EVIDENCE_TYPES = { 0x0240 => :DEVICE,
                    0xEDA1 => :FILESYSTEM,  
                    0x1001 => :MAILRAW,
                    0x0210 => :MAIL,        #missing  #message
-                   0x0211 => :SMS,         #missing  #message
-                   0x0213 => :SMSNEW,      #missing  #message
+                   0x0211 => :SMS,
+                   0x0213 => :SMSNEW,
                    0x0212 => :MMS,         #missing  #message
                    0x0200 => :ADDRESSBOOK,
-                   0x0250 => :IADDRESSBOOK,#missing
+                   0x0250 => :IADDRESSBOOK,
                    0x0201 => :CALENDAR,
                    0x0202 => :TASK}        #missing
 

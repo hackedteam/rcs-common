@@ -3,6 +3,12 @@ require_relative 'trace'
 
 require 'rcs-common/trace'
 
+class StringIO
+  def read_dword
+    self.read(4).unpack('L').shift
+  end
+end
+
 module RCS
 
   module Serialization
@@ -15,6 +21,52 @@ module RCS
     def self.decode_prefix(str)
       prefix = str.unpack('L').shift
       return (prefix & ~PREFIX_MASK) >> 0x18, prefix & PREFIX_MASK
+    end
+  end
+
+  class MAPISerializer
+    include RCS::Tracer
+
+    attr_reader :fields, :size, :delivery_time
+
+    TYPES = {0x03000000 => {field: :from, action: unserialize_string},
+             0x04000000 => {field: :rcpt, action: unserialize_string},
+             0x05000000 => {field: :cc, action: unserialize_string},
+             0x06000000 => {field: :bcc, action: unserialize_string},
+             0x07000000 => {field: :subject, action: unserialize_string},
+             0x80000000 => {field: :mime_body, action: unserialize_blob},
+             0x84000000 => {field: :text_body, action: unserialize_blob}
+             }
+
+    def initialize
+      @fields = {}
+    end
+
+    def unserialize(stream)
+      tot_size = stream.read_dword
+      @version = stream.read_dword
+      @status = stream.read_dword
+      @flags = stream.read_dword
+      @size = stream.read_dword
+      low, high = stream.read(8).unpack 'V2'
+      @delivery_time = Time.from_filetime high, low
+      @n_attachments = stream.read_dword
+
+      content = stream.read(tot_size - stream.pos)
+      until content.empty?
+        prefix = content.slice!(0, 4)
+        type, size = Serialization.decode_prefix prefix
+        str = content.slice!(0, size)
+        @fields[TYPES[type]['field']] = self.send(TYPES[type]['action'], str) if TYPES.has_key? type
+      end
+    end
+
+    def unserialize_string(str)
+      str.utf16le_to_utf8
+    end
+
+    def unserialize_blob(str)
+      str
     end
   end
 
