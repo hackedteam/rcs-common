@@ -29,13 +29,13 @@ module RCS
 
     attr_reader :fields, :size, :delivery_time
 
-    TYPES = {0x03000000 => {field: :from, action: unserialize_string},
-             0x04000000 => {field: :rcpt, action: unserialize_string},
-             0x05000000 => {field: :cc, action: unserialize_string},
-             0x06000000 => {field: :bcc, action: unserialize_string},
-             0x07000000 => {field: :subject, action: unserialize_string},
-             0x80000000 => {field: :mime_body, action: unserialize_blob},
-             0x84000000 => {field: :text_body, action: unserialize_blob}
+    TYPES = {0x03000000 => {field: :from, action: :unserialize_string},
+             0x04000000 => {field: :rcpt, action: :unserialize_string},
+             0x05000000 => {field: :cc, action: :unserialize_string},
+             0x06000000 => {field: :bcc, action: :unserialize_string},
+             0x07000000 => {field: :subject, action: :unserialize_string},
+             0x80000000 => {field: :mime_body, action: :unserialize_blob},
+             0x84000000 => {field: :text_body, action: :unserialize_blob}
              }
 
     def initialize
