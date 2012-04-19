@@ -21,8 +21,8 @@ module CalendarEvidence
 
     info[:data][:event] = @calendar.fields[:subject]
     info[:data][:type] = @calendar.fields[:categories]
-    info[:data][:begin] = @calendar.start_date
-    info[:data][:end] = @calendar.end_date
+    info[:data][:begin] = @calendar.start_date.to_i
+    info[:data][:end] = @calendar.end_date.to_i
 
     unless @calendar.fields[:recipients].nil?
       recipients = @calendar.fields[:recipients]
