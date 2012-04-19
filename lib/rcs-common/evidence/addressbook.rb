@@ -17,7 +17,7 @@ module AddressbookEvidence
 
     until stream.eof?
       info = Hash[common_info]
-      info[:data] = Hash.new if info[:data].nil?
+      info[:data] ||= Hash.new
 
       contact = AddressBookSerializer.new.unserialize stream
 
