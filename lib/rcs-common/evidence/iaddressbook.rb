@@ -19,9 +19,6 @@ module RCS
     def decode_content(common_info, chunks)
       stream = StringIO.new chunks.join
 
-      info = Hash[common_info]
-      info[:data] ||= Hash.new
-
       # ABLogStruct
       magic = read_uint32 stream
       raise EvidenceDeserializeError.new("invalid log version for IADDRESSBOOK [#{magic} != #{CONTACTLIST}]") unless magic == CONTACTLIST
@@ -30,6 +27,9 @@ module RCS
       num_records = read_uint32 stream
 
       for i in (0..num_records-1)
+
+        info = Hash[common_info]
+        info[:data] ||= Hash.new
 
         # ABFile
         magic = read_uint32 stream
@@ -57,6 +57,8 @@ module RCS
               info[:data][:info] += "#{number}\n"
           end
         end
+
+        trace :debug, "IADDRESSBOOK #{info[:data]}"
 
         yield info if block_given?
       end
