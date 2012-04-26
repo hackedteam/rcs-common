@@ -34,11 +34,15 @@ module RCS
 class MimeType
 
   def self.get(file)
-    # ask for the mime type
-    type = MIME::Types.type_for(file)
-    
-    # if there are multiple choices, get the first one
-    type = type.first if type.is_a?(Array)
+    begin
+      # ask for the mime type
+      type = MIME::Types.type_for(file)
+
+      # if there are multiple choices, get the first one
+      type = type.first if type.is_a?(Array)
+    rescue Exception => e
+      type = nil
+    end
 
     # special case for IE mobile not understanding this
     if File.extname(file) == '.cab' then

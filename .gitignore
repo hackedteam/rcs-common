@@ -43,3 +43,6 @@ pkg
 
 # For RubyMine
 .idea
+
+# Bundler
+Gemfile.lock
