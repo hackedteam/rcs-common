@@ -95,17 +95,18 @@ module MailrawEvidence
     info[:data][:from] = m.from.join(',').safe_utf8_encode unless m.from.nil?
     info[:data][:rcpt] = m.to.join(',').safe_utf8_encode unless m.to.nil?
     info[:data][:cc] = m.cc.join(',').safe_utf8_encode unless m.cc.nil?
-    info[:data][:subject] = m.subject.safe_utf8_encode
+    info[:data][:subject] = m.subject.safe_utf8_encode unless m.subject.nil?
 
     body = ct(m.parts) if m.multipart?
     # if not multipart, take body
     body ||= {}
-    body['text/plain'] ||= m.body.decoded.safe_utf8_encode
+    body['text/plain'] ||= m.body.decoded.safe_utf8_encode unless m.body.nil?
 
     if body.has_key? 'text/html'
       info[:data][:body] = body['text/html']
     else
       info[:data][:body] = body['text/plain']
+      info[:data][:body] ||= ''
     end
 
     info[:data][:attach] = m.attachments.length if m.attachments.length > 0
