@@ -7,7 +7,6 @@ gem "log4r", ">= 1.1.9"
 gem 'mime-types'
 gem 'sys-filesystem'
 gem 'sys-cpu'
-gem 'sqlite3'
 gem 'ffi'
 gem 'mail'
 
@@ -15,6 +14,5 @@ gem 'mail'
 # Include everything needed to run rake, tests, features, etc.
 group :development do
   gem "bundler"
-  gem "simplecov"
   gem 'test-unit'
 end
