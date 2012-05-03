@@ -22,6 +22,17 @@ class BinaryPatchTest < Test::Unit::TestCase
     assert_equal output, input
   end
 
+  def test_binary_with_zero
+    input = "this\x00and\x00that"
+    search = "and"
+    replace = ",\x00this\x00,"
+    output = "this\x00,\x00this\x00,\x00that"
+
+    input.binary_patch search, replace
+
+    assert_equal output, input
+  end
+
   def test_binary_with_regex
     input = SecureRandom.random_bytes(16)
     search = input.slice(0..3)
@@ -40,4 +51,34 @@ class BinaryPatchTest < Test::Unit::TestCase
     end
   end
 
+  def test_with_offset
+    input = "ciao miao bau"
+    offset = 5
+    string = "test"
+    output = "ciao test bau"
+
+    input.binary_patch_at_offset offset, string
+
+    assert_equal output, input
+  end
+
+  def test_with_offset_out_of_bound
+    input = "ciao bau"
+    offset = 15
+    string = "test"
+
+    assert_raise OutOfBounds do
+      input.binary_patch_at_offset offset, string
+    end
+  end
+
+  def test_with_offset_too_long
+    input = "ciao bau"
+    offset = 5
+    string = "test"
+
+    assert_raise OutOfBoundsString do
+      input.binary_patch_at_offset offset, string
+    end
+  end
 end
