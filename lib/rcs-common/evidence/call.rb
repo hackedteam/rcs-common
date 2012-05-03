@@ -16,7 +16,7 @@ module CallEvidence
               0X0147 => "Msn" }
   
   def decode_additional_header(data)
-    
+
     raise EvidenceDeserializeError.new("incomplete evidence") if data.nil? or data.bytesize == 0
     
     stream = StringIO.new data
@@ -31,9 +31,9 @@ module CallEvidence
     ret[:data][:program] = SOFTWARE[read_uint32 stream]
     ret[:data][:sample_rate] = read_uint32 stream
     ret[:data][:incoming] = read_uint32 stream
-    low, high = stream.read(8).unpack 'V2'
+    low, high = stream.read(8).unpack 'L2'
     ret[:data][:start_time] = Time.from_filetime high, low
-    low, high = stream.read(8).unpack 'V2'
+    low, high = stream.read(8).unpack 'L2'
     ret[:data][:stop_time] = Time.from_filetime high, low
     
     caller_len = read_uint32 stream
@@ -43,7 +43,8 @@ module CallEvidence
 
     ret[:data][:caller] ||= stream.read(caller_len).utf16le_to_utf8.lstrip.rstrip if caller_len != 0
     ret[:data][:peer] ||= stream.read(callee_len).utf16le_to_utf8.lstrip.rstrip if callee_len != 0
-    return ret
+
+    ret
   end
   
   def decode_content(common_info, chunks)
