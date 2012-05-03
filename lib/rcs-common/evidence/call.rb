@@ -26,11 +26,16 @@ module CallEvidence
     
     ret = Hash.new
     ret[:data] = Hash.new
+
     channel = read_uint32 stream
-    ret[:data][:channel] = CHANNEL[channel]    
-    ret[:data][:program] = SOFTWARE[read_uint32 stream]
+    ret[:data][:channel] = CHANNEL[channel]
+
+    software = read_uint32 stream
+    ret[:data][:program] = SOFTWARE[software]
+
     ret[:data][:sample_rate] = read_uint32 stream
     ret[:data][:incoming] = read_uint32 stream
+
     low, high = stream.read(8).unpack 'L2'
     ret[:data][:start_time] = Time.from_filetime high, low
     low, high = stream.read(8).unpack 'L2'
@@ -50,8 +55,12 @@ module CallEvidence
   def decode_content(common_info, chunks)
     info = Hash[common_info]
     info[:data] ||= Hash.new
-    
+
     info[:data][:grid_content] = chunks.join
+
+    info[:end_call] = true if info[:data][:grid_content] == "\xff\xff\xff\xff"
+    info[:end_call] ||= false
+
     yield info if block_given?
     :keep_raw
   end
