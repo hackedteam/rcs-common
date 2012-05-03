@@ -32,14 +32,14 @@ class StringIOTest < Test::Unit::TestCase
     str = "\0"
     stream = StringIO.new str
     dst = stream.read_utf16le_string
-    assert_equal nil, dst
+    assert_equal "", dst
   end
 
   def test_misaligned_string
     str = "aa\0"
     stream = StringIO.new str
     dst = stream.read_utf16le_string
-    assert_equal nil, dst
+    assert_equal "", dst
   end
   
   def test_string_not_terminated
