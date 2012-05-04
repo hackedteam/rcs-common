@@ -208,7 +208,7 @@ class Evidence
 
     # split content to chunks
     chunks = Array.new
-    if common_info[:type] == :command
+    if common_info[:type] == 'command'
       chunks << [binary_string.read]
     else
       while not binary_string.eof?
