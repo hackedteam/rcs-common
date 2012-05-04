@@ -208,10 +208,14 @@ class Evidence
 
     # split content to chunks
     chunks = Array.new
-    while not binary_string.eof?
-      len = read_uint32(binary_string)
-      content = binary_string.read align_to_block_len(len)
-      chunks << StringIO.new( decrypt(content) ).read(len)
+    if common_info[:type] == :command
+      chunks << [binary_string.read]
+    else
+      while not binary_string.eof?
+        len = read_uint32(binary_string)
+        content = binary_string.read align_to_block_len(len)
+        chunks << StringIO.new( decrypt(content) ).read(len)
+      end
     end
 
     yield chunks.join if block_given?
