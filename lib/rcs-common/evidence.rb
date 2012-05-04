@@ -204,7 +204,7 @@ class Evidence
 
     additional_data = header_string.read additional_size if additional_size > 0
 
-    yield additional_data
+    yield additional_data if block_given?
 
     # split content to chunks
     chunks = Array.new
@@ -214,7 +214,7 @@ class Evidence
       chunks << StringIO.new( decrypt(content) ).read(len)
     end
 
-    yield chunks.join
+    yield chunks.join if block_given?
 
     # decode additional header
     if respond_to? :decode_additional_header and additional_size != 0

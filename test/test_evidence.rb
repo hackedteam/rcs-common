@@ -9,7 +9,7 @@ class TestEvidence < Test::Unit::TestCase
   # to set up fixture information.
   def setup
     @key = ["000102030405060708090a0b0c0d0e0f"].pack('H*')
-    @info = { :device => "test-device", :user => "test-user", :source => "127.0.0.1" }
+    @info = { :device_id => "test-device", :user_id => "test-user", :source_id => "127.0.0.1" }
   end
   
   # Called after every test method runs. Can be used to tear
@@ -22,9 +22,9 @@ class TestEvidence < Test::Unit::TestCase
   # TODO: this test is not really a good one ... tests both generation and deserialization of evidence :(
   def test_generate
     piece = RCS::Evidence.new(@key).generate(:DEVICE, @info)
-    evidence = RCS::Evidence.new(@key).deserialize(piece.binary)
+    evidences, action = RCS::Evidence.new(@key).deserialize(piece.binary)
     
-    assert_equal piece.content.force_encoding('UTF-16LE').encode('UTF-8'), evidence[0].content.force_encoding('UTF-16LE').encode('UTF-8')
+    assert_equal piece.content.force_encoding('UTF-16LE').encode('UTF-8'), evidences[0][:data][:content]
   end
   
   def test_align_to_block_len

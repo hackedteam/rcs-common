@@ -24,7 +24,6 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency(%q<mime-types>, [">= 0"])
   s.add_runtime_dependency(%q<sys-filesystem>, [">= 0"])
   s.add_runtime_dependency(%q<sys-cpu>, [">= 0"])
-  s.add_runtime_dependency(%q<sqlite3-ruby>, [">= 0"])
   s.add_runtime_dependency(%q<ffi>, [">= 0"])
   s.add_runtime_dependency(%q<mail>, [">= 0"])
   
