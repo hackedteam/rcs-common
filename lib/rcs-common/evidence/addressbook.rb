@@ -24,6 +24,8 @@ module AddressbookEvidence
       info[:data][:name] = contact.name
       info[:data][:contact] = contact.contact
       info[:data][:info] = contact.info
+      info[:data][:program] = contact.program
+      info[:data][:type] = contact.type
 
       yield info if block_given?
     end
