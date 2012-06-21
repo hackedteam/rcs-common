@@ -1,5 +1,5 @@
 module RCS
   module Common
-    VERSION = "8.0.5"
+    VERSION = "8.1.0"
   end
 end
