@@ -40,6 +40,7 @@ class Stats
   def add(hash)
     # for each key sum up the counters in the total and in the current minute
     hash.each_pair do |k, v|
+      next if @stats[:total][k].nil? or v.nil?
       @stats[:total][k] += v
       @sections.keys.each do |section|
         add_to_section section, k, v
