@@ -7,6 +7,7 @@ require "rcs-common/version"
 # gem modules
 require 'rcs-common/crypt'
 require 'rcs-common/pascalize'
+require 'rcs-common/keywords'
 require 'rcs-common/trace'
 require 'rcs-common/mime'
 require 'rcs-common/systemstatus'

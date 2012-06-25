@@ -3,7 +3,7 @@
 require 'helper'
 require 'securerandom'
 
-class TestRcsCommon < Test::Unit::TestCase
+class PascalizeTest < Test::Unit::TestCase
   def test_pascalize
     source = "ciao"
     #            length             c            i            a            o           null
