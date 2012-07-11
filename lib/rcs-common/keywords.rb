@@ -13,7 +13,7 @@ class String
 
     # remove punctuation
     if self.ascii_only?
-      self.gsub!(/(\s|\d|\W)+/u, ' ')
+      self.gsub!(/(\W)+/u, ' ')
     else
       self.gsub!(/[(,?!\'":;.)]/, ' ')
     end

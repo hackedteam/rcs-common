@@ -47,4 +47,23 @@ class KeywordsTest < Test::Unit::TestCase
     assert_equal output, input.keywords
   end
 
+  def test_numbers
+    input = "123 456 789"
+    output = ['123', '456', '789']
+    assert_equal output, input.keywords
+  end
+
+  def test_telephone_number
+    input = "Il mio numero di telefono: +393480115642"
+    output = ['393480115642', 'di', 'il', 'mio', 'numero', 'telefono']
+    assert_equal output, input.keywords
+  end
+
+  def test_file_path
+    input = "c:\\users\\alor\\documents\\secret\\plan.doc"
+    output = ['alor', 'c', 'doc', 'documents', 'plan', 'secret', 'users']
+    assert_equal output, input.keywords
+  end
+
+
 end
