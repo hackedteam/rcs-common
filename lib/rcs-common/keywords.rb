@@ -5,21 +5,24 @@ class String
 
   def keywords
 
+    # make a copy of itself to preserve the original
+    keywords = self.dup
+
     # convert to lowercase
-    self.downcase!
+    keywords.downcase!
 
     # returns a copy of str with leading and trailing whitespace removed.
-    self.strip!
+    keywords.strip!
 
     # remove punctuation
-    if self.ascii_only?
-      self.gsub!(/(\W)+/u, ' ')
+    if keywords.ascii_only?
+      keywords.gsub!(/(\W)+/u, ' ')
     else
-      self.gsub!(/[(,?!\'":;.)]/, ' ')
+      keywords.gsub!(/[(,?!\'":;.)]/, ' ')
     end
 
     # split on spaces
-    keywords = self.split " "
+    keywords = keywords.split " "
 
     # remove duplicate words
     keywords.uniq!
