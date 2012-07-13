@@ -5,6 +5,14 @@ require 'securerandom'
 
 class KeywordsTest < Test::Unit::TestCase
 
+  def test_dont_modify_source
+    input = "abc 123 : 456 + @ pippo"
+    source = input.dup
+    output = ['123', '456', 'abc', 'pippo']
+    assert_equal output, input.keywords
+    assert_equal source, input
+  end
+
   def test_strip
     input = "   ciao\n\t miao"
     output = ['ciao', 'miao']
