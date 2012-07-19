@@ -43,18 +43,6 @@ class KeywordsTest < Test::Unit::TestCase
     assert_equal output, input.keywords
   end
 
-  def test_utf8
-    input = "スパイ alor, スパイ... "
-    output = ['alor', 'スパイ']
-    assert_equal output, input.keywords
-  end
-
-  def test_more_utf8
-    input = "Il sØl, è bello!"
-    output = ['bello', 'il', 'sØl', 'è']
-    assert_equal output, input.keywords
-  end
-
   def test_numbers
     input = "123 456 789"
     output = ['123', '456', '789']
@@ -73,5 +61,40 @@ class KeywordsTest < Test::Unit::TestCase
     assert_equal output, input.keywords
   end
 
+  def test_marks
+    input = "do you know me? of course!"
+    output = ["course", "do", "know", "me", "of", "you"]
+    assert_equal output, input.keywords
+  end
+
+  def test_utf8
+    input = "スパイ alor, スパイ... "
+    output = ['alor', 'スパイ']
+    assert_equal output, input.keywords
+  end
+
+  def test_more_utf8
+    input = "Il sØl, è bello!"
+    output = ['bello', 'il', 'sØl', 'è']
+    assert_equal output, input.keywords
+  end
+
+  def test_symbols
+    input = "alor, ... + 10% +3946 / * alor@ht-ht {sid-55--55} [ht] (55%) A&F ht_ht <html>"
+    output = ["10", "3946", "55", "a", "alor", "f", "ht", "html", "sid"]
+    assert_equal output, input.keywords
+  end
+
+  def test_utf8_symbols
+    input = "ス alor, ... + 10% +3946 / * alor@ht-ht {sid-55--55} [ht] (55%) A&F ht_ht <html>"
+    output = ["10", "3946", "55", "a", "alor", "f", "ht", "html", "sid", "ス"]
+    assert_equal output, input.keywords
+  end
+
+  def test_tweet
+    input = "this is cool :) #coolesthing"
+    output = ["cool", "coolesthing", "is", "this"]
+    assert_equal output, input.keywords
+  end
 
 end

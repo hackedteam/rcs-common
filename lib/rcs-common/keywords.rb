@@ -14,12 +14,9 @@ class String
     # returns a copy of str with leading and trailing whitespace removed.
     keywords.strip!
 
-    # remove punctuation
-    if keywords.ascii_only?
-      keywords.gsub!(/(\W)+/u, ' ')
-    else
-      keywords.gsub!(/[(,?!\'":;.)]/, ' ')
-    end
+    # remove everything that is not alphanumeric
+    keywords.gsub!(/([^[:alnum:]])+/u, ' ')
+    #keywords.gsub!(/[(,%&@_":;!\#\-\*\[\]\{\}\?\\\+\'\.\/)]/, ' ')
 
     # split on spaces
     keywords = keywords.split " "
