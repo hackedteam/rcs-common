@@ -4,7 +4,7 @@ module RCS
 
 module DeviceEvidence
   def content
-    "The time is #{Time.now} ;)".to_utf16le_binary
+    "The time is #{Time.now} and everything is ok... till now".to_utf16le_binary
   end
 
   def generate_content

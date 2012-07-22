@@ -1,5 +1,6 @@
 require 'stringio'
 require_relative 'trace'
+require_relative 'evidence/common'
 
 require 'rcs-common/trace'
 
@@ -208,9 +209,11 @@ module RCS
   class AddressBookSerializer
     include RCS::Tracer
 
-    attr_reader :name, :contact, :info
+    attr_reader :name, :contact, :info, :type, :program
 
     POOM_V1_0_PROTO = 0x01000000
+    POOM_V2_0_PROTO = 0x01000001
+
     ADDRESSBOOK_TYPES = { 0x1 => :first_name,
                           0x2 => :last_name,
                           0x3 => :company,
@@ -261,12 +264,23 @@ module RCS
                           0x30 => :body,
                           0x31 => :birthday,
                           0x32 => :anniversary,
-                          0x33 => :skype_name,
+                          0x33 => :screen_name,
                           0x34 => :phone_numbers,
                           0x35 => :address,
                           0x36 => :notes,
                           0x37 => :unknown,
                           0x38 => :facebook_page}
+
+    PROGRAM_TYPE = {
+        0x01 => :outlook,
+        0x02 => :skype,
+        0x03 => :facebook,
+        0x04 => :twitter
+    }
+
+    TYPE_FLAGS = {
+        twitter: {0x00 => :friend, 0x01 => :follower}
+    }
 
     def initialize
       @fields = {}
@@ -297,7 +311,18 @@ module RCS
       version = stream.read(4).unpack("L").shift
       oid = stream.read(4).unpack("L").shift
 
-      raise EvidenceDeserializeError.new("Invalid version") unless version == POOM_V1_0_PROTO
+      unless version == POOM_V1_0_PROTO or version == POOM_V2_0_PROTO
+        raise EvidenceDeserializeError.new("Invalid version")
+      end
+
+      case version
+        when POOM_V1_0_PROTO
+          program = 0
+          flags = 0
+        when POOM_V2_0_PROTO
+          program = stream.read(4).unpack("L").shift
+          flags = stream.read(4).unpack("L").shift
+      end
 
       @fields = {}
 
@@ -307,6 +332,7 @@ module RCS
       until content.empty?
         type, size = Serialization.decode_prefix content.slice!(0, 4)
         str = content.slice!(0, size).utf16le_to_utf8
+        trace :debug, "ADDRESSBOOK FIELD #{ADDRESSBOOK_TYPES[type]} = #{str}"
         @fields[ADDRESSBOOK_TYPES[type]] = str if ADDRESSBOOK_TYPES.has_key? type
       end
 
@@ -314,6 +340,12 @@ module RCS
       @name = ""
       @name = @fields[:first_name] if @fields.has_key? :first_name
       @name += " " + @fields[:last_name] if @fields.has_key? :last_name
+
+      @program = PROGRAM_TYPE[program]
+      @program ||= :unknown
+
+      @type = TYPE_FLAGS[@program][flags] if TYPE_FLAGS.has_key? @program
+      @type ||= :peer
 
       # contact
       @contact = ""
