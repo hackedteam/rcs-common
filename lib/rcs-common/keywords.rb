@@ -28,6 +28,9 @@ class String
     keywords.sort!
 
     keywords
+  rescue
+    # fallback case
+    []
   end
 
 end
