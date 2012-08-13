@@ -21,6 +21,10 @@ class String
     # split on spaces
     keywords = keywords.split " "
 
+    # remove too long words
+    # it is with a very high probability a meaningless word (like encoded or something)
+    keywords.delete_if {|w| w.size > 25}
+
     # remove duplicate words
     keywords.uniq!
 

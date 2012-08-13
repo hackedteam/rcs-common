@@ -109,4 +109,10 @@ class KeywordsTest < Test::Unit::TestCase
     assert_equal output, input.keywords
   end
 
+  def test_avoid_word_too_long
+    input = "how do we handle encoded binary like this dGhpcyBpcyBhIHdvcmQgdG9vIGxvbmcK?"
+    output = ["binary", "do", "encoded", "handle", "how", "like", "this", "we"]
+    assert_equal output, input.keywords
+  end
+
 end
