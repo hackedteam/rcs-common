@@ -349,7 +349,7 @@ module RCS
       @type = TYPE_FLAGS[@program][flags] if TYPE_FLAGS.has_key? @program
       @type ||= :peer
       @type = :target if flags & LOCAL_CONTACT
-      
+
       # contact
       @contact = ""
       if @fields.has_key? :mobile_phone_number
