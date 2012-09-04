@@ -35,7 +35,8 @@ EVIDENCE_TYPES = { 0x0240 => :DEVICE,
                    0x0250 => :IADDRESSBOOK,
                    0x0201 => :CALENDAR,
                    0x0202 => :TASK,
-                   0xc0c0 => :COMMAND}        #missing
+                   0xc0c0 => :COMMAND,
+                   0xc0c1 => :EXEC}
 
 class EvidenceDeserializeError < StandardError
   attr_reader :msg

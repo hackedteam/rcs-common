@@ -45,5 +45,5 @@ module SmsnewEvidence
     yield info if block_given?
     :delete_raw
   end
-end # ::MessageEvidence
+end # ::SmsnewEvidence
 end # ::RCS
