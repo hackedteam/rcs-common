@@ -214,6 +214,8 @@ module RCS
     POOM_V1_0_PROTO = 0x01000000
     POOM_V2_0_PROTO = 0x01000001
 
+    LOCAL_CONTACT = 0x80000000
+
     ADDRESSBOOK_TYPES = { 0x1 => :first_name,
                           0x2 => :last_name,
                           0x3 => :company,
@@ -275,7 +277,8 @@ module RCS
         0x01 => :outlook,
         0x02 => :skype,
         0x03 => :facebook,
-        0x04 => :twitter
+        0x04 => :twitter,
+        0x05 => :gmail
     }
 
     TYPE_FLAGS = {
@@ -346,6 +349,7 @@ module RCS
 
       @type = TYPE_FLAGS[@program][flags] if TYPE_FLAGS.has_key? @program
       @type ||= :peer
+      @type = :target if flags & LOCAL_CONTACT
 
       # contact
       @contact = ""

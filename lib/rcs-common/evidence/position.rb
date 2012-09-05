@@ -113,7 +113,8 @@ module PositionEvidence
         until stream.eof?
           info[:data][:type] = 'GPS'
           type, size, version = stream.read(12).unpack('L*')
-          info[:da] = Time.from_filetime(*stream.read(8).unpack('L*'))
+          low, high = *stream.read(8).unpack('L*')
+          info[:da] = Time.from_filetime(high, low)
           gps = GPS_Position.new
           gps.read stream
           info[:data][:latitude] = "%.7f" % gps.latitude

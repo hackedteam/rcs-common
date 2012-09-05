@@ -97,4 +97,22 @@ class KeywordsTest < Test::Unit::TestCase
     assert_equal output, input.keywords
   end
 
+  def test_ascii
+    input = "abc def".force_encoding("ASCII-8BIT")
+    output = ["abc", "def"]
+    assert_equal output, input.keywords
+  end
+
+  def test_binary
+    input = SecureRandom.random_bytes(64)
+    output = []
+    assert_equal output, input.keywords
+  end
+
+  def test_avoid_word_too_long
+    input = "how do we handle encoded binary like this dGhpcyBpcyBhIHdvcmQgdG9vIGxvbmcK?"
+    output = ["binary", "do", "encoded", "handle", "how", "like", "this", "we"]
+    assert_equal output, input.keywords
+  end
+
 end
