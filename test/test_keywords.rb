@@ -104,14 +104,26 @@ class KeywordsTest < Test::Unit::TestCase
   end
 
   def test_binary
-    input = SecureRandom.random_bytes(64)
-    output = []
-    assert_equal output, input.keywords
+    input = "keep" + SecureRandom.random_bytes(64)
+    output = ['keep']
+    assert_equal output, output & input.keywords
   end
 
   def test_avoid_word_too_long
     input = "how do we handle encoded binary like this dGhpcyBpcyBhIHdvcmQgdG9vIGxvbmcK?"
     output = ["binary", "do", "encoded", "handle", "how", "like", "this", "we"]
+    assert_equal output, input.keywords
+  end
+
+  def test_invalid_chars
+    input = "Menu \x95 U .'7\x95--;,"
+    output = ['7', 'menu', 'u']
+    assert_equal output, input.keywords
+  end
+
+  def test_real_ocr
+    input = "Menu \x95 U .'7\x95--;, '.,1 ID 10:35\ni 4 lli 1 - 1/.\nEll rat\nIP' ,\nContacts Messaging Web\nGo\nGallery Calendar Mail\nStore Vi eos Music p ayer\n\\ li\nSearch Maps Settings\nCt \x97\n\x97"
+    output = ["1","10","35","4","7","ayer","calendar","contacts","ct","ell","eos","gallery","go","i","id","ip","li","lli","mail","maps","menu","messaging","music","p","rat","search","settings","store","u","vi","web"]
     assert_equal output, input.keywords
   end
 

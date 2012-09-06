@@ -8,8 +8,8 @@ class String
     # make a copy of itself to preserve the original
     keywords = self.dup
 
-    # convert to lowercase
-    keywords.downcase!
+    # sanitize the input UTF-8
+    keywords.encode!('UTF-8', 'UTF-8', :invalid => :replace)
 
     # returns a copy of str with leading and trailing whitespace removed.
     keywords.strip!
@@ -17,6 +17,9 @@ class String
     # remove everything that is not alphanumeric
     keywords.gsub!(/([^[:alnum:]])+/u, ' ')
     #keywords.gsub!(/[(,%&@_":;!\#\-\*\[\]\{\}\?\\\+\'\.\/)]/, ' ')
+
+    # convert to lowercase
+    keywords.downcase!
 
     # split on spaces
     keywords = keywords.split " "
@@ -32,7 +35,7 @@ class String
     keywords.sort!
 
     keywords
-  rescue
+  rescue Exception => e
     # fallback case
     []
   end
