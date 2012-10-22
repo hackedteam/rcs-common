@@ -37,7 +37,9 @@ class Evidence
   attr_reader :version
   attr_reader :type
   attr_writer :info
-  
+
+  GLOBAL_KEY = "\xab\x12\xcd\x34\xef\x56\x01\x23\x45\x67\x89\xab\xcd\xef\x00\x11"
+
   def self.VERSION_ID
     2008121901
   end
@@ -164,7 +166,14 @@ class Evidence
     
     # header
     header_length = read_uint32(binary_string)
-
+    
+    # check if we need to apply the global key (evidence is being imported)
+    if (header_length & 0x80000000) == 0x80000000
+      trace :debug, "USING GLOBAL KEY FOR EVIDENCE DECODING!"
+      @key = GLOBAL_KEY
+      header_length &= ~0x80000000
+    end
+    
     # if empty evidence, raise
     raise EmptyEvidenceError.new("empty evidence") if empty?(binary_string, header_length)
     

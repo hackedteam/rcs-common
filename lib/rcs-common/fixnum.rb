@@ -37,6 +37,10 @@ class Fixnum
   include ByteSize
 end
 
+class Float
+  include ByteSize
+end
+
 # we need to add it even to Bignum for windows32 compatibility
 # everything over a GiB is Bignum...
 class Bignum
