@@ -104,10 +104,17 @@ class KeywordsTest < Test::Unit::TestCase
   end
 
   def test_binary
-    input = "keep" + SecureRandom.random_bytes(64)
+    input = "keep " + SecureRandom.random_bytes(16)
     output = ['keep']
     assert_equal output, output & input.keywords
   end
+
+  def test_binary_special
+    input = "\x6b\x65\x65\x70\x20\xf1\xb5\xfb\xc0\x55\x22\x23\xee\x25\xca\xd9\xde\x02\xef\x0d\xf1"
+    output = ['keep']
+    assert_equal output, output & input.keywords
+  end
+
 
   def test_avoid_word_too_long
     input = "how do we handle encoded binary like this dGhpcyBpcyBhIHdvcmQgdG9vIGxvbmcK?"
