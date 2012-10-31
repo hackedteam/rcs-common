@@ -40,6 +40,7 @@ class String
     io.pos = offset
     io.write replace
     io.close
+    self
   end
 
   def binary_add_at_offset(offset, value)
@@ -57,6 +58,7 @@ class String
     io.pos = offset
     io.write current
     io.close
+    self
   end
 
 end
