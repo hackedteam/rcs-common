@@ -103,7 +103,7 @@ module PositionEvidence
                                mac[4].unpack('C').first,
                                mac[5].unpack('C').first]
 
-          info[:data][:wifi] << {:mac => mac_s, :sig => sig, :bssid => ssid}
+          info[:data][:wifi] << {:mac => mac_s, :sig => sig, :ssid => ssid}
         end
       when LOCATION_IP
         info[:data][:type] = 'IPv4'
