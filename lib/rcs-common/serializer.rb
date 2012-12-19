@@ -271,7 +271,8 @@ module RCS
                           0x35 => :address,
                           0x36 => :notes,
                           0x37 => :unknown,
-                          0x38 => :facebook_page}
+                          0x38 => :facebook_page,
+                          0x40 => :handle}
 
     PROGRAM_TYPE = {
         0x01 => :outlook,
@@ -280,7 +281,8 @@ module RCS
         0x04 => :twitter,
         0x05 => :gmail,
         0x06 => :bbm,
-        0x07 => :whatwapp
+        0x07 => :whatwapp,
+        0x08 => :phone
     }
 
     TYPE_FLAGS = {
