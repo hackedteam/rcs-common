@@ -278,7 +278,9 @@ module RCS
         0x02 => :skype,
         0x03 => :facebook,
         0x04 => :twitter,
-        0x05 => :gmail
+        0x05 => :gmail,
+        0x06 => :bbm,
+        0x07 => :whatwapp
     }
 
     TYPE_FLAGS = {
