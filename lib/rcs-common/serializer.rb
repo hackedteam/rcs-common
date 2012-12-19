@@ -281,7 +281,7 @@ module RCS
         0x04 => :twitter,
         0x05 => :gmail,
         0x06 => :bbm,
-        0x07 => :whatwapp,
+        0x07 => :whatsapp,
         0x08 => :phone
     }
 
