@@ -126,6 +126,7 @@ module PositionEvidence
           gps.read stream
           info[:data][:latitude] = "%.7f" % gps.latitude
           info[:data][:longitude] = "%.7f" % gps.longitude
+          info[:data][:accuracy] = "%.7f" % gps.accuracy
           delim = stream.read(4).unpack('L').first
           raise EvidenceDeserializeError.new("Malformed LOCATION GPS (missing delimiter)") unless delim == ELEM_DELIMITER
           yield info if block_given?
@@ -164,6 +165,7 @@ class GPS_Position
 
   attr_reader :latitude
   attr_reader :longitude
+  attr_reader :accuracy
   
   def self.size
     self.struct(0,0).bytesize
@@ -213,7 +215,8 @@ class GPS_Position
     stream.read(2*4)
 
     stream.read(3*4)
-    stream.read(3*4)
+    @accuracy = stream.read(4).unpack('F').first
+    stream.read(2*4)
 
     stream.read(4)
     stream.read(12*4)
