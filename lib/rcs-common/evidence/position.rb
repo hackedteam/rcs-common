@@ -75,12 +75,11 @@ module PositionEvidence
 
   def decode_content(common_info, chunks)
     stream = StringIO.new chunks.join
-    
-    info = Hash[common_info]
-    info[:data] ||= Hash.new
-    
-    case info[:loc_type]
+
+    case common_info[:loc_type]
       when LOCATION_WIFI
+        info = Hash[common_info]
+        info[:data] ||= Hash.new
         info[:data][:type] = 'WIFI'
         info[:data][:wifi] = []
         until stream.eof?
@@ -105,12 +104,20 @@ module PositionEvidence
 
           info[:data][:wifi] << {:mac => mac_s, :sig => sig, :ssid => ssid}
         end
+        yield info if block_given?
+
       when LOCATION_IP
+        info = Hash[common_info]
+        info[:data] ||= Hash.new
         info[:data][:type] = 'IPv4'
         ip = stream.read_ascii_string
         info[:data][:ip] = ip unless ip.nil?
+        yield info if block_given?
+
       when LOCATION_GPS
         until stream.eof?
+          info = Hash[common_info]
+          info[:data] ||= Hash.new
           info[:data][:type] = 'GPS'
           type, size, version = stream.read(12).unpack('L*')
           low, high = *stream.read(8).unpack('L*')
@@ -121,9 +128,13 @@ module PositionEvidence
           info[:data][:longitude] = "%.7f" % gps.longitude
           delim = stream.read(4).unpack('L').first
           raise EvidenceDeserializeError.new("Malformed LOCATION GPS (missing delimiter)") unless delim == ELEM_DELIMITER
+          yield info if block_given?
         end
+
       when LOCATION_GSM, LOCATION_CDMA
         until stream.eof?
+          info = Hash[common_info]
+          info[:data] ||= Hash.new
           info[:data][:type] = (info[:loc_type] == LOCATION_GSM) ? 'GSM' : 'CDMA'
           type, size, version = stream.read(12).unpack('L*')
           low, high = *stream.read(8).unpack('L*')
@@ -139,12 +150,12 @@ module PositionEvidence
 
           delim = stream.read(4).unpack('L').first
           raise EvidenceDeserializeError.new("Malformed LOCATION CELL (missing delimiter)") unless delim == ELEM_DELIMITER
+          yield info if block_given?
         end
       else
         raise EvidenceDeserializeError.new("Unsupported LOCATION type (#{info[:loc_type]})")
     end
     
-    yield info if block_given?
     :delete_raw
   end
 end
