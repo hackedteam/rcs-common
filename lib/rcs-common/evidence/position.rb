@@ -215,8 +215,9 @@ class GPS_Position
     stream.read(2*4)
 
     stream.read(3*4)
-    @accuracy = stream.read(4).unpack('F').first
-    stream.read(2*4)
+    stream.read(4)                                # PDOP
+    @accuracy = stream.read(4).unpack('F').first  # HDOP
+    stream.read(4)                                # VDOP
 
     stream.read(4)
     stream.read(12*4)
