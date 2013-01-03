@@ -13,7 +13,7 @@ module RCS
 
     def decode_content(common_info, chunks)
 
-      info =  Hash[common_info]
+      info = Hash[common_info]
       info[:data] ||= Hash.new
       info[:data][:type] = :sms
 
