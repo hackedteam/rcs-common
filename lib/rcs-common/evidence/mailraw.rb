@@ -9,6 +9,8 @@ module MailrawEvidence
   MAILRAW_VERSION = 2009070301
   MAILRAW_2_VERSION = 2012030601
 
+  MAIL_INCOMING = 0x00000010
+
   PROGRAM_GMAIL = 0x00000000
 
   ADDRESSES = ['ciccio.pasticcio@google.com', 'billg@microsoft.com', 'john.doe@nasa.gov', 'mario.rossi@italy.it']
@@ -60,10 +62,13 @@ module MailrawEvidence
           else
             ret[:data][:program] = 'unknown'
         end
+        # direction of the mail
+        ret[:data][:incoming] = (flags & MAIL_INCOMING != 0) ? 1 : 0
       else
         raise EvidenceDeserializeError.new("invalid log version for MAILRAW")
     end
-    
+
+
     ret[:data][:size] = size
     return ret
   end

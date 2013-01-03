@@ -53,8 +53,6 @@ module SmsnewEvidence
 
     info[:data][:content] = stream.read.utf16le_to_utf8
 
-    puts info[:data].inspect
-
     yield info if block_given?
     :delete_raw
   end
