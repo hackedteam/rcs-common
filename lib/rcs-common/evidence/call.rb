@@ -8,12 +8,12 @@ module CallEvidence
   LOG_VOICE_VERSION = 2008121901
   CHANNEL = { 0 => :incoming, 1 => :outgoing }
   SOFTWARE = { 0x0141 => "Skype",
-              0x0142 => "GTalk",
-              0x0143 => "Yahoo",
-              0x0144 => "Msn",
-              0x0145 => "Mobile",
-              0x0146 => "Skype",
-              0X0147 => "Msn" }
+               0x0142 => "GTalk",
+               0x0143 => "Yahoo",
+               0x0144 => "Msn",
+               0x0145 => "Mobile",
+               0x0146 => "Skype",
+               0X0147 => "Msn" }
   
   def decode_additional_header(data)
 

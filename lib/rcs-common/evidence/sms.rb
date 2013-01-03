@@ -20,8 +20,8 @@ module RCS
       stream = StringIO.new chunks.join
       @sms = MAPISerializer.new.unserialize stream
 
-      info[:data][:from] = @sms.fields[:from]
-      info[:data][:rcpt] = @sms.fields[:rcpt]
+      info[:data][:from] = @sms.fields[:from].delete("\x00")
+      info[:data][:rcpt] = @sms.fields[:rcpt].delete("\x00")
       info[:data][:content] = @sms.fields[:subject]
 
       yield info if block_given?

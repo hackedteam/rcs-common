@@ -5,11 +5,11 @@ module RCS
 module CalllistEvidence
 
   def content
-    
+    raise "Not implemented!"
   end
   
   def generate_content
-    
+    raise "Not implemented!"
   end
 
   def decode_content(common_info, chunks)
