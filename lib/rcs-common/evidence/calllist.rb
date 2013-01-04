@@ -23,10 +23,10 @@ module CalllistEvidence
 
     info[:data][:peer] = @call_list.fields[:number]
     info[:data][:peer] += " (#{@call_list.fields[:name]})" unless @call_list.fields[:name].nil?
-    info[:data][:program] = @call_list.properties
+    info[:data][:program] = 'Phone'
     info[:data][:status] = :history
     info[:data][:duration] = @call_list.end_time - @call_list.start_time
-    info[:data][:incoming] = @call_list.properties.include? :incoming ? 1 : 0
+    info[:data][:incoming] = (@call_list.properties.include? :incoming) ? 1 : 0
 
     yield info if block_given?
     :delete_raw
