@@ -110,7 +110,6 @@ module RCS
       @start_time = Time.from_filetime high, low
       low, high = stream.read(8).unpack 'V2'
       @end_time = Time.from_filetime high, low
-      fields[:duration] = @end_time - @start_time
 
       props = stream.read(4).unpack('L').shift
       if props & OUTGOING == 1
