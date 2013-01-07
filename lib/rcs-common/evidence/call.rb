@@ -11,7 +11,7 @@ module CallEvidence
                0x0142 => "GTalk",
                0x0143 => "Yahoo",
                0x0144 => "Msn",
-               0x0145 => "Mobile",
+               0x0145 => "Phone",
                0x0146 => "Skype",
                0X0147 => "Msn" }
   

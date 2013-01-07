@@ -8,12 +8,11 @@ module RCS
     CONTACTFILE = 0xC022
 
     def content
-      fields = { :first_name => ["John", "Liza", "Bruno"].sample, :last_name => ["Doe", "Rossi", "Bianchi"].sample, :company => ["Acme Inc.", "Disney", "Apple Inc."].sample, :mobile_phone_number => ["00155597865", "0012342355", "+3901234567"].sample}
-      AddressBookSerializer.new.serialize fields
+
     end
 
     def generate_content
-      [ content ]
+
     end
 
     def decode_content(common_info, chunks)
