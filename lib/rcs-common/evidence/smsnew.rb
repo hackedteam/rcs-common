@@ -17,12 +17,12 @@ module SmsnewEvidence
   def additional_header
     header = StringIO.new
     header.write [SMS_VERSION].pack("l")
-    header.write [1].pack("l") # incoming
+    header.write [[0,1].sample].pack("l") # incoming
     time = Time.now.getutc.to_filetime
     time.reverse!
     header.write time.pack('L*')
     header.write "+39123456789".ljust(16, "\x00")
-    header.write "local".ljust(16, "\x00")
+    header.write "+39987654321".ljust(16, "\x00")
     header.string
   end
 
