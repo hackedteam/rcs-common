@@ -12,6 +12,7 @@ module MailrawEvidence
   MAIL_INCOMING = 0x00000010
 
   PROGRAM_GMAIL = 0x00000000
+  PROGRAM_BB = 0x00000001
 
   ADDRESSES = ['ciccio.pasticcio@google.com', 'billg@microsoft.com', 'john.doe@nasa.gov', 'mario.rossi@italy.it']
   SUBJECTS = ['drugs', 'bust me!', 'police here']
@@ -59,6 +60,8 @@ module MailrawEvidence
         case program
           when PROGRAM_GMAIL
             ret[:data][:program] = 'gmail'
+          when PROGRAM_BB
+            ret[:data][:program] = 'blackberry'
           else
             ret[:data][:program] = 'unknown'
         end
