@@ -28,8 +28,7 @@ EVIDENCE_TYPES = { 0x0240 => :DEVICE,
                    0xD0D0 => :DOWNLOAD,    #file
                    0x1220 => :POSITION,
                    0xEDA1 => :FILESYSTEM,  
-                   0x1001 => :MAILRAW,
-                   0x0210 => :MAIL,        #missing  #message
+                   0x1001 => :MAIL,
                    0x0211 => :SMS,
                    0x0213 => :SMSNEW,
                    0x0212 => :MMS,         #missing  #message

