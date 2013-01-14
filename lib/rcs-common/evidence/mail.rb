@@ -7,7 +7,7 @@ module RCS
 module MailEvidence
 
   MAIL_VERSION = 2009070301
-  MAIL_2_VERSION = 2012030601
+  MAIL_VERSION2 = 2012030601
 
   MAIL_INCOMING = 0x00000010
 
@@ -20,28 +20,32 @@ module MailEvidence
   BODIES = ["You're busted, dude.", "I'm a drug trafficker, send me to hang!", "I'll sell meth to kids. Stop me."]
   
   def content
-    binary = StringIO.new
-    
-    email = Mail.new do
-      from    ADDRESSES.sample
-      to      ADDRESSES.sample
-      subject SUBJECTS.sample
-      body    BODIES.sample
-    end
-    
-    ft_high, ft_low = Time.now.to_filetime
-    body = email.to_s
-    add_header = [MAIL_VERSION, 1, body.bytesize, ft_high, ft_low].pack("I*")
-    binary.write(add_header)
-    binary.write(body)
-
-    binary.string
+    @email.to_s
   end
   
   def generate_content
     [ content ]
   end
-  
+
+  def additional_header
+    binary = StringIO.new
+
+    @email = Mail.new do
+      from    ADDRESSES.sample
+      to      ADDRESSES.sample
+      subject SUBJECTS.sample
+      body    BODIES.sample
+    end
+
+    ft_high, ft_low = Time.now.to_filetime
+    body = @email.to_s
+    add_header = [MAIL_VERSION2, 1 | MAIL_INCOMING, body.bytesize, ft_high, ft_low].pack("I*")
+    binary.write(add_header)
+    binary.write [[0,1,2].sample].pack('L')
+
+    binary.string
+  end
+
   def decode_additional_header(data)
     raise EvidenceDeserializeError.new("incomplete MAIL") if data.nil? or data.bytesize == 0
 
@@ -52,12 +56,14 @@ module MailEvidence
 
     # flags indica se abbiamo tutto il body o solo header
     version, flags, size, ft_low, ft_high = binary.read(20).unpack('L*')
-    
+
+    trace :debug, "MAIL PARSING: #{version} #{flags}"
+
     case version
       when MAIL_VERSION
         ret[:data][:program] = 'outlook'
-      when MAIL_2_VERSION
-        program = binary.read(4).unpack('L')
+      when MAIL_VERSION2
+        program = binary.read(4).unpack('L').first
 
         trace :debug, "MAIL: program #{program} flags #{flags}"
 
@@ -73,10 +79,14 @@ module MailEvidence
         end
         # direction of the mail
         ret[:data][:incoming] = (flags & MAIL_INCOMING != 0) ? 1 : 0
+
+        trace :debug, "MAIL: incoming #{ret[:data][:incoming]}"
+
       else
         raise EvidenceDeserializeError.new("invalid log version for MAIL")
     end
 
+    trace :debug, ret[:data].inspect
 
     ret[:data][:size] = size
     return ret
