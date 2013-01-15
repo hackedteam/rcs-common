@@ -22,7 +22,7 @@ module PositionEvidence
       when LOCATION_GPS
         content.write [@loc_type, 0, 0].pack('L*')
         content.write Time.now.getutc.to_filetime.pack('L*')
-        content.write GPS_Position.struct(45.12345, 9.54321)
+        content.write GPS_Position.struct(45.12345, 9.54321, rand(10..100))
         content.write [ ELEM_DELIMITER ].pack('L')
 
       when LOCATION_GSM, LOCATION_CDMA
@@ -168,10 +168,10 @@ class GPS_Position
   attr_reader :accuracy
   
   def self.size
-    self.struct(0,0).bytesize
+    self.struct(0,0,0).bytesize
   end
 
-  def self.struct(lat, long)
+  def self.struct(lat, long, accuracy)
     str = ''
     str += [0].pack('l')  # DWORD dwVersion;  Current version of GPSID client is using.
     str += [0].pack('l')  # DWORD dwSize;     sizeof(_GPS_POSITION)
@@ -191,7 +191,7 @@ class GPS_Position
     str += [0].pack('l')  # GPS_FIX_TYPE        FixType;           // Is this 2d or 3d fix?
     str += [0].pack('l')  # GPS_FIX_SELECTION   SelectionType;     // Auto or manual selection between 2d or 3d mode
     str += [0].pack('F')  # float flPositionDilutionOfPrecision;   // Position Dilution Of Precision
-    str += [0].pack('F')  # float flHorizontalDilutionOfPrecision; // Horizontal Dilution Of Precision
+    str += [accuracy].pack('F')  # float flHorizontalDilutionOfPrecision; // Horizontal Dilution Of Precision
     str += [0].pack('F')  # float flVerticalDilutionOfPrecision;   // Vertical Dilution Of Precision
 
     str += [1].pack('l')  # DWORD dwSatelliteCount;                // Number of satellites used in solution
