@@ -86,12 +86,13 @@ module RCS
 
         info = Hash[common_info]
         info[:data] ||= Hash.new
-        info[:data][:type] = :target if (flags & LOCAL_CONTACT != 0)
 
         # ABFile
         magic = read_uint32 stream
         raise EvidenceDeserializeError.new("invalid log version for IADDRESSBOOK [#{magic} != #{CONTACTFILE}]") unless magic == CONTACTFILE
         flags = read_uint32(stream) if (magic & VERSION_2 != 0)
+
+        info[:data][:type] = :target if (flags & LOCAL_CONTACT != 0)
 
         len = read_uint32 stream
 
