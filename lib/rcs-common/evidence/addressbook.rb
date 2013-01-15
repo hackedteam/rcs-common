@@ -112,7 +112,7 @@ module RCS
           type, number = read_number(stream)
           case type
             when 0
-              info[:data][:contact] ||= number
+              info[:data][:info] ||= number
             else
               info[:data][:info] += "#{number}\n"
           end
