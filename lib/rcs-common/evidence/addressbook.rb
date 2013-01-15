@@ -85,7 +85,7 @@ module RCS
 
         info = Hash[common_info]
         info[:data] ||= Hash.new
-        info[:data][:program] = :contacts
+        info[:data][:program] = :phone
 
         # ABFile
         magic = read_uint32 stream
