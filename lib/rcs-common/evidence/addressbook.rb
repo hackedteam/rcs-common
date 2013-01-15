@@ -75,9 +75,8 @@ module RCS
       stream = StringIO.new chunks.join
 
       # ABLogStruct
-      magic = read_uint32 stream
-
-      raise EvidenceDeserializeError.new("invalid log version for IADDRESSBOOK [#{magic} != #{CONTACTLIST}]") unless magic == CONTACTLIST or magic == (CONTACTLIST | VERSION_2)
+      magic_ver = read_uint32 stream
+      raise EvidenceDeserializeError.new("invalid log version for IADDRESSBOOK [#{magic_ver} != #{CONTACTLIST}]") unless magic_ver == CONTACTLIST or magic_ver == (CONTACTLIST | VERSION_2)
 
       stream.read(4) # len, ignore
       num_records = read_uint32 stream
@@ -90,7 +89,7 @@ module RCS
         # ABFile
         magic = read_uint32 stream
         raise EvidenceDeserializeError.new("invalid log version for IADDRESSBOOK [#{magic} != #{CONTACTFILE}]") unless magic == CONTACTFILE
-        flags = read_uint32(stream) if (magic & VERSION_2 != 0)
+        flags = read_uint32(stream) if (magic_ver & VERSION_2 != 0)
 
         info[:data][:type] = :target if (flags & LOCAL_CONTACT != 0)
 
