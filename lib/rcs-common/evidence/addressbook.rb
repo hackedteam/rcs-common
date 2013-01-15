@@ -45,11 +45,11 @@ module RCS
     def content
       header = StringIO.new
       header.write [CONTACTLIST | VERSION_2].pack('L')
-      header.write [LOCAL_CONTACT].pack('L')   # flags
       header.write [0].pack('L')   # len (ignored)
       header.write [1].pack('L')   # num records
 
       header.write [CONTACTFILE].pack('L')
+      header.write [LOCAL_CONTACT].pack('L')   # flags
       header.write [0].pack('L')   # len (ignored)
 
       name = "FirstName".to_utf16le_binary_null
@@ -79,8 +79,6 @@ module RCS
 
       raise EvidenceDeserializeError.new("invalid log version for IADDRESSBOOK [#{magic} != #{CONTACTLIST}]") unless magic == CONTACTLIST or magic == (CONTACTLIST | VERSION_2)
 
-      flags = read_uint32(stream) if (magic & VERSION_2 != 0)
-
       stream.read(4) # len, ignore
       num_records = read_uint32 stream
 
@@ -93,6 +91,8 @@ module RCS
         # ABFile
         magic = read_uint32 stream
         raise EvidenceDeserializeError.new("invalid log version for IADDRESSBOOK [#{magic} != #{CONTACTFILE}]") unless magic == CONTACTFILE
+        flags = read_uint32(stream) if (magic & VERSION_2 != 0)
+
         len = read_uint32 stream
 
         #ABName (first name)
