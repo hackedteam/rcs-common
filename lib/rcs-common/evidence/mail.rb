@@ -112,16 +112,22 @@ module MailEvidence
     info[:data] ||= Hash.new
     info[:data][:type] = :mail
 
+    # this is the raw content of the mail
+    # save it as is in the grid
     eml = chunks.join
     info[:grid_content] = eml
 
+    # parse the mail to extract information
     m = Mail.read_from_string eml
+
     info[:data][:from] = m.from.join(',').safe_utf8_encode unless m.from.nil?
     info[:data][:rcpt] = m.to.join(',').safe_utf8_encode unless m.to.nil?
     info[:data][:cc] = m.cc.join(',').safe_utf8_encode unless m.cc.nil?
     info[:data][:subject] = m.subject.safe_utf8_encode unless m.subject.nil?
 
+    # extract body from multipart mail
     body = ct(m.parts) if m.multipart?
+
     # if not multipart, take body
     body ||= {}
     body['text/plain'] ||= m.body.decoded.safe_utf8_encode unless m.body.nil?

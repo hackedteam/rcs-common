@@ -37,6 +37,8 @@ module ChatnewEvidence
     content.write program
     content.write flags
     content.write from
+    content.write from
+    content.write to
     content.write to
     content.write KEYSTROKES.sample.to_utf16le_binary_null
     content.write [ ELEM_DELIMITER ].pack('L')
@@ -61,19 +63,19 @@ module ChatnewEvidence
 
       program = stream.read(4).unpack('L').first
       info[:data][:program] = PROGRAM_TYPE[program]
-      #trace :debug, "CHAT Program #{info[:data][:program]}"
 
       flags = stream.read(4).unpack('L').first
       info[:data][:incoming] = (flags & CHAT_INCOMING != 0) ? 1 : 0
-      #trace :debug, "CHAT Incoming #{info[:data][:incoming]}"
 
       from = stream.read_utf16le_string
       info[:data][:from] = from.utf16le_to_utf8
-      #trace :debug, "CHAT from #{info[:data][:from]}"
+      from_display = stream.read_utf16le_string
+      info[:data][:from_display] = from_display.utf16le_to_utf8
 
       rcpt = stream.read_utf16le_string
       info[:data][:rcpt] = rcpt.utf16le_to_utf8
-      #trace :debug, "CHAT rcpt #{info[:data][:rcpt]}"
+      rcpt_display = stream.read_utf16le_string
+      info[:data][:rcpt_display] = rcpt_display.utf16le_to_utf8
 
       keystrokes = stream.read_utf16le_string
       info[:data][:content] = keystrokes.utf16le_to_utf8 unless keystrokes.nil?
