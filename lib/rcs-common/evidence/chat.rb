@@ -76,6 +76,12 @@ module ChatnewEvidence
 
       rcpt = stream.read_utf16le_string
       info[:data][:rcpt] = rcpt.utf16le_to_utf8
+
+      # remove the sender from the recipients (damned lazy Naga who does not want to parse it on the client)
+      recipients = info[:data][:rcpt].split(',')
+      recipients.delete(info[:data][:from])
+      info[:data][:rcpt] = recipients.join(',')
+
       #trace :debug, "CHAT rcpt: #{info[:data][:rcpt]}"
       rcpt_display = stream.read_utf16le_string
       info[:data][:rcpt_display] = rcpt_display.utf16le_to_utf8
