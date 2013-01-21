@@ -86,7 +86,7 @@ module CalllistEvidence
     @call_list = CallListSerializer.new.unserialize stream
 
     info[:data][:peer] = @call_list.fields[:number]
-    info[:data][:peer] += " (#{@call_list.fields[:name]})" unless @call_list.fields[:name].nil?
+    info[:data][:peer_name] = @call_list.fields[:name] unless @call_list.fields[:name].nil?
     info[:data][:program] = 'Phone'
     info[:data][:status] = :history
     info[:data][:duration] = @call_list.end_time - @call_list.start_time

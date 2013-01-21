@@ -92,21 +92,6 @@ module MailEvidence
     return ret
   end
 
-  def ct(parts)
-    content_types = parts.map { |p| p.content_type.split(';')[0] }
-    body = {}
-    content_types.each_with_index do |ct, i|
-      case ct
-        when 'multipart/alternative'
-          body = ct(parts[i].parts)
-        else
-          body ||= {}
-          body[ct] = parts[i].body.decoded.safe_utf8_encode
-      end
-    end
-    body
-  end
-
   def decode_content(common_info, chunks)
     info = Hash[common_info]
     info[:data] ||= Hash.new
@@ -120,17 +105,29 @@ module MailEvidence
     # parse the mail to extract information
     m = Mail.read_from_string eml
 
-    info[:data][:from] = m.from.join(',').safe_utf8_encode unless m.from.nil?
-    info[:data][:rcpt] = m.to.join(',').safe_utf8_encode unless m.to.nil?
-    info[:data][:cc] = m.cc.join(',').safe_utf8_encode unless m.cc.nil?
+    trace :debug, "MAIL: EML size: #{eml.size}"
+    trace :debug, "MAIL: From: #{m.from.inspect}"
+    trace :debug, "MAIL: Rcpt: #{m.to.inspect}"
+    trace :debug, "MAIL: CC: #{m.cc.inspect}"
+    trace :debug, "MAIL: Subject: #{m.subject.inspect}"
+
+    info[:data][:from] = parse_address(m.from)
+    info[:data][:rcpt] = parse_address(m.to)
+    info[:data][:cc] = parse_address(m.cc)
     info[:data][:subject] = m.subject.safe_utf8_encode unless m.subject.nil?
 
+    trace :debug, "MAIL: multipart #{m.multipart?} parts size: #{m.parts.size}"
+    trace :debug, "MAIL: parts #{m.parts.inspect}"
+
     # extract body from multipart mail
-    body = ct(m.parts) if m.multipart?
+    body = parse_multipart(m.parts) if m.multipart?
 
     # if not multipart, take body
     body ||= {}
     body['text/plain'] ||= m.body.decoded.safe_utf8_encode unless m.body.nil?
+
+    trace :debug, "MAIL: text/plain #{body['text/plain']}"
+    trace :debug, "MAIL: text/html #{body['text/html']}"
 
     if body.has_key? 'text/html'
       info[:data][:body] = body['text/html']
@@ -152,6 +149,38 @@ module MailEvidence
     yield info if block_given?
     :delete_raw
   end
+
+  def parse_multipart(parts)
+    content_types = parts.map { |p| p.content_type.split(';')[0] }
+    body = {}
+    content_types.each_with_index do |ct, i|
+      case ct
+        when 'multipart/alternative'
+          body = parse_multipart(parts[i].parts)
+        else
+          body ||= {}
+          body[ct] = parts[i].body.decoded.safe_utf8_encode
+      end
+    end
+    body
+  end
+
+  def parse_address(addresses)
+    return "" if addresses.nil?
+
+    address = ''
+
+    # it's already a string
+    address = addresses if addresses.is_a? String
+
+    # join the array of multiple addresses
+    if addresses.is_a? Array
+      address = addresses.join(", ")
+    end
+
+    address.safe_utf8_encode
+  end
+
 end # ::Mail
 
 end # ::RCS

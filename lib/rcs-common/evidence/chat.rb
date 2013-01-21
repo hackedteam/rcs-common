@@ -81,8 +81,8 @@ module ChatnewEvidence
       recipients = info[:data][:rcpt].split(',')
       recipients.delete(info[:data][:from])
       info[:data][:rcpt] = recipients.join(',')
-
       #trace :debug, "CHAT rcpt: #{info[:data][:rcpt]}"
+
       rcpt_display = stream.read_utf16le_string
       info[:data][:rcpt_display] = rcpt_display.utf16le_to_utf8
       #trace :debug, "CHAT rcpt_display: #{info[:data][:rcpt_display]}"

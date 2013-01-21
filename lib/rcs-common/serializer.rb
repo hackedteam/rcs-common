@@ -319,8 +319,8 @@ module RCS
       version = stream.read(4).unpack("L").shift
       oid = stream.read(4).unpack("L").shift
 
-      unless version == POOM_V1_0_PROTO or version == POOM_V2_0_PROTO
-        raise EvidenceDeserializeError.new("Invalid version")
+      if version != POOM_V1_0_PROTO and version != POOM_V2_0_PROTO
+        raise EvidenceDeserializeError.new("Invalid addressbook version")
       end
 
       case version
