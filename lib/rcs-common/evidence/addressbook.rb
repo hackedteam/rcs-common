@@ -42,6 +42,8 @@ module RCS
 
     LOCAL_CONTACT = 0x80000000
 
+    PROGRAM_WHATSAPP = 0x00000001
+
     def content
       header = StringIO.new
       header.write [CONTACTLIST | VERSION_2].pack('L')
@@ -93,6 +95,7 @@ module RCS
         flags = read_uint32(stream) if (magic_ver & VERSION_2 != 0)
 
         info[:data][:type] = :target if (flags & LOCAL_CONTACT != 0)
+        info[:data][:program] = :whatsapp if (flags & PROGRAM_WHATSAPP != 0)
 
         len = read_uint32 stream
 
