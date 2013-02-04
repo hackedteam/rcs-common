@@ -106,7 +106,7 @@ module CalllistEvidence
   CALL_INCOMING = 0x01
 
   PROGRAM_TYPE = {
-      0x00 => :phone
+      0x00 => :phone,
       0x01 => :skype
   }
 
