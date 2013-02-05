@@ -124,6 +124,8 @@ module CalllistEvidence
     content.write program
     content.write flags
     content.write from
+    content.write from
+    content.write to
     content.write to
     content.write [duration].pack('L')
     content.write [ ELEM_DELIMITER ].pack('L')
@@ -154,9 +156,13 @@ module CalllistEvidence
 
       from = stream.read_utf16le_string
       info[:data][:from] = from.utf16le_to_utf8
+      from_display = stream.read_utf16le_string
+      info[:data][:from_display] = from_display.utf16le_to_utf8
 
       rcpt = stream.read_utf16le_string
       info[:data][:rcpt] = rcpt.utf16le_to_utf8
+      rcpt_display = stream.read_utf16le_string
+      info[:data][:rcpt_display] = rcpt_display.utf16le_to_utf8
 
       info[:data][:duration] = stream.read(4).unpack('L').first
 
