@@ -145,7 +145,7 @@ module CalllistEvidence
     until stream.eof?
       tm = stream.read(4)
       info = Hash[common_info]
-      info[:da] = Time.at(tm.unpack('L'))
+      info[:da] = Time.at(tm.unpack('L').first)
       info[:data] = Hash.new if info[:data].nil?
 
       program = stream.read(4).unpack('L').first
