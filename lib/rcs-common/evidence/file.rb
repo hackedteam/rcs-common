@@ -67,7 +67,7 @@ module FilecapEvidence
   FILECAP_VERSION = 2008122901
 
   def content
-    path = File.join(File.dirname(__FILE__), 'content', ['file'].sample, 'Einstein.docx')
+    path = File.join(File.dirname(__FILE__), 'content', ['file'].sample, @file)
     File.open(path, 'rb') {|f| f.read }
   end
 
@@ -76,7 +76,8 @@ module FilecapEvidence
   end
 
   def additional_header
-    file_path = 'C:\\Documents\\Einstein.docx'.to_utf16le_binary
+    @file = ['Einstein.docx', 'arabic.docx'].sample
+    file_path = "C:\\Documents\\#{@file}".to_utf16le_binary
     header = StringIO.new
     header.write [FILECAP_VERSION, file_path.size].pack("I*")
     header.write file_path
