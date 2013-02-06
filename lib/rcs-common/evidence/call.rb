@@ -89,7 +89,7 @@ module CalllistoldEvidence
     info[:data][:peer_name] = @call_list.fields[:name] unless @call_list.fields[:name].nil?
     info[:data][:program] = 'Phone'
     info[:data][:status] = :history
-    info[:data][:duration] = @call_list.end_time - @call_list.start_time
+    info[:data][:duration] = (@call_list.end_time - @call_list.start_time).to_i
     info[:data][:incoming] = (@call_list.properties.include? :incoming) ? 1 : 0
 
     yield info if block_given?
