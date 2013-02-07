@@ -83,7 +83,7 @@ module RCS
       stream.read(4) # len, ignore
       num_records = read_uint32 stream
 
-      for i in (0..num_records-1)
+      (0..num_records-1).each do |i|
 
         info = Hash[common_info]
         info[:data] ||= Hash.new
@@ -111,7 +111,7 @@ module RCS
         magic = read_uint32 stream
         num_contacts = read_uint32 stream
 
-        for i in (0..num_contacts-1)
+        (0..num_contacts-1).each do |i|
           type, number = read_number(stream)
           case type
             when 0

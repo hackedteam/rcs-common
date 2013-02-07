@@ -54,7 +54,7 @@ class SystemStatus
   def self.cpu_load
     # cpu load in the last minute
     avg = CPU.load_avg
-    if avg.is_a? Array then
+    if avg.is_a? Array
       # under unix like, there are 3 values (1, 15 and 15 minutes)
       load_last_minute = avg.first
       # default values for systems where the number is not reported (linux)
