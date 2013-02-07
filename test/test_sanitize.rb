@@ -21,4 +21,20 @@ class SanitizeTest < Test::Unit::TestCase
     output = "keep them \$ ^ |"
     assert_equal output, input.remove_invalid_chars
   end
+
+  def test_strip_html_tags
+    input = "Strip <i>these</i> tags!"
+    output = "Strip these tags!"
+    assert_equal output, input.strip_html_tags
+
+    input = "<b>Bold</b> no more!  <a href='more.html'>See more here</a>..."
+    output = "Bold no more!  See more here..."
+    assert_equal output, input.strip_html_tags
+
+    input = "<div id='top-bar'>Welcome to my website!</div>"
+    output = "Welcome to my website!"
+    assert_equal output, input.strip_html_tags
+  end
+
+
 end
