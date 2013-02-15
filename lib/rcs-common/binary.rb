@@ -40,6 +40,25 @@ class String
     io.pos = offset
     io.write replace
     io.close
+    self
+  end
+
+  def binary_add_at_offset(offset, value)
+    io = StringIO.new(self)
+
+    # check for boundaries
+    raise OutOfBounds if offset < 0
+    raise OutOfBounds if offset > io.size
+
+    io.pos = offset
+    current = io.read(4).unpack('I').first
+    current += value
+    current = [current].pack('I')
+
+    io.pos = offset
+    io.write current
+    io.close
+    self
   end
 
 end

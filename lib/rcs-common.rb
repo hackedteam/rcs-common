@@ -8,6 +8,7 @@ require "rcs-common/version"
 require 'rcs-common/crypt'
 require 'rcs-common/pascalize'
 require 'rcs-common/keywords'
+require 'rcs-common/sanitize'
 require 'rcs-common/trace'
 require 'rcs-common/mime'
 require 'rcs-common/systemstatus'

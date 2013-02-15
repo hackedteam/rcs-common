@@ -110,7 +110,6 @@ module RCS
       @start_time = Time.from_filetime high, low
       low, high = stream.read(8).unpack 'V2'
       @end_time = Time.from_filetime high, low
-      fields[:duration] = @end_time - @start_time
 
       props = stream.read(4).unpack('L').shift
       if props & OUTGOING == 1
@@ -271,14 +270,20 @@ module RCS
                           0x35 => :address,
                           0x36 => :notes,
                           0x37 => :unknown,
-                          0x38 => :facebook_page}
+                          0x38 => :facebook_page,
+                          0x40 => :handle}
 
     PROGRAM_TYPE = {
         0x01 => :outlook,
         0x02 => :skype,
         0x03 => :facebook,
         0x04 => :twitter,
-        0x05 => :gmail
+        0x05 => :gmail,
+        0x06 => :bbm,
+        0x07 => :whatsapp,
+        0x08 => :phone,
+        0x09 => :mail,
+        0x0a => :linkedin
     }
 
     TYPE_FLAGS = {
@@ -314,8 +319,8 @@ module RCS
       version = stream.read(4).unpack("L").shift
       oid = stream.read(4).unpack("L").shift
 
-      unless version == POOM_V1_0_PROTO or version == POOM_V2_0_PROTO
-        raise EvidenceDeserializeError.new("Invalid version")
+      if version != POOM_V1_0_PROTO and version != POOM_V2_0_PROTO
+        raise EvidenceDeserializeError.new("Invalid addressbook version")
       end
 
       case version
@@ -335,7 +340,7 @@ module RCS
       until content.empty?
         type, size = Serialization.decode_prefix content.slice!(0, 4)
         str = content.slice!(0, size).utf16le_to_utf8
-        trace :debug, "ADDRESSBOOK FIELD #{ADDRESSBOOK_TYPES[type]} = #{str}"
+        #trace :debug, "ADDRESSBOOK FIELD #{ADDRESSBOOK_TYPES[type]} = #{str}"
         @fields[ADDRESSBOOK_TYPES[type]] = str if ADDRESSBOOK_TYPES.has_key? type
       end
 
@@ -349,7 +354,7 @@ module RCS
 
       @type = TYPE_FLAGS[@program][flags] if TYPE_FLAGS.has_key? @program
       @type ||= :peer
-      @type = :target if flags & LOCAL_CONTACT
+      @type = :target if (flags & LOCAL_CONTACT != 0)
 
       # contact
       @contact = ""

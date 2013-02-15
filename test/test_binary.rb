@@ -81,4 +81,27 @@ class BinaryPatchTest < Test::Unit::TestCase
       input.binary_patch_at_offset offset, string
     end
   end
+
+  def test_add_at_offset
+    input = "\x00\x00\x00\x00ciao miao bau"
+    offset = 0
+    value = 16
+    output = "\x10\x00\x00\x00ciao miao bau"
+
+    input.binary_add_at_offset offset, value
+
+    assert_equal output, input
+  end
+
+  def test_add_at_offset_not_zero
+    input = "ciao \x10\x00\x00\x00 miao bau"
+    offset = 5
+    value = 16
+    output = "ciao \x20\x00\x00\x00 miao bau"
+
+    input.binary_add_at_offset offset, value
+
+    assert_equal output, input
+  end
+
 end

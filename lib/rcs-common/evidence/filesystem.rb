@@ -10,7 +10,8 @@ module FilesystemEvidence
 	FILESYSTEM_IS_EMPTY     = 2
 
   def content
-    path = ["C:\\\\topsecret\\\\bombing plan", "C:\\miao\\bau", "C:\\pippo\\pluto\\paperino", "/home/alor/secret", "/mnt/share/secret"].sample
+    #path = ["C:\\\\topsecret\\\\bombing plan", "C:\\miao\\bau", "C:\\pippo\\pluto\\paperino", "/home/alor/secret", "/mnt/share/secret"].sample
+    path = ["/home/alor/secret", "/mnt/share/secret"].sample
     path = path.to_utf16le_binary_null
     content = StringIO.new
     content.write [FILESYSTEM_VERSION, path.bytesize, FILESYSTEM_IS_FILE, rand(0..2**24), 0].pack("I*")

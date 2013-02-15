@@ -1,3 +1,5 @@
+# encoding: utf-8
+
 # here we are re-opening the ruby String class,
 # the namespace must not be specified
 
@@ -8,15 +10,18 @@ class String
     # make a copy of itself to preserve the original
     keywords = self.dup
 
-    # convert to lowercase
-    keywords.downcase!
-
-    # returns a copy of str with leading and trailing whitespace removed.
-    keywords.strip!
+    # sanitize the input UTF-8
+    keywords.encode!('UTF-8', 'UTF-8', :invalid => :replace)
 
     # remove everything that is not alphanumeric
     keywords.gsub!(/([^[:alnum:]])+/u, ' ')
     #keywords.gsub!(/[(,%&@_":;!\#\-\*\[\]\{\}\?\\\+\'\.\/)]/, ' ')
+
+    # returns a copy of str with leading and trailing whitespace removed.
+    keywords.strip!
+
+    # convert to lowercase
+    keywords.downcase!
 
     # split on spaces
     keywords = keywords.split " "
@@ -32,7 +37,9 @@ class String
     keywords.sort!
 
     keywords
-  rescue
+  rescue Exception => e
+    #puts e.message if debug
+    #puts e.backtrace.first if debug
     # fallback case
     []
   end

