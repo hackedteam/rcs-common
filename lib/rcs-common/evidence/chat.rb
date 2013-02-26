@@ -20,6 +20,8 @@ module ChatEvidence
       0x04 => :gmail,
       0x05 => :bbm,
       0x06 => :whatsapp,
+      0x07 => :msn,
+      0x08 => :adium,
   }
 
   CHAT_INCOMING = 0x01
