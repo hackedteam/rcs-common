@@ -40,7 +40,7 @@ class Evidence
 
   GLOBAL_KEY = "\xab\x12\xcd\x34\xef\x56\x01\x23\x45\x67\x89\xab\xcd\xef\x00\x11"
 
-  def self.VERSION_ID
+  def self.version_id
     2008121901
   end
   
@@ -50,7 +50,7 @@ class Evidence
   
   def initialize(key)
     @key = key
-    @version = Evidence.VERSION_ID
+    @version = Evidence.version_id
   end
   
   def extend_on_type(type)
@@ -71,7 +71,7 @@ class Evidence
     add_header = additional_header if respond_to? :additional_header
     
     additional_size = add_header.bytesize
-    struct = [Evidence.VERSION_ID, type_id, thigh, tlow, deviceid_utf16.bytesize, userid_utf16.bytesize, sourceid_utf16.bytesize, additional_size]
+    struct = [Evidence.version_id, type_id, thigh, tlow, deviceid_utf16.bytesize, userid_utf16.bytesize, sourceid_utf16.bytesize, additional_size]
     header = struct.pack("I*")
     
     header += deviceid_utf16
@@ -189,7 +189,7 @@ class Evidence
     additional_size = read_uint32(header_string)
     
     # check that version is correct
-    raise EvidenceDeserializeError.new("mismatching version [expected #{Evidence.VERSION_ID}, found #{@version}]") unless @version == Evidence.VERSION_ID
+    raise EvidenceDeserializeError.new("mismatching version [expected #{Evidence.version_id}, found #{@version}]") unless @version == Evidence.version_id
 
     common_info = Hash.new
     common_info[:dr] = Time.new.getgm
@@ -220,10 +220,10 @@ class Evidence
     if common_info[:type] == 'command'
       chunks << [binary_string.read]
     else
-      while not binary_string.eof?
+      until binary_string.eof?
         len = read_uint32(binary_string)
         content = binary_string.read align_to_block_len(len)
-        chunks << StringIO.new( decrypt(content) ).read(len)
+        chunks << StringIO.new(decrypt(content)).read(len)
       end
     end
 
