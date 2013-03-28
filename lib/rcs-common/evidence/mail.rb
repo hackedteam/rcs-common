@@ -10,6 +10,7 @@ module MailEvidence
   MAIL_VERSION2 = 2012030601
 
   MAIL_INCOMING = 0x00000010
+  MAIL_DRAFT = 0x00000100
 
   PROGRAM_GMAIL = 0x00000000
   PROGRAM_BB = 0x00000001
@@ -78,6 +79,7 @@ module MailEvidence
         end
         # direction of the mail
         ret[:data][:incoming] = (flags & MAIL_INCOMING != 0) ? 1 : 0
+        ret[:data][:draft] = true if (flags & MAIL_DRAFT != 0)
       else
         raise EvidenceDeserializeError.new("invalid log version for MAIL")
     end
