@@ -283,7 +283,8 @@ module RCS
         0x07 => :whatsapp,
         0x08 => :phone,
         0x09 => :mail,
-        0x0a => :linkedin
+        0x0a => :linkedin,
+        0x0b => :viber
     }
 
     TYPE_FLAGS = {
