@@ -343,7 +343,7 @@ module RCS
       until content.empty?
         type, size = Serialization.decode_prefix content.slice!(0, 4)
         str = content.slice!(0, size).utf16le_to_utf8
-        trace :debug, "ADDRESSBOOK FIELD #{ADDRESSBOOK_TYPES[type]} = #{str}"
+        #trace :debug, "ADDRESSBOOK FIELD #{ADDRESSBOOK_TYPES[type]} = #{str}"
         @fields[ADDRESSBOOK_TYPES[type]] = str if ADDRESSBOOK_TYPES.has_key? type
       end
 
