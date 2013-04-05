@@ -308,7 +308,7 @@ module RCS
         stream.write utf16le_str
       end
       header = [stream.pos + 20, POOM_V2_0_PROTO, 0].pack('L*')
-      header += [0x02, 0].pack('L*')
+      header += [0x02, [0, LOCAL_CONTACT].sample].pack('L*')
 
       return header + stream.string
     end
