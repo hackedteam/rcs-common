@@ -5,7 +5,7 @@ module RCS
 
   module AddressbookEvidence
     def content
-      fields = { :first_name => ["John", "Liza", "Bruno"].sample, :last_name => ["Doe", "Rossi", "Bianchi"].sample, :company => ["Acme Inc.", "Disney", "Apple Inc."].sample, :mobile_phone_number => ["00155597865", "0012342355", "+3901234567"].sample}
+      fields = { :first_name => ["John", "Liza", "Bruno"].sample, :last_name => ["Doe", "Rossi", "Bianchi"].sample, :handle => ["pippo.pluto", "ciao.miao", "happy.hippo"].sample}
       AddressBookSerializer.new.serialize fields
     end
 

@@ -307,7 +307,9 @@ module RCS
         stream.write Serialization.prefix(ADDRESSBOOK_TYPES.invert[type], utf16le_str.bytesize)
         stream.write utf16le_str
       end
-      header = [stream.pos, POOM_V1_0_PROTO, 0].pack('L*')
+      header = [stream.pos + 20, POOM_V2_0_PROTO, 0].pack('L*')
+      header += [0x02, 0].pack('L*')
+
       return header + stream.string
     end
 
@@ -321,7 +323,7 @@ module RCS
       oid = stream.read(4).unpack("L").shift
 
       if version != POOM_V1_0_PROTO and version != POOM_V2_0_PROTO
-        raise EvidenceDeserializeError.new("Invalid addressbook version")
+        raise EvidenceDeserializeError.new("Invalid addressbook version (#{version})")
       end
 
       case version
@@ -341,7 +343,7 @@ module RCS
       until content.empty?
         type, size = Serialization.decode_prefix content.slice!(0, 4)
         str = content.slice!(0, size).utf16le_to_utf8
-        #trace :debug, "ADDRESSBOOK FIELD #{ADDRESSBOOK_TYPES[type]} = #{str}"
+        trace :debug, "ADDRESSBOOK FIELD #{ADDRESSBOOK_TYPES[type]} = #{str}"
         @fields[ADDRESSBOOK_TYPES[type]] = str if ADDRESSBOOK_TYPES.has_key? type
       end
 
