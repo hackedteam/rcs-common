@@ -208,7 +208,7 @@ module RCS
   class AddressBookSerializer
     include RCS::Tracer
 
-    attr_reader :name, :contact, :info, :type, :program
+    attr_reader :name, :contact, :info, :type, :program, :handle
 
     POOM_V1_0_PROTO = 0x01000000
     POOM_V2_0_PROTO = 0x01000001
@@ -373,6 +373,10 @@ module RCS
         @contact = @fields[:car_phone_number]
       elsif @fields.has_key? :radio_phone_number
         @contact = @fields[:radio_phone_number]
+      end
+
+      if @fields.has_key? :handle
+        @handle = @fields[:handle]
       end
 
       # info

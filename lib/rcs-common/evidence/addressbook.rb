@@ -27,6 +27,7 @@ module RCS
         info[:data][:info] = contact.info
         info[:data][:program] = contact.program
         info[:data][:type] = contact.type
+        info[:data][:handle] = contact.handle if contact.handle
 
         yield info if block_given?
       end
@@ -116,6 +117,7 @@ module RCS
           case type
             when 0
               info[:data][:info] ||= number
+              info[:data][:handle] = number
             else
               info[:data][:info] += "#{number}\n"
           end
