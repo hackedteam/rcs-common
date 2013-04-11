@@ -88,6 +88,12 @@ module ChatEvidence
 
       rcpt_display = stream.read_utf16le_string
       info[:data][:rcpt_display] = rcpt_display.utf16le_to_utf8
+      if info[:data][:program] == :skype
+        # remove the sender from the recipients (damned lazy Naga who does not want to parse it on the client)
+        recipients = info[:data][:rcpt_display].split(',')
+        recipients.delete(info[:data][:from])
+        info[:data][:rcpt_display] = recipients.join(',')
+      end
       #trace :debug, "CHAT rcpt_display: #{info[:data][:rcpt_display]}"
 
       keystrokes = stream.read_utf16le_string
