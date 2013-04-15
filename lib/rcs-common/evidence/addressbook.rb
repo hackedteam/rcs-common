@@ -44,6 +44,8 @@ module RCS
     LOCAL_CONTACT = 0x80000000
 
     PROGRAM_WHATSAPP = 0x00000001
+    PROGRAM_SKYPE = 0x00000002
+    PROGRAM_VIBER = 0x00000004
 
     def content
       header = StringIO.new
@@ -97,6 +99,8 @@ module RCS
 
         info[:data][:type] = :target if (flags & LOCAL_CONTACT != 0)
         info[:data][:program] = :whatsapp if (flags & PROGRAM_WHATSAPP != 0)
+        info[:data][:program] = :skype if (flags & PROGRAM_SKYPE != 0)
+        info[:data][:program] = :viber if (flags & PROGRAM_VIBER != 0)
 
         len = read_uint32 stream
 
