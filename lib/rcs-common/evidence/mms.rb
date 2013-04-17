@@ -20,6 +20,8 @@ module RCS
       stream = StringIO.new chunks.join
       @mms = MAPISerializer.new.unserialize stream
 
+      info[:da] = @mms.delivery_time
+
       info[:data][:from] = @mms.fields[:from].delete("\x00")
       info[:data][:rcpt] = @mms.fields[:rcpt].delete("\x00")
 
