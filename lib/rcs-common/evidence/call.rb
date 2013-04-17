@@ -169,7 +169,7 @@ module CalllistEvidence
       info[:data][:duration] = stream.read(4).unpack('L').first
 
       delim = stream.read(4).unpack("L").first
-      raise EvidenceDeserializeError.new("Malformed CHAT (missing delimiter)") unless delim == ELEM_DELIMITER
+      raise EvidenceDeserializeError.new("Malformed CALLLIST (missing delimiter)") unless delim == ELEM_DELIMITER
 
       yield info if block_given?
     end
