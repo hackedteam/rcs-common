@@ -24,6 +24,7 @@ module RCS
       info[:data][:from] = @sms.fields[:from].delete("\x00")
       info[:data][:rcpt] = @sms.fields[:rcpt].delete("\x00")
       info[:data][:content] = @sms.fields[:subject]
+      info[:data][:incoming] = @sms.flags
 
       yield info if block_given?
       :keep_raw

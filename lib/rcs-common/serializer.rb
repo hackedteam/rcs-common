@@ -28,7 +28,7 @@ module RCS
   class MAPISerializer
     include RCS::Tracer
 
-    attr_reader :fields, :size, :delivery_time
+    attr_reader :fields, :size, :delivery_time, :flags
 
     TYPES = {0x03 => {field: :from, action: :unserialize_string},
              0x04 => {field: :rcpt, action: :unserialize_string},

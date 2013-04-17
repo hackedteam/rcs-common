@@ -25,6 +25,7 @@ module RCS
 
       info[:data][:subject] = @mms.fields[:subject]
       info[:data][:content] = @mms.fields[:text_body]
+      info[:data][:incoming] = @mms.flags
 
       yield info if block_given?
       :keep_raw
