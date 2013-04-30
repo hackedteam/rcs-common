@@ -86,6 +86,7 @@ module CalllistoldEvidence
 
     @call_list = CallListSerializer.new.unserialize stream
 
+    info[:da] = @call_list.start_time
     info[:data][:peer] = @call_list.fields[:number]
     info[:data][:peer_name] = @call_list.fields[:name] unless @call_list.fields[:name].nil?
     info[:data][:program] = 'Phone'
@@ -169,7 +170,7 @@ module CalllistEvidence
       info[:data][:duration] = stream.read(4).unpack('L').first
 
       delim = stream.read(4).unpack("L").first
-      raise EvidenceDeserializeError.new("Malformed CHAT (missing delimiter)") unless delim == ELEM_DELIMITER
+      raise EvidenceDeserializeError.new("Malformed CALLLIST (missing delimiter)") unless delim == ELEM_DELIMITER
 
       yield info if block_given?
     end

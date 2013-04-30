@@ -20,11 +20,14 @@ module RCS
       stream = StringIO.new chunks.join
       @mms = MAPISerializer.new.unserialize stream
 
+      info[:da] = @mms.delivery_time
+
       info[:data][:from] = @mms.fields[:from].delete("\x00")
       info[:data][:rcpt] = @mms.fields[:rcpt].delete("\x00")
 
       info[:data][:subject] = @mms.fields[:subject]
       info[:data][:content] = @mms.fields[:text_body]
+      info[:data][:incoming] = @mms.flags
 
       yield info if block_given?
       :keep_raw
