@@ -67,7 +67,7 @@ module Tracer
     log.send(level, "#{msg}") unless log.nil?
 
     # fallback if the logger is not initialized
-    puts "#{Time.now} [#{level.to_s.upcase}]: #{msg}" if log.nil?
+    puts "#{Time.now} [#{level.to_s.upcase}]: #{msg}" if log.nil? and not ENV['no_trace']
     
   end
 
