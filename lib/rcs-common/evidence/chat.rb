@@ -23,6 +23,7 @@ module ChatEvidence
       0x07 => :msn,
       0x08 => :adium,
       0x09 => :viber,
+      0x0a => :wechat,
   }
 
   CHAT_INCOMING = 0x01

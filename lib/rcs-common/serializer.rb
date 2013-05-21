@@ -284,7 +284,8 @@ module RCS
         0x08 => :phone,
         0x09 => :mail,
         0x0a => :linkedin,
-        0x0b => :viber
+        0x0b => :viber,
+        0x0c => :wechat,
     }
 
     TYPE_FLAGS = {
