@@ -2,6 +2,7 @@
 
 require 'rcs-common/evidence/common'
 require 'mail'
+require 'cgi'
 
 module RCS
 module MailEvidence
@@ -99,6 +100,10 @@ module MailEvidence
     # this is the raw content of the mail
     # save it as is in the grid
     eml = chunks.join
+
+    # special case for outlook (live) mail that are html encoded
+    eml = CGI.unescapeHTML(eml) if info[:data][:program].eql? 'outlook'
+
     info[:grid_content] = eml
 
     # parse the mail to extract information
