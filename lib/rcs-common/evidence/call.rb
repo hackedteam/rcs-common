@@ -7,14 +7,17 @@ module CallEvidence
   
   LOG_VOICE_VERSION = 2008121901
   CHANNEL = { 0 => :incoming, 1 => :outgoing }
-  SOFTWARE = { 0x0141 => :skype,
-               0x0142 => :gtalk,
-               0x0143 => :yahoo,
-               0x0144 => :msn,
-               0x0145 => :phone,
-               0x0146 => :skype,
-               0X0147 => :msn,
-               0x0148 => :viber}
+  CALL_PROGRAM = { 0x0141 => :skype,
+                   0x0142 => :gtalk,
+                   0x0143 => :yahoo,
+                   0x0144 => :msn,
+                   0x0145 => :phone,
+                   0x0146 => :skype,
+                   0X0147 => :msn,
+                   0x0148 => :viber,
+                   0x0149 => :wechat,
+                   0x014a => :line,
+                 }
   
   def decode_additional_header(data)
 
@@ -32,7 +35,7 @@ module CallEvidence
     ret[:data][:channel] = CHANNEL[channel]
 
     software = read_uint32 stream
-    ret[:data][:program] = SOFTWARE[software]
+    ret[:data][:program] = CALL_PROGRAM[software]
 
     ret[:data][:sample_rate] = read_uint32 stream
     ret[:data][:incoming] = read_uint32 stream

@@ -13,7 +13,7 @@ module ChatEvidence
   ELEM_DELIMITER = 0xABADC0DE
   KEYSTROKES = ["привет мир", "こんにちは世界", "Hello world!", "Ciao mondo!"]
 
-  PROGRAM_TYPE = {
+  CHAT_PROGRAM = {
       0x01 => :skype,
       0x02 => :facebook,
       0x03 => :twitter,
@@ -23,12 +23,14 @@ module ChatEvidence
       0x07 => :msn,
       0x08 => :adium,
       0x09 => :viber,
+      0x0a => :wechat,
+      0x0d => :line,
   }
 
   CHAT_INCOMING = 0x01
 
   def content
-    program = [PROGRAM_TYPE.keys.sample].pack('L')
+    program = [CHAT_PROGRAM.keys.sample].pack('L')
     flags = [[0,1].sample].pack('L')
     users = ["ALoR", "Bruno", "Naga", "Quez", "Tizio", "Caio"]
     from = users.sample.to_utf16le_binary_null
@@ -65,7 +67,7 @@ module ChatEvidence
       info[:data] = Hash.new if info[:data].nil?
 
       program = stream.read(4).unpack('L').first
-      info[:data][:program] = PROGRAM_TYPE[program]
+      info[:data][:program] = CHAT_PROGRAM[program]
 
       flags = stream.read(4).unpack('L').first
       info[:data][:incoming] = (flags & CHAT_INCOMING != 0) ? 1 : 0

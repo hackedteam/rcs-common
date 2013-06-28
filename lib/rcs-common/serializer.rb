@@ -273,7 +273,7 @@ module RCS
                           0x38 => :facebook_page,
                           0x40 => :handle}
 
-    PROGRAM_TYPE = {
+    ADDRESSBOOK_PROGRAM = {
         0x01 => :outlook,
         0x02 => :skype,
         0x03 => :facebook,
@@ -284,7 +284,9 @@ module RCS
         0x08 => :phone,
         0x09 => :mail,
         0x0a => :linkedin,
-        0x0b => :viber
+        0x0b => :viber,
+        0x0c => :wechat,
+        0x0d => :line,
     }
 
     TYPE_FLAGS = {
@@ -352,7 +354,7 @@ module RCS
       @name = @fields[:first_name] if @fields.has_key? :first_name
       @name += " " + @fields[:last_name] if @fields.has_key? :last_name
 
-      @program = PROGRAM_TYPE[program]
+      @program = ADDRESSBOOK_PROGRAM[program]
       @program ||= :unknown
 
       @type = TYPE_FLAGS[@program][flags] if TYPE_FLAGS.has_key? @program
