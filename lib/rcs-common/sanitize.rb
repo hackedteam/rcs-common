@@ -8,7 +8,7 @@ class String
   def remove_invalid_chars
 
     # remove invalid UTF-8 chars
-    self.encode('UTF-8', 'UTF-8', :invalid => :replace).gsub(/([^[:alnum:][:graph:]\n\r])+/u, ' ')
+    self.encode('UTF-8', self.encoding.to_s, :invalid => :replace).gsub(/([^[:alnum:][:graph:]\n\r])+/u, ' ')
   end
 
   def strip_html_tags
@@ -28,4 +28,3 @@ class String
   end
 
 end
-
