@@ -22,7 +22,38 @@ module MailEvidence
   ADDRESSES = ['ciccio.pasticcio@google.com', 'billg@microsoft.com', 'john.doe@nasa.gov', 'mario.rossi@italy.it']
   SUBJECTS = ['drugs', 'bust me!', 'police here']
   BODIES = ["You're busted, dude.", "I'm a drug trafficker, send me to hang!", "I'll sell meth to kids. Stop me."]
-  
+
+ARABIC = <<-EOF
+
+MIME-Version: 1.0
+Received: by 10.64.33.143 with HTTP; Mon, 1 Jul 2013 03:11:15 -0700 (PDT)
+Date: Mon, 1 Jul 2013 12:11:15 +0200
+Delivered-To: jimmypage1337@gmail.com
+Message-ID: <CALdP1Uy44nQ-1Pfj1Po+uoUKbe5JMGDr-ZhpoHRVVkNQdOOV5w@mail.gmail.com>
+Subject: Test
+From: Jimmy Page <jimmypage1337@gmail.com>
+To: Jimmy Page <jimmypage1337@gmail.com>
+Content-Type: multipart/alternative; boundary=14dae947395bec30d304e0707250
+
+--14dae947395bec30d304e0707250
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: base64
+
+2KrYtNi02LPZitiq2YXZhiDYqtmG2LTYp9iz2YbZiiDZh9i52LTYutiz2Yog2KfYqti02LPZitin
+INmG2KrYtNiz2KfZitivDQrYtNiz2YXYqtmK2YYg2LTYs9mK2KrZhiDYtNmH2KTYudiz2YrZhNix
+2YbYqg0K2LHYs9ix2LPZitix2YrYsw0K
+--14dae947395bec30d304e0707250
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: base64
+
+PGRpdiBkaXI9Imx0ciI+PGRpdiBkaXI9InJ0bCI+2KrYtNi02LPZitiq2YXZhiDYqtmG2LTYp9iz
+2YbZiiDZh9i52LTYutiz2Yog2KfYqti02LPZitinINmG2KrYtNiz2KfZitivPGJyPjwvZGl2Pjxk
+aXYgZGlyPSJydGwiPti02LPZhdiq2YrZhiDYtNiz2YrYqtmGINi02YfYpNi52LPZitmE2LHZhtiq
+IDxicj7Ysdiz2LHYs9mK2LHZitizPGJyPjwvZGl2PjwvZGl2Pg0K
+--14dae947395bec30d304e0707250--
+EOF
+
+
   def content
     @email.to_s
   end
@@ -40,6 +71,8 @@ module MailEvidence
       subject SUBJECTS.sample
       body    BODIES.sample
     end
+
+    #@email = ARABIC
 
     ft_high, ft_low = Time.now.to_filetime
     body = @email.to_s
@@ -87,6 +120,8 @@ module MailEvidence
       else
         raise EvidenceDeserializeError.new("invalid log version for MAIL")
     end
+
+    #trace :debug, ret[:data].inspect
 
     ret[:data][:size] = size
     return ret
@@ -142,6 +177,8 @@ module MailEvidence
       info[:data][:body] ||= ''
     end
 
+    #trace :debug, "MAIL: body: #{info[:data][:body]}"
+
     info[:data][:attach] = m.attachments.length if m.attachments.length > 0
 
     date = m.date.to_time unless m.date.nil?
@@ -165,7 +202,7 @@ module MailEvidence
           body = parse_multipart(parts[i].parts)
         else
           body ||= {}
-          body[ct] = parts[i].body.decoded.safe_utf8_encode
+          body[ct] = parts[i].body.decoded #.safe_utf8_encode
       end
     end
     body
