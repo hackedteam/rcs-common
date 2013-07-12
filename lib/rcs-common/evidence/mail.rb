@@ -174,7 +174,7 @@ EOF
       info[:data][:body] = body['text/html']
     else
       info[:data][:body] = body['text/plain']
-      info[:data][:body] ||= ''
+      info[:data][:body] ||= 'Content of this mail cannot be decoded.'
     end
 
     #trace :debug, "MAIL: body: #{info[:data][:body]}"
@@ -197,12 +197,10 @@ EOF
     content_types = parts.map { |p| p.content_type.split(';')[0] }
     body = {}
     content_types.each_with_index do |ct, i|
-      case ct
-        when 'multipart/alternative'
-          body = parse_multipart(parts[i].parts)
-        else
-          body ||= {}
-          body[ct] = parts[i].body.decoded #.safe_utf8_encode
+      if parts[i].multipart?
+        body = parse_multipart(parts[i].parts)
+      else
+        body[ct] = parts[i].body.decoded.safe_utf8_encode
       end
     end
     body
