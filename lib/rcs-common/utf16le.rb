@@ -69,6 +69,7 @@ class String
   end
 
   def safe_utf8_encode
-    self.encode! 'UTF-8', invalid: :replace, undef: :replace, replace: ''
+    self.force_encoding('UTF-8')
+    self.encode! 'UTF-8', 'UTF-8', invalid: :replace, undef: :replace, replace: ''
   end
 end
