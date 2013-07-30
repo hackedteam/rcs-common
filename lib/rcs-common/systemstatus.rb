@@ -19,6 +19,11 @@ class SystemStatus
   @@prev_cpu = {}
   @@prev_time = {}
 
+  def self.reset
+    self.my_status = 'OK'
+    self.my_error_msg = nil
+  end
+
   def self.my_status
     return @@status || "N/A"
   end
