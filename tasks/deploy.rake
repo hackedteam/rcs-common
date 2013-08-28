@@ -8,28 +8,44 @@ $target, $me = deploy.target, deploy.me
 desc 'Deploy all the code in the lib folder'
 task :deploy do
   if $me.pending_changes?
-    print 'You have pending changes, continue (y/n)? '
-    exit if STDIN.getc != 'y'
+    exit unless $me.ask('You have pending changes, continue?')
   end
+
+  deploy_rcs_common = $me.ask('Deploy also the rcs-common gem?')
 
   Rake::Task['deploy:backup'].invoke
 
-  services_to_restart = []
-  %w[Aggregator Intelligence OCR Translate Worker DB].each do |service|
-    name = service.downcase
-    result = $target.mirror("#{$me.path}/lib/rcs-#{name}/", "rcs/DB/lib/rcs-#{name}-release/", trap: true)
-    something_changed = result.split("\n")[1..-3].reject { |x| x.empty? }.any?
-
-    if something_changed
-      services_to_restart << "RCS#{service}"
-      puts result
-    else
-      puts 'nothing changed'
-    end
+  if deploy_rcs_common
+    $me.run('cd ../rcs-common; rake build')
+    $target.mirror("#{$me.path}/../rcs-common/pkg", "./rcs-common")
+    $target.run("cd ./rcs-common; \"C:/RCS/Ruby/bin/gem\" install rcs*.gem; \"C:/RCS/Ruby/bin/gem\" clean rcs-common")
   end
 
-  services_to_restart.each do |service|
-    $target.restart_service(service)
+  if File.exists?("#{$me.path}/rcs-db.gemspec")
+    services_to_restart = []
+    %w[Aggregator Intelligence OCR Translate Worker DB].each do |service|
+      name = service.downcase
+      something_changed = $target.mirror("#{$me.path}/lib/rcs-#{name}/", "rcs/DB/lib/rcs-#{name}-release/")
+
+      if something_changed
+        services_to_restart << "RCS#{service}"
+        puts result
+      else
+        puts "rcs-#{name}-release is already up to date!"
+      end
+    end
+
+    services_to_restart.each do |service|
+      $target.restart_service(service)
+    end
+  elsif File.exists?("#{$me.path}/rcs-collector.gemspec")
+    if $target.mirror("#{$me.path}/lib/rcs-collector/", "rcs/Collector/lib/rcs-collector-release/")
+      $target.restart_service('RCSCollector')
+    else
+      puts 'rcs-collector-release is already up to date!'
+    end
+  else
+    puts "Nothing to do here"
   end
 end
 
@@ -70,7 +86,12 @@ namespace :deploy do
     folder = result.split(" ").sort.last
 
     if folder
-      $target.run("cp -r deploy_backups/#{folder}/lib/* rcs/DB/lib")
+      cmds = [
+        "cp -r deploy_backups/#{folder}/DB/lib/* rcs/DB/lib",
+        "cp -r deploy_backups/#{folder}/Collector/lib/* rcs/Collector/lib"
+      ]
+
+      $target.run(cmds.join('; '))
     else
       puts "No backups found :("
     end
@@ -78,6 +99,16 @@ namespace :deploy do
 
   task :backup do
     folder = "#{Time.now.to_i}"
-    $target.run("mkdir deploy_backups/#{folder}; cp -r rcs/DB/lib deploy_backups/#{folder}")
+
+    cmds = [
+      "mkdir deploy_backups",
+      "mkdir deploy_backups/#{folder}",
+      "mkdir deploy_backups/#{folder}/DB",
+      "mkdir deploy_backups/#{folder}/Collector",
+      "cp -r rcs/DB/lib deploy_backups/#{folder}/DB",
+      "cp -r rcs/Collector/lib deploy_backups/#{folder}/Collector"
+    ]
+
+    $target.run(cmds.join('; '))
   end
 end

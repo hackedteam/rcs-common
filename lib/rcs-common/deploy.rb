@@ -24,7 +24,10 @@ module RCS
       attr_reader :path
 
       def initialize
-        @path ||= File.expand_path File.join(File.dirname(__FILE__), '..')
+        @path ||= File.expand_path(Dir.pwd)
+
+        raise "Missing rakefile" unless File.exists?("#{@path}/Rakefile")
+        raise "Not in a git repo" unless Dir.exists?("#{@path}/.git")
       end
 
       def run(cmd, opts = {})
@@ -33,7 +36,14 @@ module RCS
       end
 
       def pending_changes?
-        run("cd \"#{me.path}\" && git status", trap: true) !~ /nothing to commit, working directory clean/
+        run("cd \"#{path}\" && git status", trap: true) !~ /nothing to commit, working directory clean/
+      end
+
+      def ask(question)
+        print("#{question} (y/n) ")
+        answer = STDIN.getc
+        STDIN.readline
+        answer.strip.downcase == 'y'
       end
     end
 
@@ -50,10 +60,17 @@ module RCS
         path.end_with?('/') ? "#{path}" : "#{path}/"
       end
 
-      def mirror(local_folder, remote_folder, opts = {})
+      def mirror!(local_folder, remote_folder, opts = {})
         src = add_slash(local_folder)
         dst = add_slash(remote_folder)
+
         me.run("rsync --delete -vaz \"#{src}\" #{user}@#{address}:\"#{dst}\"", opts)
+      end
+
+      def mirror(local_folder, remote_folder, opts = {})
+        opts[:trap] = true
+        result = mirror!(local_folder, remote_folder, opts)
+        result.split("\n")[1..-3].reject { |x| x.empty? }.any?
       end
 
       def restart_service(name)
