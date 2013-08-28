@@ -25,13 +25,13 @@ task :deploy do
     services_to_restart = []
     %w[Aggregator Intelligence OCR Translate Worker DB].each do |service|
       name = service.downcase
-      something_changed = $target.mirror("#{$me.path}/lib/rcs-#{name}/", "rcs/DB/lib/rcs-#{name}-release/")
+      changes = $target.mirror("#{$me.path}/lib/rcs-#{name}/", "rcs/DB/lib/rcs-#{name}-release/", changes: true)
 
-      if something_changed
+      if changes
         services_to_restart << "RCS#{service}"
-        puts result
+        puts changes
       else
-        puts "rcs-#{name}-release is already up to date!"
+        puts "rcs-#{name}-release is up to date, nothing was changed."
       end
     end
 
@@ -42,7 +42,7 @@ task :deploy do
     if $target.mirror("#{$me.path}/lib/rcs-collector/", "rcs/Collector/lib/rcs-collector-release/")
       $target.restart_service('RCSCollector')
     else
-      puts 'rcs-collector-release is already up to date!'
+      puts 'rcs-collector-release is up to date, nothing was changed.'
     end
   else
     puts "Nothing to do here"

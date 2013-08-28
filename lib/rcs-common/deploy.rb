@@ -70,7 +70,13 @@ module RCS
       def mirror(local_folder, remote_folder, opts = {})
         opts[:trap] = true
         result = mirror!(local_folder, remote_folder, opts)
-        result.split("\n")[1..-3].reject { |x| x.empty? }.any?
+        changed = result.split("\n")[1..-3].reject { |x| x.empty? }.any?
+
+        if opts[:changes]
+          changed ? result : nil
+        else
+          changed
+        end
       end
 
       def restart_service(name)
