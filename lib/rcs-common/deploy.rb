@@ -64,13 +64,14 @@ module RCS
         src = add_slash(local_folder)
         dst = add_slash(remote_folder)
 
-        me.run("rsync --delete -vaz \"#{src}\" #{user}@#{address}:\"#{dst}\"", opts)
+        me.run("rsync --delete -vazc \"#{src}\" #{user}@#{address}:\"#{dst}\"", opts)
       end
 
       def mirror(local_folder, remote_folder, opts = {})
         opts[:trap] = true
         result = mirror!(local_folder, remote_folder, opts)
-        changed = result.split("\n")[1..-3].reject { |x| x.empty? }.any?
+        changes = result.split("\n")[1..-3].reject { |x| x.empty? }
+        changed = changes.size > 0 && changes != ["./"]
 
         if opts[:changes]
           changed ? result : nil
