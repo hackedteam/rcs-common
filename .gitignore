@@ -46,3 +46,6 @@ pkg
 
 # Bundler
 Gemfile.lock
+
+# RVM gemset
+.ruby-gemset
