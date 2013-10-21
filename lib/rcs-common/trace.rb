@@ -57,18 +57,20 @@ module Tracer
     MDC.remove(name)
   end
 
+  def thread_name
+    (Thread.current[:name] || Thread.current.object_id.to_s(32)).to_s
+  end
+
   # the actual method used to output a trace
   def trace(level, msg)
-    #t = Time.now
-    #puts t.strftime("%H:%M:%S.") + "%06d" % (t.usec) + " #{self.class}: #{msg}"
-    
+    thread_info = "[Thread:#{thread_name}] " if ENV['TRACE_SHOW_THREAD_NAME']
+    msg = "#{thread_info}#{msg}"
+
     log = Logger['rcslogger']
-    #log.send(level, "#{self.class}: #{msg}")
     log.send(level, "#{msg}") unless log.nil?
 
     # fallback if the logger is not initialized
     puts "#{Time.now} [#{level.to_s.upcase}]: #{msg}" if log.nil? and not ENV['no_trace']
-    
   end
 
 end # Tracer::

@@ -11,10 +11,11 @@ module RCS
           new_path = path.gsub(/(.*)rcs-([^\/]+)/, '\1rcs-\2-release')
         end
 
-        new_path << '.rb' unless new_path.end_with?('.rb')
-        new_path = File.exists?(new_path) ? new_path : new_path.gsub('-release', '')
-
-        require new_path
+        begin
+          require new_path
+        rescue LoadError => error
+          require new_path.gsub('-release', '')
+        end
   		end
   	end
   end
