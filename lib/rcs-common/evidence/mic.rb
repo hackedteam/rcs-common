@@ -6,7 +6,7 @@ module MicEvidence
 
     MIC_LOG_VERSION = 2008121901
 
-    def decode_additional_header(data)
+  def decode_additional_header(data)
 
     raise EvidenceDeserializeError.new("incomplete evidence") if data.nil? or data.bytesize == 0
 
