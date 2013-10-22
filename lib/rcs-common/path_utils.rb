@@ -1,7 +1,6 @@
 module RCS
   module Common
   	module PathUtils
-
       # Requires and rcs module. Sarch for a folder named rcs-NAME, where NAME is
       # the given name, and requires a script named NAME.rb
       #
@@ -48,5 +47,7 @@ module RCS
   end
 end
 
-Kernel.send :include, RCS::Common::PathUtils
-Object.send :include, Kernel
+unless Kernel.respond_to?(:require_release)
+  Kernel.__send__(:include, RCS::Common::PathUtils)
+  Object.__send__(:include, Kernel)
+end
