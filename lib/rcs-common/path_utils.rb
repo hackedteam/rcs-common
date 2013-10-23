@@ -5,7 +5,7 @@ module RCS
       # the given name, and requires a script named NAME.rb
       #
       # @note The current directory is changed (chdir command)
-      def require_module(name, opts = {})
+      def require_component(name, opts = {})
         init_script = caller[0].scan(/^(.+)\:\d+\:.+$/)[0][0]
 
         unless init_script.end_with?("lib/rcs-#{name}.rb")
