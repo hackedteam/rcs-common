@@ -12,11 +12,6 @@ module RCS
         @_component = value.to_sym
         @_component_name = name || "RCS #{value.to_s.capitalize}"
       end
-
-      db_class = const_get(base.to_s.split("::")[0..-2].join("::")+"::DB") rescue nil
-      db_class = const_get('RCS::DB::DB') unless db_class
-
-      base.instance_variable_set('@_db_class', db_class)
     end
 
     def component
@@ -35,8 +30,10 @@ module RCS
     end
 
     def database
-      db_class = self.class.instance_variable_get('@_db_class')
-      db_class.instance
+      @_database ||= begin
+        db_class =  RCS.const_get('Collector::DB') rescue RCS.const_get('DB::DB')
+        db_class.instance
+      end
     end
 
     def establish_database_connection(wait_until_connected: false)
