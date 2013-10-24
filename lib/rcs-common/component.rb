@@ -22,11 +22,13 @@ module RCS
       self.class.instance_variable_get('@_component_name')
     end
 
+    def component_version
+      $version ||= File.read(Dir.pwd + '/config/VERSION')
+    end
+
     def show_startup_message
       build = File.read(Dir.pwd + '/config/VERSION_BUILD')
-      version = File.read(Dir.pwd + '/config/VERSION')
-
-      trace :fatal, "Starting the #{component_name} #{version} (#{build})..."
+      trace :fatal, "Starting the #{component_name} #{component_version} (#{build})..."
     end
 
     def database
