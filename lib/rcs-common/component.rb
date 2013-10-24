@@ -4,6 +4,8 @@ module RCS
   module Component
     def self.included(base)
       base.__send__(:include, RCS::Tracer)
+      base.__send__(:extend, RCS::Tracer)
+
       base.__send__(:extend, ClassMethods)
 
       base.__send__(:define_singleton_method, :component) do |value, name: nil|
@@ -11,8 +13,10 @@ module RCS
         @_component_name = name || "RCS #{value.to_s.capitalize}"
       end
 
-      db_class = base.to_s.split("::")[0..-2].join("::")+"::DB"
-      base.instance_variable_set '@_db_class', const_get(db_class)
+      db_class = const_get(base.to_s.split("::")[0..-2].join("::")+"::DB") rescue nil
+      db_class = const_get('RCS::DB::DB') unless db_class
+
+      base.instance_variable_set('@_db_class', db_class)
     end
 
     def component
@@ -37,14 +41,20 @@ module RCS
 
     def establish_database_connection(wait_until_connected: false)
       loop do
-        if database.connect!(:carrier)
+        connected = database.respond_to?(:connect!) ? database.connect!(component) : database.connect
+
+        if connected
           trace :info, "Database connection succeeded"
+          break
         end
 
-        break if database.connected? or wait_until_connected == false
-
-        trace :warn, "Database connection failed, retry..."
-        sleep 1
+        if wait_until_connected
+          trace :warn, "Database connection failed, retry..."
+          sleep 1
+        else
+          trace :error, "Database connection failed"
+          break
+        end
       end
     end
 
