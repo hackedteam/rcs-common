@@ -11,10 +11,44 @@ module RCS
 module Tracer
   include Log4r
 
+  TRACE_YAML_NAME = 'trace.yaml'
+
+  # Ensures that the log directories exists
+  def trace_ensure_log_folders
+    pwd = File.expand_path(Dir.pwd)
+
+    ["#{pwd}/log", "#{pwd}/log/err"].each do |path|
+      Dir.mkdir(path) unless File.directory?(path)
+    end
+  end
+
+  def trace_setup
+    pwd = File.expand_path(Dir.pwd)
+
+    raise "FATAL: Invalid execution directory." unless File.directory?("#{pwd}/lib")
+
+    trace_file_path = File.exist?(TRACE_YAML_NAME) ? TRACE_YAML_NAME : "#{pwd}/config/#{TRACE_YAML_NAME}"
+    raise "FATAL: Unable to find #{TRACE_YAML_NAME} file" unless File.exist?(trace_file_path)
+
+    trace_ensure_log_folders
+
+    trace_cfg = YamlConfigurator
+
+    # the only parameter in the YAML, our HOME directory
+    trace_cfg['HOME'] = pwd
+
+    # load the YAML file with this
+    trace_cfg.load_yaml_file(trace_file_path)
+  rescue Exception => ex
+    raise "FATAL: Unable to load #{TRACE_YAML_NAME}: #{ex.message}"
+  end
+
   # needed to initialize the trace subsystem.
   # the path provided is the path where the 'trace.yaml' resides
   # the configuration inside the yaml can be changed at will
-  # and the trace system will reflect it 
+  # and the trace system will reflect it
+  # 
+  # @deprecated Please use {#trace_setup} instead
   def trace_init(path = '.', file = 'trace.yaml')
     # the configuration file is YAML
     # the file must be called trace.yaml and put in the working directory

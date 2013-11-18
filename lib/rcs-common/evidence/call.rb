@@ -62,7 +62,7 @@ module CallEvidence
 
     info[:data][:grid_content] = chunks.join
 
-    info[:end_call] = true if info[:data][:grid_content] == "\xff\xff\xff\xff"
+    info[:end_call] = true if info[:data][:grid_content] == "\xff\xff\xff\xff".force_encoding("ASCII-8BIT")
     info[:end_call] ||= false
 
     yield info if block_given?
