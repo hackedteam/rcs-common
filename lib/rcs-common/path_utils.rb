@@ -14,13 +14,14 @@ module RCS
 
         execution_directory = File.expand_path('../..', init_script)
 
-        puts "WARN: chdir to #{execution_directory}"
+        #puts "WARN: chdir to #{execution_directory}"
         Dir.chdir(execution_directory)
 
         require_release("#{execution_directory}/lib/rcs-#{name}-release/#{name}.rb", warn: true)
 
       rescue LoadError => error
         puts "FATAL: cannot find any rcs-#{name} code!"
+        puts error.message
       end
 
       # Requires an encrypted ruby script (rcs-XXX-releases folders) when
