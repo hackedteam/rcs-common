@@ -60,6 +60,7 @@ module RCS
     def run_with_rescue
       show_startup_message
       yield
+      return 0
     rescue Interrupt
       trace :info, "User asked to exit. Bye bye!"
       exit(0)
