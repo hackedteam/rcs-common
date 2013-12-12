@@ -40,10 +40,6 @@ module RCS::HeartBeat
       stats = {:disk => RCS::SystemStatus.disk_free, :cpu => RCS::SystemStatus.cpu_load, :pcpu => RCS::SystemStatus.my_cpu_load(@component_fullname)}
       msg = RCS::SystemStatus.my_error_msg || message
 
-      puts '*'*30
-      puts status_str
-      puts message
-
       if defined?(::Status)
         # Db
         ::Status.status_update(@component_fullname, ip_addr, status_str, msg, stats, @component_name, $version)
