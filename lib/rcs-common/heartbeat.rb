@@ -14,9 +14,8 @@ module RCS::HeartBeat
       @after_heartbeat    = after_heartbeat
     end
 
-    def ip_addr
-      return '' unless defined?(Socket)
-      @ip_addr ||= Socket.gethostname rescue 'unknown'
+    def hostname
+      @hostname ||= Socket.gethostname rescue 'unknown'
     end
 
     # @note: This must be implemented by subclasses
@@ -42,11 +41,11 @@ module RCS::HeartBeat
 
       if defined?(::Status)
         # Db
-        ::Status.status_update(@component_fullname, ip_addr, status_str, msg, stats, @component_name, $version)
+        ::Status.status_update(@component_fullname, hostname, status_str, msg, stats, @component_name, $version)
       else
         # Collector
         db_class = Object.const_get(@component_fullname)::DB
-        db_class.instance.update_status(@component_fullname, ip_addr, status_str, msg, stats, @component_name, $version)
+        db_class.instance.update_status(@component_fullname, '', status_str, msg, stats, @component_name, $version)
       end
     ensure
        instance_exec(&@after_heartbeat) if @after_heartbeat.respond_to?(:call)
