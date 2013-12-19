@@ -21,32 +21,31 @@ task :deploy do
     $target.run("cd ./rcs-common; \"C:/RCS/Ruby/bin/gem\" install rcs*.gem; \"C:/RCS/Ruby/bin/gem\" clean rcs-common")
   end
 
-  if File.exists?("#{$me.path}/rcs-db.gemspec")
-    services_to_restart = []
-    %w[Aggregator Intelligence OCR Translate Worker DB].each do |service|
-      name = service.downcase
-      changes = $target.mirror("#{$me.path}/lib/rcs-#{name}/", "rcs/DB/lib/rcs-#{name}-release/", changes: true)
-
-      if changes
-        services_to_restart << "RCS#{service}"
-        puts changes
-      else
-        puts "rcs-#{name}-release is up to date, nothing was changed."
-      end
-    end
-
-    services_to_restart.each do |service|
-      $target.restart_service(service)
-    end
-  elsif File.exists?("#{$me.path}/rcs-collector.gemspec")
-    if $target.mirror("#{$me.path}/lib/rcs-collector/", "rcs/Collector/lib/rcs-collector-release/")
-      $target.restart_service('RCSCollector')
-    else
-      puts 'rcs-collector-release is up to date, nothing was changed.'
-    end
+  components = if File.exists?("#{$me.path}/lib/rcs-db")
+    %w[Aggregator Intelligence OCR Translate Worker Connector DB]
+  elsif File.exists?("#{$me.path}/lib/rcs-collector")
+    %w[Collector Carrier Controller]
   else
-    puts "Nothing to do here"
+    puts "db or collector?"
+    exit;
   end
+
+  services_to_restart = []
+
+  components.each do |service|
+    name = service.downcase
+    changes = $target.mirror("#{$me.path}/lib/rcs-#{name}/", "rcs/DB/lib/rcs-#{name}-release/", changes: true)
+
+    if changes
+      services_to_restart << "RCS#{service}"
+      puts "#{name} is changed. RCS#{service} service will be restarted soon."
+      # puts changes
+    else
+      puts "#{name} is up to date, nothing was changed."
+    end
+  end
+
+  services_to_restart.each { |name| $target.restart_service(name) }
 end
 
 namespace :deploy do
