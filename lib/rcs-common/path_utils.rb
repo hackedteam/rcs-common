@@ -20,8 +20,8 @@ module RCS
         require_release("#{execution_directory}/lib/rcs-#{name}-release/#{name}.rb", warn: true)
 
       rescue LoadError => error
-        puts "FATAL: cannot find any rcs-#{name} code!"
-        puts error.message
+        puts "FATAL: cannot load component rcs-#{name}: #{error.message}"
+        puts error.backtrace.join(", ") if error.backtrace.respond_to?(:join)
       end
 
       # Requires an encrypted ruby script (rcs-XXX-releases folders) when
