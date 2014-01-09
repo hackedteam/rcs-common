@@ -439,14 +439,24 @@ class CoinWallet
     @transactions.each do |tx|
       tx[:from] = Set.new
 
-      # calculate the amounts based on the direction
+      # calculate the amounts based on the direction (incoming tx)
       if tx[:versus].eql? :in
         tx[:amount] = tx[:out].select {|x| x[:own]}.first[:value]
         tx[:to] = tx[:out].select {|x| x[:own]}.first[:address]
+
+        # if the source is an hash of all zeroes, it was mined directly
+        if tx[:in].size.eql? 1 and tx[:in].first[:prevout_hash].eql? "0"*64
+          tx[:from] << "MINED BLOCK"
+        end
+
         # TODO: calculate the source from the past tx
         #tx[:from] = ???
+
         @balance += tx[:amount]
-      else
+      end
+
+      # calculate the amounts based on the direction (outgoing tx)
+      if tx[:versus].eql? :out
         tx[:amount] = tx[:out].select {|x| not x[:own]}.first[:value]
         tx[:to] = tx[:out].select {|x| not x[:own]}.first[:address]
 
