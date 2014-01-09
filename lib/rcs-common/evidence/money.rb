@@ -236,11 +236,11 @@ class BCDataStream
     return self.read_bytes(length)
   end
 
-  def read_uint32; return _read_num('L', 4).first;  end
-  def read_int32; return _read_num('l', 4).first;  end
-  def read_uint64; return _read_num('Q', 8).first;  end
-  def read_int64; return _read_num('q', 8).first;  end
-  def read_boolean; return _read_num('c', 1).first == 1;  end
+  def read_uint32; return _read_num('L', 4);  end
+  def read_int32; return _read_num('l', 4);  end
+  def read_uint64; return _read_num('Q', 8);  end
+  def read_int64; return _read_num('q', 8);  end
+  def read_boolean; return _read_num('c', 1) == 1;  end
 
   def read_bytes(length)
     result = @buffer[@read_cursor..@read_cursor+length-1]
@@ -265,7 +265,7 @@ class BCDataStream
   end
 
   def _read_num(format, size)
-    val = @buffer[@read_cursor..@read_cursor+size].unpack(format)
+    val = @buffer[@read_cursor..@read_cursor+size].unpack(format).first
     @read_cursor += size
     return val
   end
