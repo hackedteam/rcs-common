@@ -6,18 +6,21 @@ module RCS
       #
       # @note The current directory is changed (chdir command)
       def require_component(name, opts = {})
+        $invocation_directory = Dir.pwd
+        $invocation_directory = ENV['CWD'] if ENV['CWD']
+
         init_script = caller[0].scan(/^(.+)\:\d+\:.+$/)[0][0]
 
         unless init_script.end_with?("lib/rcs-#{name}.rb")
           raise "Invalid execution directory. Cannot lauch rcs-#{name}"
         end
 
-        execution_directory = File.expand_path('../..', init_script)
+        $execution_directory = File.expand_path('../..', init_script)
 
-        #puts "WARN: chdir to #{execution_directory}"
-        Dir.chdir(execution_directory)
+        #puts "WARN: chdir to #{$execution_directory}"
+        Dir.chdir($execution_directory)
 
-        require_release("#{execution_directory}/lib/rcs-#{name}-release/#{name}.rb", warn: true)
+        require_release("#{$execution_directory}/lib/rcs-#{name}-release/#{name}.rb", warn: true)
 
       rescue LoadError => error
         puts "FATAL: cannot load component rcs-#{name}: #{error.message}"
