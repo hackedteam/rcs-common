@@ -118,6 +118,19 @@ module MoneyEvidence
     end
 
     # output the transactions
+    cw.transactions.each do |tx|
+      trace :debug, "TX: #{tx[:from]} #{tx[:to]} #{tx[:versus]} #{tx[:amount]} #{tx[:id]}"
+      tx_info = Hash[common_info]
+      tx_info[:data] = Hash.new
+      tx_info[:data][:type] = :tx
+      tx_info[:da] = tx[:time]
+      tx_info[:data][:id] = tx[:id]
+      tx_info[:data][:from] = tx[:from]
+      tx_info[:data][:to] = tx[:to]
+      tx_info[:data][:amount] = tx[:amount]
+      tx_info[:data][:versus] = tx[:versus]
+      yield tx_info if block_given?
+    end
 
     :delete_raw
   end
@@ -339,6 +352,9 @@ class CoinWallet
 
     db.close
     env.close
+
+    # remove temporary env files
+    9.times {|i| FileUtils.rm_rf "__db.00#{i}" }
   end
 
   def load_entries(db)
