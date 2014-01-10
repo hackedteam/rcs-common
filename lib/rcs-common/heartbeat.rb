@@ -75,7 +75,7 @@ module RCS::HeartBeat
     rescue Interrupt
       trace :fatal, "Heartbeat was interrupted because of a term signal"
     rescue Exception => ex
-      trace :fatal, "Cannot perform status update: #{ex.message}"
+      trace :fatal, "Cannot perform heartbeat: #{ex.message}"
       trace :fatal, ex.backtrace
     end
   end
