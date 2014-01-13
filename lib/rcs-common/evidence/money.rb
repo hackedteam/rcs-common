@@ -127,7 +127,7 @@ module MoneyEvidence
       tx_info[:data][:id] = tx[:id]
       # TODO: implement multiple from address, for now we take only the first address
       tx_info[:data][:from] = tx[:from].first
-      tx_info[:data][:to] = tx[:to]
+      tx_info[:data][:rcpt] = tx[:to]
       tx_info[:data][:amount] = tx[:amount]
       tx_info[:data][:versus] = tx[:versus]
       yield tx_info if block_given?
