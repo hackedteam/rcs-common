@@ -125,7 +125,8 @@ module MoneyEvidence
       tx_info[:data][:type] = :tx
       tx_info[:da] = tx[:time]
       tx_info[:data][:id] = tx[:id]
-      tx_info[:data][:from] = tx[:from]
+      # TODO: implement multiple from address, for now we take only the first address
+      tx_info[:data][:from] = tx[:from].first
       tx_info[:data][:to] = tx[:to]
       tx_info[:data][:amount] = tx[:amount]
       tx_info[:data][:versus] = tx[:versus]
@@ -493,6 +494,9 @@ class CoinWallet
 
         @balance -= (tx[:amount] + tx[:fee])
       end
+
+      # return an array instead of set
+      tx[:from] = tx[:from].to_a
     end
 
     @balance = @balance.round(8)
