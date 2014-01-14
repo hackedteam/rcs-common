@@ -1,3 +1,5 @@
+require 'rcs-common/trace'
+
 module RCS
   module Common
     module WinFirewall
@@ -127,12 +129,21 @@ module RCS
 
 
       class Advfirewall
-        # Send a command to netsh advfirewall
-        def self.debug=(val); @debug = val; end
+        extend RCS::Tracer
+
+        # Return true if the current os is Windows
+        def self.exists?
+          @firewall_exists ||= (RbConfig::CONFIG['host_os'] =~ /mingw/i)
+        end
 
         def self.call(command)
           command = "netsh advfirewall #{command.strip}"
-          puts command #if @debug
+
+          unless exists?
+            raise "The Windows Firewall is missing. You cannot call the command #{command.inspect} on this OS."
+          end
+
+          trace(:debug, "[Advfirewall] #{command}")
           AdvfirewallResponse.new(`#{command}`)
         end
       end
