@@ -169,6 +169,11 @@ module RCS
         raise "Unable to change firewall state: #{response}" unless response.ok?
       end
 
+      # Delegate
+      def exists?
+        Advfirewall.exists?
+      end
+
       # Returns and array of #Rule
       #
       # Note that the files test/fixtures/advfirewall/firewall_show_rule_name_all
@@ -222,3 +227,5 @@ module RCS
     end
   end
 end
+
+WinFirewall = RCS::Common::WinFirewall
