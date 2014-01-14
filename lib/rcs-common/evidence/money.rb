@@ -113,6 +113,7 @@ module MoneyEvidence
       info[:data][:program] = coin
       info[:data][:type] = :target
       info[:data][:name] = k[:name]
+      info[:data][:contact] = k[:address]
       info[:data][:handle] = k[:address]
       yield info if block_given?
     end
