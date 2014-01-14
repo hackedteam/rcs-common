@@ -58,6 +58,7 @@ module RCS
     end
 
     def run_with_rescue
+      trace_setup
       show_startup_message
       yield
       return 0
