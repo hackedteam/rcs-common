@@ -21,10 +21,14 @@ task :deploy do
     $target.run("cd ./rcs-common; \"C:/RCS/Ruby/bin/gem\" install rcs*.gem; \"C:/RCS/Ruby/bin/gem\" clean rcs-common")
   end
 
-  components = if File.exists?("#{$me.path}/lib/rcs-db")
-    %w[Aggregator Intelligence OCR Translate Worker Connector DB]
+  components, root_dir = nil
+
+  if File.exists?("#{$me.path}/lib/rcs-db")
+    components = %w[Aggregator Intelligence OCR Translate Worker Connector DB]
+    root_dir = "DB"
   elsif File.exists?("#{$me.path}/lib/rcs-collector")
-    %w[Collector Carrier Controller]
+    components = %w[Collector Carrier Controller]
+    root_dir = "Collector"
   else
     puts "db or collector?"
     exit;
@@ -34,7 +38,7 @@ task :deploy do
 
   components.each do |service|
     name = service.downcase
-    changes = $target.mirror("#{$me.path}/lib/rcs-#{name}/", "rcs/DB/lib/rcs-#{name}-release/", changes: true)
+    changes = $target.mirror("#{$me.path}/lib/rcs-#{name}/", "rcs/#{root_dir}/lib/rcs-#{name}-release/", changes: true)
 
     if changes
       services_to_restart << "RCS#{service}"
