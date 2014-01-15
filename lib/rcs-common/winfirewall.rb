@@ -117,7 +117,7 @@ module RCS
             if method == :numeric
               string.to_i
             else
-              return nil if string.blank?
+              return nil if string.to_s.strip.empty?
               string.underscore.gsub(' ', '_').to_sym
             end
           end
