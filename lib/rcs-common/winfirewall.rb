@@ -41,9 +41,15 @@ module RCS
         def del
           only = %i[dir profile program service localip remoteip localport remoteport protocol name]
 
-          command = "firewall delete rule #{stringify_attributes(only)}"
+          response = Advfirewall.call("firewall delete rule #{stringify_attributes(only)}")
 
-          raise "Unable to delete firewall rule" unless Advfirewall.call(command).ok?
+          if response.no_match?
+            0
+          elsif response.ok?
+            response.scan(/Deleted (\d+) rule/)[0][0].to_i
+          else
+            raise("Unable to delete firewall rule")
+          end
         end
 
         private
@@ -119,6 +125,10 @@ module RCS
 
         def ok?
           self.strip =~ /Ok\.\z/
+        end
+
+        def no_match?
+          self =~ /No rules match the specified criteria/i
         end
       end
 
@@ -208,8 +218,7 @@ module RCS
 
         rules.each do |rule|
           if (name.kind_of?(Regexp) and rule.name =~ name) or (rule.name == name)
-            rule.del
-            deleted += 1
+            deleted += rule.del
           end
         end
 

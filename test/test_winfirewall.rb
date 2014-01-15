@@ -98,4 +98,18 @@ class WinFirewallTest < Test::Unit::TestCase
     }
     assert_equal(rule.attributes, expected_attributes)
   end
+
+  def test_rule_del
+    stub_advfirewall_and_return("firewall_show_rule_name_all")
+    rule = subject.rules.first
+
+    stub_advfirewall_and_return("firewall_delete_rule_ok")
+    assert_equal(rule.del, 3)
+
+    stub_advfirewall_and_return("firewall_delete_rule_no_match")
+    assert_equal(rule.del, 0)
+
+    stub_advfirewall_and_return("command_err")
+    assert_raise { rule.del }
+  end
 end
