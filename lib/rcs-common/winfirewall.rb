@@ -1,4 +1,5 @@
 require 'rcs-common/trace'
+require 'resolv'
 
 module RCS
   module Common
@@ -15,8 +16,7 @@ module RCS
         def initialize(attributes = {})
           # Default attribute values
           @attributes = {
-            grouping: RULE_GROUP,
-            protocol: :tcp
+            grouping: RULE_GROUP
           }
 
           # Merge default attributes with the given ones
@@ -29,6 +29,26 @@ module RCS
           ATTRIBUTES.each do |name|
             define_singleton_method(name) { @attributes[name] }
             define_singleton_method("#{name}=") { |value| @attributes[name] = value }
+          end
+
+          resolve_addresses!
+        end
+
+        def resolve_addresses!
+          %i[remote_ip local_ip].each do |name|
+            address = @attributes[name]
+            
+            next unless address
+            next if %w[any localsubnet dns dhcp wins defaultgateway].include?(address.to_s.downcase)
+            next if address.to_s =~ Resolv::IPv4::Regex
+
+            if Socket.gethostname.casecmp(address).zero?
+              resolved = '127.0.0.1'
+            else
+              resolved = Resolv::DNS.new.getaddress(address).to_s rescue nil
+            end
+
+            @attributes[name] = resolved if resolved
           end
         end
 
@@ -65,7 +85,8 @@ module RCS
             remoteip:   remote_ip,
             localip:    local_ip,
             localport:  local_port,
-            remoteport: remote_port
+            remoteport: remote_port,
+            #group:      grouping  / why isn't working?
           }
 
           string = ""
@@ -117,7 +138,7 @@ module RCS
             if method == :numeric
               string.to_i
             else
-              return nil if string.to_s.strip.empty?
+              return nil if string.blank?
               string.underscore.gsub(' ', '_').to_sym
             end
           end
@@ -149,7 +170,9 @@ module RCS
           end
 
           trace(:debug, "[Advfirewall] #{command}")
-          AdvfirewallResponse.new(`#{command}`)
+          resp = AdvfirewallResponse.new(`#{command}`)
+          trace(:error, "[Advfirewall] " + resp[0..resp.index("\nUsage:") || -1].strip) unless resp.ok? or resp.no_match?
+          resp
         end
       end
 
@@ -213,16 +236,16 @@ module RCS
         Rule.new(attributes).save
       end
 
-      def del_rule(name)
-        deleted = 0
-
-        rules.each do |rule|
-          if (name.kind_of?(Regexp) and rule.name =~ name) or (rule.name == name)
-            deleted += rule.del
+      def del_rule(rule_or_name)
+        if rule_or_name.kind_of?(Regexp)
+          rules.inject(0) do |deleted, rule|
+            deleted += (rule.name =~ rule_or_name ? rule.del : 0)
           end
+        elsif rule_or_name.kind_of?(Rule)
+          rule_or_name.del
+        else
+          Rule.new(name: rule_or_name.to_s).del
         end
-
-        deleted
       end
 
       private
