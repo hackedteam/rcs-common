@@ -77,17 +77,17 @@ class WinFirewallTest < Test::Unit::TestCase
       :remote_port=>:any,
       :edge_traversal=>:defer_to_user,
       :action=>:allow,
-      :rule_name=>"Ruby interpreter (CUI) 2.0.0p247 [i386-mingw32]"
+      :name=>"Ruby interpreter (CUI) 2.0.0p247 [i386-mingw32]"
     }
     assert_equal(rule.attributes, expected_attributes)
 
-    rule = subject.rules.find { |rule| rule.rule_name == "Media Center Extenders - WMDRM-ND/RTP/RTCP (UDP-In)" }
+    rule = subject.rules.find { |rule| rule.name == "Media Center Extenders - WMDRM-ND/RTP/RTCP (UDP-In)" }
     expected_attributes = {
       :enabled=>:no,
       :protocol=>:udp,
       :profiles=>[:domain, :private, :public],
       :grouping=>"Media Center Extenders",
-      :rule_name=>"Media Center Extenders - WMDRM-ND/RTP/RTCP (UDP-In)",
+      :name=>"Media Center Extenders - WMDRM-ND/RTP/RTCP (UDP-In)",
       :direction=>:in,
       :local_ip=>:any,
       :remote_ip=>"LocalSubnet",

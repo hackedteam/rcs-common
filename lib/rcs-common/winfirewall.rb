@@ -6,7 +6,7 @@ module RCS
 
       # Represent a Windows Firewall rule.
       class Rule
-        ATTRIBUTES = %i[direction action local_ip remote_ip local_port remote_port rule_name protocol profiles enabled grouping edge_traversal]
+        ATTRIBUTES = %i[direction action local_ip remote_ip local_port remote_port name protocol profiles enabled grouping edge_traversal]
 
         RULE_GROUP = 'RCS Firewall Rules'
 
@@ -45,11 +45,6 @@ module RCS
 
           raise "Unable to delete firewall rule" unless Advfirewall.call(command).ok?
         end
-
-        # Aliases
-
-        def name; rule_name; end
-        def name=(v); @attributes[:rule_name] = v; end
 
         private
 
@@ -197,6 +192,8 @@ module RCS
               normalize(new_value)
             end
           end
+
+          hash[:name] = hash.delete(:rule_name)
 
           Rule.new(hash)
         end
