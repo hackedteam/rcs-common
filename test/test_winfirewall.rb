@@ -30,6 +30,10 @@ class WinFirewallTest < Test::Unit::TestCase
       stubbed_resp = File.read(File.expand_path("../fixtures/advfirewall/#{filepath}", __FILE__))
       RCS::Common::WinFirewall::AdvfirewallResponse.new(stubbed_resp)
     end
+
+    # Stub #resolve_addresses! => Do not raise error when DNS
+    # cannot be resolved
+    eval 'class RCS::Common::WinFirewall::Rule; def resolve_addresses!; end; end'
   end
 
   def test_status_on

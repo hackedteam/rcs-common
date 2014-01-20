@@ -36,19 +36,19 @@ module RCS
 
         def resolve_addresses!
           %i[remote_ip local_ip].each do |name|
-            address = @attributes[name]
-            
-            next unless address
-            next if %w[any localsubnet dns dhcp wins defaultgateway].include?(address.to_s.downcase)
-            next if address.to_s =~ Resolv::IPv4::Regex
+            next unless @attributes[name]
 
-            if Socket.gethostname.casecmp(address).zero?
-              resolved = '127.0.0.1'
-            else
-              resolved = Resolv::DNS.new.getaddress(address).to_s rescue nil
+            addresses = [@attributes[name]].flatten
+
+            addresses.each_with_index do |address, index|
+              next if %w[any localsubnet dns dhcp wins defaultgateway].include?(address.to_s.downcase)
+              next if address.to_s =~ Resolv::IPv4::Regex
+
+              is_localhost =  Socket.gethostname.casecmp(address).zero?
+              addresses[index] = is_localhost ? '127.0.0.1' : Resolv::DNS.new.getaddress(address).to_s
             end
 
-            @attributes[name] = resolved if resolved
+            @attributes[name] = addresses.size == 1 ? addresses[0] : addresses
           end
         end
 
