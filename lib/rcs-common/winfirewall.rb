@@ -185,7 +185,7 @@ module RCS
       # Note that the files test/fixtures/advfirewall/show_currentprofile_state_on and
       # test/fixtures/advfirewall/show_currentprofile_state_off contains an example of the command output
       def status
-        list = Advfirewall.call("show currentprofile state").parse(block_separator_regexp: /^Public Profile Settings:.+$/)
+        list = Advfirewall.call("show currentprofile state").parse(block_separator_regexp: /Profile Settings:.+$/)
         list[0]['State'] == 'ON' ? :on : :off
       end
 
