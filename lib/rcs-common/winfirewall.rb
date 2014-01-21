@@ -30,11 +30,36 @@ module RCS
             define_singleton_method(name) { @attributes[name] }
             define_singleton_method("#{name}=") { |value| @attributes[name] = value }
           end
+        end
 
-          resolve_addresses!
+        def resolve_dns(dns)
+          ip = Resolv::DNS.new.getaddress(dns).to_s rescue nil
+
+          return ip if ip
+
+          File.open('C:\\Windows\\system32\\drivers\\etc\\hosts', 'rb') do |f|
+            f.each_line do |line|
+              line.strip!
+              next if line.start_with?('#')
+              addr1, addr2 = *line.split(' ')
+              next if addr1.nil? or addr2.nil?
+              return addr1 if addr2.casecmp(dns).zero?
+              return addr2 if addr1.casecmp(dns).zero?
+            end
+          end
+
+          nil
+        rescue Exception => ex
+          raise("Cannot resolve DNS #{dns.inspect}: #{ex.message}")
         end
 
         def resolve_addresses!
+          resolve_addresses(true)
+        end
+
+        def resolve_addresses(_raise = false)
+          return if @addresses_resolved
+
           %i[remote_ip local_ip].each do |name|
             next unless @attributes[name]
 
@@ -43,23 +68,35 @@ module RCS
             addresses.each_with_index do |address, index|
               next if %w[any localsubnet dns dhcp wins defaultgateway].include?(address.to_s.downcase)
               next if address.to_s =~ Resolv::IPv4::Regex
-              next if address.to_s =~ /\:\:/
 
               is_localhost =  Socket.gethostname.casecmp(address).zero?
-              addresses[index] = is_localhost ? '127.0.0.1' : Resolv::DNS.new.getaddress(address).to_s
+
+              addresses[index] = if is_localhost
+                '127.0.0.1'
+              elsif _raise
+                resolve_dns(address)
+              else
+                resolve_dns(address) rescue address
+              end
             end
 
             @attributes[name] = addresses.size == 1 ? addresses[0] : addresses
           end
+
+          @addresses_resolved = true
         end
 
         def save
+          resolve_addresses!
+
           command = "firewall add rule #{stringify_attributes}"
 
           raise "Unable to save firewall rule" unless Advfirewall.call(command).ok?
         end
 
         def del
+          resolve_addresses
+
           only = %i[dir profile program service localip remoteip localport remoteport protocol name]
 
           response = Advfirewall.call("firewall delete rule #{stringify_attributes(only)}")
