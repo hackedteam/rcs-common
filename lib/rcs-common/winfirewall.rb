@@ -43,6 +43,7 @@ module RCS
             addresses.each_with_index do |address, index|
               next if %w[any localsubnet dns dhcp wins defaultgateway].include?(address.to_s.downcase)
               next if address.to_s =~ Resolv::IPv4::Regex
+              next if address.to_s =~ /\:\:/
 
               is_localhost =  Socket.gethostname.casecmp(address).zero?
               addresses[index] = is_localhost ? '127.0.0.1' : Resolv::DNS.new.getaddress(address).to_s
@@ -138,8 +139,15 @@ module RCS
             if method == :numeric
               string.to_i
             else
-              return nil if string.blank?
-              string.underscore.gsub(' ', '_').to_sym
+              return nil if string.to_s.strip.empty?
+              # equivalent to String#undescore (ActiveSupport)
+              string = string.to_s.gsub(/::/, '/')
+              string.gsub!(/([A-Z\d]+)([A-Z][a-z])/,'\1_\2')
+              string.gsub!(/([a-z\d])([A-Z])/,'\1_\2')
+              string.gsub!("-", "_")
+              string.downcase!
+              string.gsub!(' ', '_')
+              string.to_sym
             end
           end
         end

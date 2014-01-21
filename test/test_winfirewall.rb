@@ -5,21 +5,6 @@ require 'securerandom'
 
 require 'rcs-common/winfirewall'
 
-# The #undescore method is added by active_support/core_ext/string/inflections
-# Here's a very simple implementation
-class String
-  def underscore
-    word = self.to_s.dup
-    word.gsub!(/::/, '/')
-    # word.gsub!(/(?:([A-Za-z\d])|^)(#{inflections.acronym_regex})(?=\b|[^a-z])/) { "#{$1}#{$1 && '_'}#{$2.downcase}" }
-    word.gsub!(/([A-Z\d]+)([A-Z][a-z])/,'\1_\2')
-    word.gsub!(/([a-z\d])([A-Z])/,'\1_\2')
-    word.gsub!("-", "_")
-    word.downcase!
-    word
-  end
-end
-
 class WinFirewallTest < Test::Unit::TestCase
   def subject
     @subject ||= RCS::Common::WinFirewall
