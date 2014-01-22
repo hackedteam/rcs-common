@@ -130,6 +130,7 @@ module MoneyEvidence
       # TODO: implement multiple from address, for now we take only the first address
       tx_info[:data][:from] = tx[:from].first
       tx_info[:data][:rcpt] = tx[:to]
+      tx_info[:data][:currency] = coin
       tx_info[:data][:amount] = tx[:amount]
       tx_info[:data][:incoming] = (tx[:versus].eql? :in) ? 1 : 0
       yield tx_info if block_given?
