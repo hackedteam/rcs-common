@@ -68,7 +68,7 @@ module MoneyEvidence
     info[:data][:size] = info[:grid_content].bytesize
 
     # dump the wallet to a temporary file
-    temp = RCS::DB::Config.instance.temp(SecureRandom.base64(10))
+    temp = RCS::DB::Config.instance.temp(SecureRandom.urlsafe_base64(10))
     File.open(temp, 'wb') {|d| d.write binary_wallet}
 
     coin = info[:data][:currency]
