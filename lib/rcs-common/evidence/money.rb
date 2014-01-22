@@ -101,6 +101,7 @@ module MoneyEvidence
       info = Hash[address_info]
       info[:data] = {}
       info[:data][:program] = coin
+      info[:data][:type] = :peer
       info[:data][:name] = k[:name]
       info[:data][:handle] = k[:address]
       yield info if block_given?
