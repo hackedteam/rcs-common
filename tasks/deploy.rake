@@ -26,6 +26,7 @@ task :deploy do
     $me.run('rake build')
     $target.mirror("pkg", "./rcs-common")
     $target.run("cd ./rcs-common; \"C:/RCS/Ruby/bin/gem\" install rcs*.gem; \"C:/RCS/Ruby/bin/gem\" clean rcs-common")
+    $target.restart_service('RCSWorker')
     exit
   end
 
