@@ -3,6 +3,8 @@
 # here we are re-opening the ruby String class,
 # the namespace must not be specified
 
+require_relative 'sanitize'
+
 class String
 
   def keywords
