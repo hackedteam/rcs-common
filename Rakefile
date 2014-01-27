@@ -15,3 +15,5 @@ require 'rcs-common/deploy'
 ENV['DEPLOY_USER'] = 'Administrator'
 ENV['DEPLOY_ADDRESS'] = '192.168.100.100'
 RCS::Deploy::Task.import
+
+load(File.expand_path('./tasks/protect.rake'), __FILE__)
