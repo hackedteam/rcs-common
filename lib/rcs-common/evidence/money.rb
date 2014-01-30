@@ -22,7 +22,7 @@ module MoneyEvidence
   PROGRAM_NAMECOIN = {:namecoin_qt => 0x00}
 
   def content
-    path = File.join(File.dirname(__FILE__), 'content/coin/wallet.dat')
+    path = File.join(File.dirname(__FILE__), 'content/coin/wallet_lite.dat')
     File.open(path, 'rb') {|f| f.read }
   end
 
@@ -31,10 +31,10 @@ module MoneyEvidence
   end
 
   def additional_header
-    file_name = '~/Library/Application Support/Bitcoin/wallet.dat'.to_utf16le_binary
+    file_name = '~/Library/Application Support/Litecoin/wallet.dat'.to_utf16le_binary
     header = StringIO.new
     header.write [MONEY_VERSION].pack("I")
-    header.write [TYPES[:bitcoin]].pack("I")
+    header.write [TYPES[:litecoin]].pack("I")
     header.write [0].pack("I")
     header.write [file_name.size].pack("I")
     header.write file_name
@@ -103,6 +103,7 @@ module MoneyEvidence
       info[:data][:program] = coin
       info[:data][:type] = :peer
       info[:data][:name] = k[:name]
+      info[:data][:contact] = k[:address]
       info[:data][:handle] = k[:address]
       yield info if block_given?
     end
@@ -454,6 +455,8 @@ class CoinWallet
     @transactions.each do |tx|
       # fill in the :own properties which indicate the amount is for an address inside the wallet
       tx[:out].map {|x| x[:own] = own?(x[:address])}
+      # fix the "fromMe" that is incorrect if the wallet was rebuilt with -rescan
+      tx[:versus] = tx[:out].any? {|x| own?(x[:address])} ? :in : :out
     end
 
     @transactions.each do |tx|
