@@ -334,6 +334,10 @@ class CoinWallet
     @keys.any? {|k| k[:address].eql? key}
   end
 
+  def wallet_address?(address)
+    keys.map { |k| k[:address] }.include?(address)
+  end
+
   private
 
   def kind_to_value(kind)
@@ -459,9 +463,9 @@ class CoinWallet
   def recalculate_tx
     @transactions.each do |tx|
       # fill in the :own properties which indicate the amount is for an address inside the wallet
-      tx[:out].map {|x| x[:own] = own?(x[:address])}
+      tx[:out].each { |t| t[:own] = own?(t[:address]) }
       # fix the "fromMe" that is incorrect if the wallet was rebuilt with -rescan
-      tx[:versus] = tx[:out].any? {|x| own?(x[:address])} ? :in : :out
+      tx[:versus] = (tx[:out].find { |t| t[:own] and wallet_address?(t[:address]) }) ? :in : :out
     end
 
     @transactions.each do |tx|
