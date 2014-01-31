@@ -29,25 +29,35 @@ module RCS
 
       # Requires an encrypted ruby script (rcs-XXX-releases folders) when
       # available, otherwise requires the clean version of it (rcs-XXX folders)
-      def require_release(path, opts = {})
+      def require_release(path, warn: false, required: true)
         if path.include?("-release")
           new_path = path
         else
           new_path = path.gsub(/(.*)rcs-([^\/]+)/, '\1rcs-\2-release')
         end
 
-        if opts[:warn] and !new_path.include?('-release') and File.exists?(new_path)
+        if warn and !new_path.include?('-release') and File.exists?(new_path)
           puts "WARNING: Executing clear text code... (debug only)"
         end
 
         begin
           require(new_path)
+          return
         rescue LoadError => error
+          # In this case, raise the LoadError only if it's caused
+          # by another #require inside the required script, otherwise
+          # go on and try to require the clean version
+          raise(error) if error.path != new_path
+        end
+
+        begin
           new_path.gsub!('-release', '')
           require(new_path)
+        rescue LoadError => error
+          raise(error) if required
         end
-  		end
-  	end
+      end
+    end
   end
 end
 
