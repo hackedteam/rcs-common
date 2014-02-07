@@ -295,7 +295,6 @@ class CoinWallet
   attr_reader :count, :version, :default_key, :kinds, :seed, :balance
 
   def initialize(file, kind)
-    @currency = kind
     @seed = kind_to_value(kind)
     @kinds = Set.new
     @count = 0
@@ -456,10 +455,6 @@ class CoinWallet
     return hash
   end
 
-  def money_module_loaded?
-    @@money_module_loaded ||= RCS.__send__(:const_defined?, :'Money') and RCS::Money.__send__(:const_defined?, :'Tx')
-  end
-
   def recalculate_tx
     @transactions.each do |tx|
       # fill in the :own properties which indicate the amount is for an address inside the wallet
@@ -479,10 +474,10 @@ class CoinWallet
         # if the source is an hash of all zeroes, it was mined directly
         if tx[:in].size.eql? 1 and tx[:in].first[:prevout_hash].eql? "0"*64
           tx[:from] << "MINED BLOCK"
-        elsif money_module_loaded? # fetch input address(es) from the blockchain
-          fetched_tx = RCS::Money::Tx.for(@currency).find(tx[:id]) rescue nil
-          tx[:from] = fetched_tx.in.uniq if fetched_tx
         end
+
+        # TODO: calculate the source from the past tx
+        #tx[:from] = ???
 
         @balance += tx[:amount]
       end
