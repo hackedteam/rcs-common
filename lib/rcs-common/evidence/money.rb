@@ -487,6 +487,10 @@ class CoinWallet
         tx[:amount] = tx[:out].select {|x| not x[:own]}.first[:value]
         tx[:to] = tx[:out].select {|x| not x[:own]}.first[:address]
 
+        # TODO: Remove once multiple addresses will be supported.
+        # Force the first element of the "from" array to the first public wallet address.
+        tx[:from] << keys[0][:address]
+
         # calculate the fee based on the in and out tx
         if tx[:in].size > 0
           tx[:in].each do |txin|
