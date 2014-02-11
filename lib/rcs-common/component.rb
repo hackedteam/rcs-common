@@ -63,6 +63,8 @@ module RCS
       yield
       return 0
     rescue Interrupt
+      # call the kill handler if defined
+      kill if self.respond_to? :kill
       trace :info, "User asked to exit. Bye bye!"
       exit(0)
     rescue Exception => e
