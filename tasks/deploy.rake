@@ -43,7 +43,7 @@ task :deploy do
   components, root_dir = nil
 
   if $project == :db
-    components = %w[Aggregator Intelligence OCR Translate Worker Connector DB]
+    components = %w[Aggregator Intelligence OCR Translate Worker Connector Money DB]
     root_dir = "DB"
   elsif $project == :collector
     components = %w[Collector Carrier Controller]
