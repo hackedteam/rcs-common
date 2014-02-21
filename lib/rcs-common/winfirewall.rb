@@ -234,6 +234,12 @@ module RCS
         list[0]['State'] == 'ON' ? :on : :off
       end
 
+      # Returns true if the default firewall policy is to block all inbound connections
+      def block_inbound?
+        list = Advfirewall.call("show currentprofile firewallpolicy").parse(block_separator_regexp: /Profile Settings:.+$/)
+        list[0]['Firewall Policy'].include?('BlockInbound')
+      end
+
       # Enable or the disable the firewall. The netsh command requires elevation to succeed
       # Accpeted values are :on or :off
       def status=(state)
