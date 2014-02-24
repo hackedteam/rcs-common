@@ -48,7 +48,7 @@ module RCS
             end
           end
 
-          nil
+          raise("Cannot resolve DNS #{dns.inspect}")
         rescue Exception => ex
           raise("Cannot resolve DNS #{dns.inspect}: #{ex.message}")
         end
@@ -68,6 +68,7 @@ module RCS
             addresses.each_with_index do |address, index|
               next if %w[any localsubnet dns dhcp wins defaultgateway].include?(address.to_s.downcase)
               next if address.to_s =~ Resolv::IPv4::Regex
+              next if address.to_s =~ Resolv::IPv4::Regex256
 
               is_localhost =  Socket.gethostname.casecmp(address).zero?
 
