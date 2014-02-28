@@ -3,6 +3,8 @@
 # here we are re-opening the ruby String class,
 # the namespace must not be specified
 
+require_relative 'sanitize'
+
 class String
 
   def keywords
@@ -11,7 +13,7 @@ class String
     keywords = self.dup
 
     # sanitize the input UTF-8
-    keywords.encode!('UTF-8', 'UTF-8', :invalid => :replace)
+    keywords.force_utf8!
 
     # remove everything that is not alphanumeric
     keywords.gsub!(/([^[:alnum:]])+/u, ' ')

@@ -223,7 +223,17 @@ class Evidence
       until binary_string.eof?
         len = read_uint32(binary_string)
         content = binary_string.read align_to_block_len(len)
-        chunks << StringIO.new(decrypt(content)).read(len)
+
+        decoded_chunk = nil
+
+        begin
+          decoded_chunk = StringIO.new(decrypt(content)).read(len)
+        rescue Exception => ex
+          yield(chunks.join) if block_given?
+          raise EvidenceDeserializeError.new("Unable to decrypt chunck #{chunks.size}. Expected length is #{len}, content bytesize is #{content.bytesize}. #{ex.message}")
+        end
+
+        chunks << decoded_chunk
       end
     end
 

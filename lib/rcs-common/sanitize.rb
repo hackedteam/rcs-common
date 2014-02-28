@@ -4,11 +4,23 @@
 # the namespace must not be specified
 
 class String
+  REMOVE_INVALID_CHARS_REGEXP = Regexp.new(/([^[:alnum:][:graph:]\n\r])+/u)
 
   def remove_invalid_chars
+    self.force_utf8.gsub(REMOVE_INVALID_CHARS_REGEXP, ' ')
+  end
 
-    # remove invalid UTF-8 chars
-    self.encode('UTF-8', self.encoding.to_s, :invalid => :replace).gsub(/([^[:alnum:][:graph:]\n\r])+/u, ' ')
+  def force_utf8(modify_self = false)
+    src_encoding = valid_encoding? ? encoding.to_s : 'BINARY'
+    dst_encoding = 'UTF-8'
+
+    args = [dst_encoding, src_encoding, {:invalid => :replace, :undef => :replace, replace: ''}]
+
+    modify_self ? encode!(*args) : encode(*args)
+  end
+
+  def force_utf8!
+    force_utf8(true)
   end
 
   def strip_html_tags
