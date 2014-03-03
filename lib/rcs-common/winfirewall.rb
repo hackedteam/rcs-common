@@ -68,7 +68,7 @@ module RCS
             addresses.each_with_index do |address, index|
               next if %w[any localsubnet dns dhcp wins defaultgateway].include?(address.to_s.downcase)
               next if address.to_s =~ Resolv::IPv4::Regex
-              next if address.to_s =~ Resolv::IPv4::Regex256
+              next if address.to_s =~ /(\d+)\.(\d+)\.(\d+)\.(\d+)\/(\d+)/
 
               is_localhost =  Socket.gethostname.casecmp(address).zero?
 
