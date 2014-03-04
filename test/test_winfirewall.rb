@@ -15,8 +15,8 @@ class WinFirewallTest < Test::Unit::TestCase
   end
 
   if subject.exists?
-    def call(command)
-      subject::Advfirewall.call(command)
+    def call(command, **options)
+      subject::Advfirewall.call(command, options)
     end
 
     def test_status
@@ -41,20 +41,24 @@ class WinFirewallTest < Test::Unit::TestCase
     def test_add_rule_and_del_rule
       rule_name = "test_rule_#{rand(1E10)}"
       subject.add_rule(action: :allow, direction: :in, name: rule_name, local_port: 80, remote_ip: %w[LocalSubnet 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16], protocol: :tcp)
-      assert_equal(call("firewall show rule name=#{rule_name}").has_separator?, true)
+      assert_equal(call("firewall show rule name=#{rule_name}", read: true).has_separator?, true)
       subject.del_rule(rule_name)
-      assert_equal(call("firewall show rule name=#{rule_name}").has_separator?, false)
+      assert_equal(call("firewall show rule name=#{rule_name}", read: true).has_separator?, false)
+    end
+
+    def test_invalid_add_rule
+      assert_raise { subject.add_rule(action: :allow, direction: :in, xxxxx: 1) }
     end
 
     def test_dns_resolution
       rule_name = "test_rule_#{rand(1E10)}"
       subject.add_rule(action: :allow, direction: :in, name: rule_name, remote_ip: "wikipedia.org", protocol: :tcp)
-      resp = call("firewall show rule name=#{rule_name}")
+      resp = call("firewall show rule name=#{rule_name}", read: true)
       assert_equal(resp.include?('208.80.154.224'), true)
       subject.del_rule(rule_name)
 
       assert_raise { subject.add_rule(action: :allow, direction: :in, name: rule_name, remote_ip: "wikipedia.org.x.x.x", protocol: :tcp) }
-      assert_equal(call("firewall show rule name=#{rule_name}").has_separator?, false)
+      assert_equal(call("firewall show rule name=#{rule_name}", read: true).has_separator?, false)
     end
 
     def test_del_missing_rule

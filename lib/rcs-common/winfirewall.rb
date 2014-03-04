@@ -1,9 +1,11 @@
 require 'rcs-common/trace'
 require 'resolv'
+require 'timeout'
 
 module RCS
   module Common
     module WinFirewall
+      extend RCS::Tracer
 
       # Represent a Windows Firewall rule.
       class Rule
@@ -33,7 +35,11 @@ module RCS
         end
 
         def resolve_dns(dns)
-          ip = Resolv::DNS.new.getaddress(dns).to_s rescue nil
+          ip = nil
+
+          Timeout::timeout(8) do
+            ip = Resolv::DNS.new.getaddress(dns).to_s rescue nil
+          end
 
           return ip if ip
 
@@ -49,6 +55,8 @@ module RCS
           end
 
           raise("Cannot resolve DNS #{dns.inspect}")
+        rescue Timeout::Error
+          raise("Cannot resolve DNS #{dns.inspect}: timeout")
         rescue Exception => ex
           raise("Cannot resolve DNS #{dns.inspect}: #{ex.message}")
         end
@@ -141,7 +149,10 @@ module RCS
       class AdvfirewallResponse < String
         SEPARATOR = '-'*70
 
+        attr_accessor :ok
+
         def ok?
+          return self.ok unless self.ok.nil?
           self.strip =~ /OK\.\z/i
         end
 
@@ -165,7 +176,7 @@ module RCS
           @firewall_exists ||= (RbConfig::CONFIG['host_os'] =~ /mingw/i)
         end
 
-        def self.call(command)
+        def self.call(command, read: false)
           command = "netsh advfirewall #{command.strip}"
 
           unless exists?
@@ -173,9 +184,16 @@ module RCS
           end
 
           trace(:debug, "[Advfirewall] #{command}")
-          resp = AdvfirewallResponse.new(`#{command}`)
-          trace(:error, "[Advfirewall] #{resp}") unless resp.ok?
-          resp
+
+          if read
+            resp = AdvfirewallResponse.new(`#{command}`)
+            trace(:error, "[Advfirewall] #{resp}") unless resp.ok?
+            resp
+          else
+            resp = AdvfirewallResponse.new
+            resp.ok = system(command)
+            resp
+          end
         end
       end
 
@@ -188,13 +206,29 @@ module RCS
       # Note that the files test/fixtures/advfirewall/show_currentprofile_state_on and
       # test/fixtures/advfirewall/show_currentprofile_state_off contains an example of the command output
       def status
-        first_line = Advfirewall.call("show currentprofile state").first_line
-        first_line =~ /ON\z/ ? :on : :off
+        return status_from_registry if @use_registry_for_status
+
+        first_line = Advfirewall.call("show currentprofile state", read: true).first_line
+
+        if first_line =~ /ON\z/
+          :on
+        elsif first_line =~ /OFF\z/
+          :off
+        else
+          @use_registry_for_status = true
+          status_from_registry
+        end
+      end
+
+      def status_from_registry
+        command = 'reg query HKLM\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile /v EnableFirewall'
+        trace(:debug, "[Advfirewall] #{command}")
+        `#{command}`.include?('0x1') ? :on : :off
       end
 
       # Returns true if the default firewall policy is to block all inbound connections
       def block_inbound?
-        line = Advfirewall.call("show currentprofile firewallpolicy").first_line
+        line = Advfirewall.call("show currentprofile firewallpolicy", read: true).first_line
         line.to_s.downcase.include?('blockinbound')
       end
 
