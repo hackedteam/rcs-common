@@ -17,3 +17,8 @@ ENV['DEPLOY_ADDRESS'] = '192.168.100.100'
 RCS::Deploy::Task.import
 
 load(File.expand_path('./tasks/protect.rake'), __FILE__)
+
+require 'rspec/core/rake_task'
+
+desc "Run all RSpec tests"
+RSpec::Core::RakeTask.new(:spec)
