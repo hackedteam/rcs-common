@@ -146,6 +146,21 @@ module RCS::Common::GridFS
       described_class.const_set(:DEFAULT_CHUNK_SIZE, $chunk_size)
     end
 
+    it "deal with different encodings" do
+      bucket = Bucket.new
+
+      non_utf8_string = "- Men\xFC -"
+      expect(non_utf8_string.valid_encoding?).to be_false
+      id = bucket.put non_utf8_string
+      file = bucket.get(id)
+      expect(file.read.encoding.to_s).to eq('ASCII-8BIT')
+
+      utf8_string = "ciao"
+      id = bucket.put utf8_string
+      file = bucket.get(id)
+      expect(file.read.encoding.to_s).to eq('UTF-8')
+    end
+
     describe '#append' do
 
       let(:bucket) { Bucket.new }
@@ -240,7 +255,7 @@ module RCS::Common::GridFS
     describe '#drop' do
 
       it 'removes the collections' do
-        bucket = Bucket.new
+        bucket = Bucket.new(nil, lazy: false)
         bucket.drop
         expect(bucket.session.collections).to be_empty
       end
@@ -248,7 +263,7 @@ module RCS::Common::GridFS
       context 'when the collections are missing' do
 
         let(:bucket) do
-          bucket = Bucket.new.tap { |b| b.drop }
+          bucket = Bucket.new
         end
 
         context '#get' do
@@ -272,19 +287,19 @@ module RCS::Common::GridFS
     describe '#initialize' do
 
       it 'creates the requied collections with the default name' do
-        session = Bucket.new.session
+        session = Bucket.new(nil, lazy: false).session
         names = session.collections.map(&:name).sort
         expect(names).to eq(['fs.chunks', 'fs.files'])
       end
 
       it 'creates the requied collections with the given prefix' do
-        session = Bucket.new('foo.bar').session
+        session = Bucket.new('foo.bar', lazy: false).session
         names = session.collections.map(&:name).sort
         expect(names).to eq(['foo.bar.chunks', 'foo.bar.files'])
       end
 
       it 'creates the indexes' do
-        session = Bucket.new.session
+        session = Bucket.new(nil, lazy: false).session
 
         db_name = session.instance_variable_get('@current_database').name
 
@@ -301,7 +316,7 @@ module RCS::Common::GridFS
       context 'when nil is passed as name' do
 
         it 'creates the requied collections with the default name' do
-          session = Bucket.new(nil).session
+          session = Bucket.new(nil, lazy: false).session
           names = session.collections.map(&:name).sort
           expect(names).to eq(['fs.chunks', 'fs.files'])
         end
@@ -310,7 +325,7 @@ module RCS::Common::GridFS
       context 'when a blank string is passed as name' do
 
         it 'creates the requied collections with the default name' do
-          session = Bucket.new('  ').session
+          session = Bucket.new('  ', lazy: false).session
           names = session.collections.map(&:name).sort
           expect(names).to eq(['fs.chunks', 'fs.files'])
         end

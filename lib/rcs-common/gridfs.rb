@@ -89,6 +89,7 @@ module RCS
         DEFAULT_NAME          = 'fs'
         DEFAULT_CONTENT_TYPE  = 'application/octet-stream'
         DEFAULT_CHUNK_SIZE    =  262144
+        BINARY_ENCODING       = 'BINARY'
 
         def initialize(name = DEFAULT_NAME, options = {})
           @name               = name.to_s.downcase.strip
@@ -150,7 +151,7 @@ module RCS
           end
 
           chunkerize(data) do |chunk_data, chunk_num|
-            chunks_collection.find(files_id: file_id, n: chunk_num + chunk_offset).upsert('$set' => {data: BSON::Binary.new(:generic, chunk_data)})
+            chunks_collection.find(files_id: file_id, n: chunk_num + chunk_offset).upsert('$set' => {data: binary(chunk_data)})
           end
 
           new_md5 = md5(file_id) if options[:md5] != false
@@ -236,11 +237,16 @@ module RCS
           md5 = Digest::MD5.new if options[:md5] != false
 
           chunkerize(data) do |chunk_data, chunk_num|
-            chunks_collection.insert(files_id: file_id, n: chunk_num, data: BSON::Binary.new(:generic, chunk_data))
+            chunks_collection.insert(files_id: file_id, n: chunk_num, data: binary(chunk_data))
             md5.update(chunk_data) if md5
           end
 
           md5.hexdigest if md5
+        end
+
+        def binary(data)
+          data.force_encoding(BINARY_ENCODING) if data.respond_to?(:force_encoding)
+          BSON::Binary.new(:generic, data)
         end
       end
     end
