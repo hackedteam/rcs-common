@@ -96,7 +96,7 @@ module RCS
           @session            = options[:session] || Mongoid.default_session
           @files_collection   = @session[:"#{@name}.files"]
           @chunks_collection  = @session[:"#{@name}.chunks"]
-          @setup_on_write     = options[:lazy]
+          @setup_on_write     = options[:lazy].nil? ? true : options[:lazy]
 
           setup unless @setup_on_write
         end
