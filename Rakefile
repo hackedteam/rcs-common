@@ -22,3 +22,6 @@ require 'rspec/core/rake_task'
 
 desc "Run all RSpec tests"
 RSpec::Core::RakeTask.new(:spec)
+
+# Disable the release task (release the gem to rubygems)
+Rake::Task["release"].clear
