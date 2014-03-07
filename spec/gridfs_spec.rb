@@ -107,9 +107,45 @@ module RCS::Common::GridFS
 
     let(:content) { ('a'*$chunk_size)+'b' }
 
-    describe '#read' do
+    let(:file) { bucket.get(bucket.put(content)) }
 
-      let(:file) { bucket.get(bucket.put(content)) }
+    describe '#eof?' do
+
+      it 'is false when there are bytes to read' do
+        expect(file.eof?).to be_false
+      end
+
+      context 'when file#read has been called' do
+
+        before { file.read }
+
+        it 'is true' do
+          expect(file.eof?).to be_true
+        end
+      end
+
+      context 'when the file has been read sequentially' do
+
+        let(:content) { ('a'*$chunk_size)+('b'*$chunk_size)+'c' }
+
+        let(:file) { bucket.get(bucket.put(content)) }
+
+        it 'is false until the are no more bytes to read' do
+          file.read(1)
+          expect(file.eof?).to be_false
+          file.read($chunk_size**2)
+          expect(file.eof?).to be_true
+
+          file.rewind
+          file.read(1)
+          expect(file.eof?).to be_false
+          file.read($chunk_size*2)
+          expect(file.eof?).to be_true
+        end
+      end
+    end
+
+    describe '#read' do
 
       it 'reads the entire file without parameters' do
         expect(file.read).to eq(content)

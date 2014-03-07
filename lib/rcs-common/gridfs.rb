@@ -57,7 +57,7 @@ module RCS
         end
 
         def eof?
-          @file_position == @attributes[:length]
+          @file_position >= @attributes[:length]
         end
 
         def id
