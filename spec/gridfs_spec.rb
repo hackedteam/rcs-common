@@ -59,12 +59,10 @@ module RCS::Common::GridFS
       bucket_file = bucket.get(id.to_s)
       grid_file = grid.get(id)
 
-      # NOTE: the difference here is that grid_file.read returns an empty string
-      # when the file is finished while bucket_file.read returns nil
       loop do
         bytes = rand(0..1000)
         buff1 = grid_file.read(bytes)
-        buff2 = bucket_file.read(bytes) || ''
+        buff2 = bucket_file.read(bytes)
         expect(buff1).to eq(buff2)
         break if buff1 == '' or buff2 == ''
       end
@@ -162,12 +160,12 @@ module RCS::Common::GridFS
         file.rewind
         expect(file.read($chunk_size-1)).to eq(('a'*($chunk_size-1)))
         expect(file.read).to eq('ab')
-        expect(file.read).to be_nil
+        expect(file.read).to be_empty
 
         file.rewind
         $chunk_size.times { expect(file.read(1)).to eq('a') }
         expect(file.read(1)).to eq('b')
-        expect(file.read(1)).to be_nil
+        expect(file.read(1)).to be_empty
 
         file.rewind
         expect(file.read($chunk_size**2)).to eq(content)

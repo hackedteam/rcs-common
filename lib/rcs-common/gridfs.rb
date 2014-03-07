@@ -25,10 +25,10 @@ module RCS
         # Each time a new chunk is needed, #read_next_chunk fetch and cache it.
         # When there is nothing more to read returns nil (not an empty string).
         def read(bytes_to_read = nil)
-          return nil if @file_position >= @attributes[:length]
-          return nil if bytes_to_read and bytes_to_read <= 0
-
           data = ''
+
+          return data if @file_position >= @attributes[:length]
+          return data if bytes_to_read and bytes_to_read <= 0
 
           if @current_chunk[:n]
             chunk_size = @attributes[:chunk_size]
@@ -48,7 +48,7 @@ module RCS
           bytes_to_read = bytes_to_read ? bytes_to_read - 1 : -1
           data = data[0..bytes_to_read]
           @file_position += data.bytesize
-          data.bytesize == 0 ? nil : data
+          data
         end
 
         def rewind
@@ -166,11 +166,9 @@ module RCS
         def content(file_id)
           file_id = objectid(file_id)
 
-          data = chunks_collection.find(files_id: file_id, n: {'$gte' => 0}).inject("") do |data, chunk|
+          chunks_collection.find(files_id: file_id, n: {'$gte' => 0}).inject("") do |data, chunk|
             data << chunk['data'].data
           end
-
-          data if data.bytesize > 0
         end
 
         def get(file_id, options = {})
