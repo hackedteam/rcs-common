@@ -27,7 +27,7 @@ namespace :protect do
 
       # Encoding files
 
-      system "#{RUBYENC} --stop-on-error --encoding UTF-8 -b- -r --ruby 2.0.0 #{LIB_PATH}/*.rb"
+      system "#{RUBYENC} --stop-on-error --encoding UTF-8 -b- -r --ruby 2.0.0 \"#{LIB_PATH}/*.rb\""
 
 
       # Copy rgloader to lib folder
@@ -46,7 +46,7 @@ namespace :protect do
 
       # Building the gem
 
-      export_protected = windows? ? "set PROTECTED=1 &&" : "export RPROTECTED=1 ;"
+      export_protected = windows? ? "set PROTECTED=1 &&" : "export PROTECTED=1 ;"
       system "#{export_protected} rake build"
     ensure
       # Restore the lib folder
