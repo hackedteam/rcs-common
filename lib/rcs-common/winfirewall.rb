@@ -187,7 +187,7 @@ module RCS
 
           if read
             resp = AdvfirewallResponse.new(`#{command}`)
-            trace(:error, "[Advfirewall] #{resp}") unless resp.ok?
+            trace(:debug, "[Advfirewall] #{resp}") unless resp.ok?
             resp
           else
             resp = AdvfirewallResponse.new
