@@ -71,6 +71,7 @@ module RCS
         alias :content :read
         alias :tell :file_position
         alias :position :file_position
+        alias :pos :file_position
 
         private
 
