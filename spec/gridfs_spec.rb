@@ -149,6 +149,34 @@ module RCS::Common::GridFS
         expect(file.read).to eq(content)
       end
 
+      context 'when the content is binary' do
+
+        let(:content_size) { $chunk_size*20+$chunk_size/2 }
+
+        let(:content) do
+          content = ""
+          content_size.times { content << rand(0..255).chr }
+          content
+        end
+
+        let(:file) { bucket.get(bucket.put(content)) }
+
+        def print_bytes(str)
+          str2 = []
+          str.bytes.each { |b| str2 << b.to_i }
+          str2.join(", ")
+        end
+
+        it 'reads the file sequentially (binary)' do
+          readed = ""
+          loop {
+            break if file.eof?;
+            readed << file.read($chunk_size/2)
+          }
+          expect(readed).to eq(content)
+        end
+      end
+
       it 'reads the file sequentially' do
         expect(file.read($chunk_size)).to eq('a'*$chunk_size)
         expect(file.read).to eq('b')

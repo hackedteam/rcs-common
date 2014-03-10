@@ -33,7 +33,8 @@ module RCS
 
           if @current_chunk[:n]
             chunk_size = @attributes[:chunk_size]
-            offset = chunk_size == @file_position ? chunk_size : @file_position % chunk_size
+            offset = @file_position % chunk_size
+            offset = chunk_size if offset == 0
             data = @current_chunk[:data][offset..-1] || ''
           end
 
