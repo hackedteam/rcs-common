@@ -455,11 +455,11 @@ module RCS::Common::GridFS
           expect(file.metadata).to eq({'a' => 1})
         end
 
-        it 'ignores invalid attributes' do
+        it 'raise an error with invalid attributes' do
           id = bucket.put(content, foo: 'bar', content_type: 'text')
           file = bucket.get(id)
 
-          expect(file.foo).to be_nil
+          expect{ file.foo }.to raise_error(NoMethodError)
           expect(file.content_type).to eq('text')
         end
 

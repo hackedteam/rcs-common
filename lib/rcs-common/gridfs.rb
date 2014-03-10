@@ -17,6 +17,7 @@ module RCS
         end
 
         def method_missing(name)
+          raise NoMethodError.new(name.inspect) unless @attributes.has_key?(name)
           @attributes[name]
         end
 
