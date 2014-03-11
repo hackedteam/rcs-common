@@ -21,10 +21,6 @@ module RCS
           @attributes[name]
         end
 
-        # Reads up to bytes_to_read bytes
-        #
-        # Each time a new chunk is needed, #read_next_chunk fetch and cache it.
-        # When there is nothing more to read returns nil (not an empty string).
         def read(bytes_to_read = nil)
           data = ''
 
