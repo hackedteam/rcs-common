@@ -244,6 +244,10 @@ module RCS
       def del_rule(name)
         Rule.new(name: name.to_s).del
       end
+
+      def has_rule?(name)
+        Advfirewall.call("firewall show rule name=\"#{name}\"").ok?
+      end
     end
   end
 end
