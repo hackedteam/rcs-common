@@ -78,6 +78,10 @@ module RCS
           return nil if chunk_num == @last_chunk_num + 1
 
           chunk = bucket.chunks_collection.find(files_id: @attributes[:_id], n: chunk_num).first
+          # chunk maybe nil in case of corrupted data
+          # e.g.: declared length different than the actual length
+          return nil unless chunk
+
           @current_chunk = {n: chunk['n'], data: chunk['data'].data}
         end
       end
@@ -133,12 +137,24 @@ module RCS
         end
 
         def append(file_id, data, options = {})
-          file_id = objectid(file_id)
-          attributes = files_collection.find(_id: file_id).first
+          attributes = if options[:filename]
+            files_collection.find(filename: file_id).first
+          else
+            file_id = objectid(file_id)
+            files_collection.find(_id: file_id).first
+          end
+
+          if !attributes and options[:create]
+            file_attributes = options[:create].respond_to?(:[]) ? options[:create] : {}
+            new_file_id = put(data, file_attributes, options)
+            return [new_file_id, data.bytesize]
+          end
 
           raise("File not found: #{file_id}") unless attributes
 
           attributes.symbolize_keys!
+
+          file_id = objectid(attributes[:_id])
 
           length, chunk_size = attributes[:length], attributes[:chunkSize]
 
@@ -158,7 +174,7 @@ module RCS
 
           files_collection.find(_id: file_id).update('$set' => {length: new_length, md5: new_md5})
 
-          new_length
+          [file_id, new_length]
         end
 
         # Equivalent to #get(id).read

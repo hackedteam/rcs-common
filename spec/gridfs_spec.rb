@@ -266,6 +266,28 @@ module RCS::Common::GridFS
         expect(bucket.get(file_id).md5).to eq(Digest::MD5.hexdigest(content))
       end
 
+      context 'when the file is missing' do
+
+        it 'raises an error' do
+          fake_id = Moped::BSON::ObjectId.new
+          expect { bucket.append(fake_id, 'foo') }.to raise_error(/not found/)
+        end
+
+        context 'when option :create is passed' do
+
+          it 'creates the file' do
+            fake_id = Moped::BSON::ObjectId.new
+            expect { bucket.append(fake_id, 'foo', create: true) }.not_to raise_error
+
+            fake_id = Moped::BSON::ObjectId.new
+            file_id, length = bucket.append(fake_id, 'foo', create: {filename: 'bar'})
+            file = bucket.get(file_id)
+            expect(file.filename).to eq('bar')
+            expect(file.content).to eq('foo')
+          end
+        end
+      end
+
       context "when {md5: false} is given as options" do
 
         it 'sets the md5 attribute to nil' do
