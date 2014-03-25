@@ -39,11 +39,16 @@ module RCS
         run("cd \"#{path}\" && git status", trap: true) !~ /nothing to commit, working directory clean/
       end
 
-      def ask(question)
-        print("#{question} (y/n) ")
-        answer = STDIN.getc
-        STDIN.readline
-        answer.strip.downcase == 'y'
+      def ask(question, yes_no: true, choices: %w[y n])
+        print("#{question} (#{choices.join(', ')}): ")
+
+        begin
+          answer = STDIN.readline.strip.downcase
+          yes_no ? (answer == 'y' or answer == 'yes') : answer
+        rescue Interrupt
+          puts "\nBye"
+          exit
+        end
       end
     end
 

@@ -52,7 +52,20 @@ task :deploy do
     exit
   end
 
+  loop do
+    components_choosed = $me.ask('Choose the component(s) to deploy, ENTER=all', yes_no: false, choices: components.map(&:downcase))
+    break if components_choosed.empty?
+    components_choosed = components_choosed.split(',').map(&:strip)
+    components_choosed = components_choosed & components.map(&:downcase)
+    next if components_choosed.empty?
+    components = components.select { |name| components.find { |nane| components_choosed.include?(name.downcase) } }
+    break
+  end
+
   services_to_restart = []
+
+  changes = $target.mirror("#{$me.path}/bin/", "rcs/#{root_dir}/bin/", changes: true)
+  puts "The #{root_dir}/bin/ folder is "+(changes ? "changed" : "up to date")+"."
 
   components.each do |service|
     name = service.downcase
@@ -124,6 +137,7 @@ if [:db, :collector].include?($project)
       folder = "#{Time.now.to_i}"
 
       cmds = [
+        "rm -rf deploy_backups",
         "mkdir deploy_backups",
         "mkdir deploy_backups/#{folder}",
         "mkdir deploy_backups/#{folder}/DB",

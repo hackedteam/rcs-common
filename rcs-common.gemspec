@@ -16,16 +16,21 @@ gemspec = Gem::Specification.new do |s|
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
 
-  s.add_runtime_dependency(%q<log4r>, [">= 1.1.9"])
-  s.add_runtime_dependency(%q<mime-types>, [">= 0"])
-  s.add_runtime_dependency(%q<sys-filesystem>, [">= 0"])
-  s.add_runtime_dependency(%q<sys-cpu>, [">= 0"])
-  s.add_runtime_dependency(%q<ffi>, [">= 0"])
-  s.add_runtime_dependency(%q<mail>, [">= 0"])
+  s.add_dependency("log4r", ">= 1.1.9")
+  s.add_dependency('mime-types')
+  s.add_dependency('sys-filesystem')
+  s.add_dependency('sys-cpu')
+  s.add_dependency('ffi')
+  s.add_dependency('mail')
+  s.add_dependency('sbdb')
+  s.add_dependency('mongoid', ">= 3.0.0")
 
-  s.add_development_dependency(%q<bundler>, [">= 0"])
-  s.add_development_dependency(%q<rcov>, [">= 0"])
-  s.add_development_dependency(%q<test-unit>, [">= 0"])
+  s.add_development_dependency("bundler", "> 1.0.0")
+  s.add_development_dependency('rake')
+  s.add_development_dependency('test-unit')
+  s.add_development_dependency('simplecov')
+  s.add_development_dependency('rspec')
+  s.add_development_dependency('pry')
 end
 
 if ENV['PROTECTED']
@@ -37,7 +42,7 @@ if ENV['PROTECTED']
   exclusions = [".gitignore", ".ruby-version", "Rakefile"]
 
   files.reject! do |path|
-    path.start_with?("test/") or path.start_with?("tasks/") or exclusions.include?(path)
+    path.start_with?("test/") or path.start_with?("tasks/") or path.start_with?("spec/") or exclusions.include?(path)
   end
 
   files.concat(Dir["lib/rgloader/**/*"])
