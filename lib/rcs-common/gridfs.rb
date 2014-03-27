@@ -87,7 +87,7 @@ module RCS
       end
 
       class Bucket
-        attr_reader :session, :name, :files_collection, :chunks_collection
+        attr_reader :name, :mongoid_session_name
 
         DEFAULT_NAME          = 'fs'
         DEFAULT_CONTENT_TYPE  = 'application/octet-stream'
@@ -95,14 +95,24 @@ module RCS
         BINARY_ENCODING       = 'BINARY'
 
         def initialize(name = DEFAULT_NAME, options = {})
-          @name               = name.to_s.downcase.strip
-          @name               = DEFAULT_NAME if @name.empty?
-          @session            = options[:session] || Mongoid.default_session
-          @files_collection   = @session[:"#{@name}.files"]
-          @chunks_collection  = @session[:"#{@name}.chunks"]
-          @setup_on_write     = options[:lazy].nil? ? true : options[:lazy]
+          @name                 = name.to_s.downcase.strip
+          @name                 = DEFAULT_NAME if @name.empty?
+          @mongoid_session_name = options[:mongoid_session_name] || :default
+          @setup_on_write       = options[:lazy].nil? ? true : options[:lazy]
 
           setup unless @setup_on_write
+        end
+
+        def session
+          Mongoid.session(mongoid_session_name)
+        end
+
+        def files_collection
+          session[:"#{name}.files"]
+        end
+
+        def chunks_collection
+          session[:"#{name}.chunks"]
         end
 
         def put(content, attrs = {}, options = {})
