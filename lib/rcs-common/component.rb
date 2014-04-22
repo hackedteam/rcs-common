@@ -22,13 +22,17 @@ module RCS
       self.class.instance_variable_get('@_component_name')
     end
 
+    def full_component_version
+      File.read(Dir.pwd + '/config/VERSION').strip
+    end
+
     def component_version
-      $version ||= File.read(Dir.pwd + '/config/VERSION')
+      $version || full_component_version.split('-').first
     end
 
     def show_startup_message
       build = File.read(Dir.pwd + '/config/VERSION_BUILD')
-      trace :fatal, "Starting the #{component_name} #{component_version} (#{build})..."
+      trace :fatal, "Starting the #{component_name} #{full_component_version} (#{build})..."
     end
 
     def database
@@ -58,6 +62,7 @@ module RCS
     end
 
     def run_with_rescue
+      $version = component_version
       trace_setup
       show_startup_message
       yield
