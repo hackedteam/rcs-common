@@ -18,6 +18,7 @@ module MailEvidence
   PROGRAM_ANDROID = 0x00000002
   PROGRAM_THUNDERBIRD = 0x00000003
   PROGRAM_OUTLOOK = 0x00000004
+  PROGRAM_MAIL = 0x00000005
 
   ADDRESSES = ['ciccio.pasticcio@google.com', 'billg@microsoft.com', 'john.doe@nasa.gov', 'mario.rossi@italy.it']
   SUBJECTS = ['drugs', 'bust me!', 'police here']
@@ -111,6 +112,8 @@ EOF
             ret[:data][:program] = 'thunderbird'
           when PROGRAM_OUTLOOK
             ret[:data][:program] = 'outlook'
+          when PROGRAM_MAIL
+            ret[:data][:program] = 'mail'
           else
             ret[:data][:program] = 'unknown'
         end

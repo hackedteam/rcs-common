@@ -11,6 +11,7 @@ module FileopenEvidence
   def content
     process = ["Explorer.exe\0", "Firefox.exe\0", "Chrome.exe\0"].sample.encode("US-ASCII")
     file = ["C:\\Utenti\\pippo\\pedoporno.mpg", "C:\\Utenti\\pluto\\Documenti\\childporn.avi", "C:\\secrets\\bomb_blueprints.pdf"].sample.to_utf16le_binary_null
+    #file = ["/movies/pedoporno.mpg", "/movies/childporn.avi", "/plans/bomb_blueprints.pdf"].sample.to_utf16le_binary_null
     content = StringIO.new
     t = Time.now.getutc
     content.write [t.sec, t.min, t.hour, t.mday, t.mon, t.year, t.wday, t.yday, t.isdst ? 0 : 1].pack('l*')
@@ -24,9 +25,10 @@ module FileopenEvidence
   end
   
   def generate_content
-    ret = Array.new
-    10.rand_times { ret << content() }
-    ret
+    #ret = Array.new
+    #10.rand_times { ret << content() }
+    #ret
+    [content()]
   end
   
   def decode_content(common_info, chunks)

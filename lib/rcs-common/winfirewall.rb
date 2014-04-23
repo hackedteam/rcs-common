@@ -38,23 +38,12 @@ module RCS
           ip = nil
 
           Timeout::timeout(8) do
-            ip = Resolv::DNS.new.getaddress(dns).to_s rescue nil
+            ip = Resolv.getaddress(dns).to_s rescue nil
           end
 
-          return ip if ip
+          raise("Unknown host: #{dns.inspect}") unless ip
 
-          File.open('C:\\Windows\\system32\\drivers\\etc\\hosts', 'rb') do |f|
-            f.each_line do |line|
-              line.strip!
-              next if line.start_with?('#')
-              addr1, addr2 = *line.split(' ')
-              next if addr1.nil? or addr2.nil?
-              return addr1 if addr2.casecmp(dns).zero?
-              return addr2 if addr1.casecmp(dns).zero?
-            end
-          end
-
-          raise("Cannot resolve DNS #{dns.inspect}")
+          return ip
         rescue Timeout::Error
           raise("Cannot resolve DNS #{dns.inspect}: timeout")
         rescue Exception => ex
