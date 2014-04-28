@@ -99,12 +99,20 @@ module RCS
           @name                 = DEFAULT_NAME if @name.empty?
           @mongoid_session_name = options[:mongoid_session_name] || :default
           @setup_on_write       = options[:lazy].nil? ? true : options[:lazy]
+          @osx                  = RbConfig::CONFIG['host_os'] =~ /darwin/
 
           setup unless @setup_on_write
         end
 
+        def session_options
+          # Allow unsafe write on OSX.
+          # @see https://github.com/mongoid/mongoid/issues/3582
+
+          @osx ? {safe: false} : {}
+        end
+
         def session
-          Mongoid.session(mongoid_session_name)
+          Mongoid.session(mongoid_session_name).with(session_options)
         end
 
         def files_collection
