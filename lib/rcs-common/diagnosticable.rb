@@ -26,7 +26,7 @@ module RCS
       end
 
       groups.keys.each do |group_name|
-        groups[group_name].sort! { |p1, p2| File.mtime(p1) <=> File.mtime(p2) }
+        groups[group_name].sort! { |p1, p2| File.mtime(p2).to_i <=> File.mtime(p1).to_i }
         groups[group_name] = groups[group_name][0..deepness - 1]
       end
 
