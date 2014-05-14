@@ -65,6 +65,12 @@ module RCS
         path.end_with?('/') ? "#{path}" : "#{path}/"
       end
 
+      def transfer(src, remote_folder, opts = {})
+        dst = add_slash(remote_folder)
+
+        me.run("rsync -tcv #{src} #{user}@#{address}:\"#{dst}\"", opts)
+      end
+
       def mirror!(local_folder, remote_folder, opts = {})
         src = add_slash(local_folder)
         dst = add_slash(remote_folder)
