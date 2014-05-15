@@ -49,14 +49,13 @@ module RCS
 
     def os_lang
       return unless windows?
-      result = `reg query "hklm\system\controlset001\control\nls\language" /v Installlanguage`
+      result = `reg query \"HKLM\\system\\controlset001\\control\\nls\\language\" /v Installlanguage`
       result.scan(/REG_SZ\s*(.{4})/).flatten.first
     end
 
-    def command_output(*args)
-      name = args.shift
-      path = "#{execution_directory}/bin/#{name}"
-      output = `ruby #{path}`
+    def command_output(name)
+      cmd = (name =~ /rcs\-/) ? "ruby #{execution_directory}/bin/#{name}" : name
+      output = `#{cmd}`
       "Output of command #{name}\n#{output}\n\n"
     end
 
@@ -78,7 +77,7 @@ module RCS
       hash['gem_list'] = `gem list`.split("\n")
       hash['ENV'] = ENV.reject { |key| !%w[RUBY_VERSION PWD].include?(key) }
 
-      fs = Sys::Filesystem.stat(Dir.pwd)
+      fs = Sys::Filesystem.stat(windows? ? "#{Dir.pwd[0]+":\\"}" : "/")
 
       hash['filesystem'] = {
         'path' => fs.path,
