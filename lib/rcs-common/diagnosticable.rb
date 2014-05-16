@@ -29,6 +29,13 @@ module RCS
       groups
     end
 
+    def pretty_print(hash, out = $stdout)
+      string = JSON.pretty_generate(hash)
+      string = hide_addresses(string)
+      out.write(string)
+      out.write("\n")
+    end
+
     def change_trace_level(level)
       trace_yaml = "#{execution_directory}/config/trace.yaml"
       raise "Unable to find file #{trace_yaml}" unless File.exists?(trace_yaml)
