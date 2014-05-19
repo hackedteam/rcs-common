@@ -68,7 +68,7 @@ module RCS
 
     def config_files
       paths = []
-      %w[VERSION VERSION_BUILD certs/*.crt certs/*.pem *.yaml *.lic *.crt *.pem].each do |glob|
+      %w[VERSION VERSION_BUILD certs/*.crt certs/*.pem *.yaml *.lic *.crt *.pem gapi].each do |glob|
         paths += Dir["#{execution_directory}/config/#{glob}"]
       end
       paths.flatten!
