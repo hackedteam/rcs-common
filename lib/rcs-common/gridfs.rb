@@ -275,9 +275,16 @@ module RCS
           md5.hexdigest if md5
         end
 
-        def binary(data)
-          data.force_encoding(BINARY_ENCODING) if data.respond_to?(:force_encoding)
-          BSON::Binary.new(:generic, data)
+        if Mongoid::VERSION < '4.0.0'
+          def binary(data)
+            data.force_encoding(BINARY_ENCODING) if data.respond_to?(:force_encoding)
+            BSON::Binary.new(:generic, data)
+          end
+        else
+          def binary(data)
+            data.force_encoding(BINARY_ENCODING) if data.respond_to?(:force_encoding)
+            BSON::Binary.new(data, :generic)
+          end
         end
       end
     end
