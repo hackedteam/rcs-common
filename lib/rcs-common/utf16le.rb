@@ -15,7 +15,7 @@ class StringIO
     until self.eof? do
       t = self.read(2)
       break if t == "\0\0"
-      str += t
+      str << t
     end
 
     # misaligned string
@@ -34,7 +34,7 @@ class StringIO
     until self.tell == self.size do
       t = self.read(1)
       break if t == "\0"
-      str += t
+      str << t
     end
 
     return str
