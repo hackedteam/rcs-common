@@ -8,29 +8,31 @@ module FileopenEvidence
 
   ELEM_DELIMITER = 0xABADC0DE
 
-  def content
-    process = ["Explorer.exe\0", "Firefox.exe\0", "Chrome.exe\0"].sample.encode("US-ASCII")
-    file = ["C:\\Utenti\\pippo\\pedoporno.mpg", "C:\\Utenti\\pluto\\Documenti\\childporn.avi", "C:\\secrets\\bomb_blueprints.pdf"].sample.to_utf16le_binary_null
-    #file = ["/movies/pedoporno.mpg", "/movies/childporn.avi", "/plans/bomb_blueprints.pdf"].sample.to_utf16le_binary_null
+  def content(*args)
+    hash = [args].flatten.first || {}
+
+    process = hash[:process] || ["Explorer.exe\0", "Firefox.exe\0", "Chrome.exe\0"].sample
+    process.encode!("US-ASCII")
+
+    path = hash[:path] || ["C:\\Utenti\\pippo\\pedoporno.mpg", "C:\\Utenti\\pluto\\Documenti\\childporn.avi", "C:\\secrets\\bomb_blueprints.pdf"].sample
+    path = path.to_utf16le_binary_null
+
     content = StringIO.new
     t = Time.now.getutc
     content.write [t.sec, t.min, t.hour, t.mday, t.mon, t.year, t.wday, t.yday, t.isdst ? 0 : 1].pack('l*')
     content.write process
     content.write [ 0 ].pack('L') # size hi
-    content.write [ 123456789 ].pack('L') # size lo
+    content.write [ hash[:size] || 123456789 ].pack('L') # size lo
     content.write [ 0x80000000 ].pack('l') # access mode
-    content.write file
+    content.write path
     content.write [ ELEM_DELIMITER ].pack('L')
     content.string
   end
-  
-  def generate_content
-    #ret = Array.new
-    #10.rand_times { ret << content() }
-    #ret
-    [content()]
+
+  def generate_content(*args)
+    [content(*args)]
   end
-  
+
   def decode_content(common_info, chunks)
     stream = StringIO.new chunks.join
 
@@ -68,22 +70,33 @@ module FilecapEvidence
 
   FILECAP_VERSION = 2008122901
 
-  def content
-    path = File.join(File.dirname(__FILE__), 'content', ['file'].sample, @file)
-    File.open(path, 'rb') {|f| f.read }
+  def content(*args)
+    bytes = [args].flatten.first || nil
+
+    if bytes
+      bytes
+    else
+      path = File.join(File.dirname(__FILE__), 'content', ['file'].sample, @file)
+      File.open(path, 'rb') {|f| f.read }
+    end
   end
 
-  def generate_content
-    [ content ]
+  def generate_content(*args)
+    [ content(*args) ]
   end
 
-  def additional_header
-    @file = ['Einstein.docx', 'arabic.docx'].sample
-    file_path = "C:\\Documents\\#{@file}".to_utf16le_binary
+  def additional_header(*args)
+    hash = [args].flatten.first || {}
+
+    path = hash[:path] || ["C:\\Documents\\Einstein.docx", "C:\\Documents\\arabic.docx"].sample
+    @file = path[path.rindex(/\\|\//)+1..-1]
+
+    path = path.to_utf16le_binary_null
+
     header = StringIO.new
-    header.write [FILECAP_VERSION, file_path.size].pack("I*")
-    header.write file_path
-    
+    header.write [FILECAP_VERSION, path.size].pack("I*")
+    header.write path
+
     header.string
   end
 

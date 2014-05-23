@@ -66,10 +66,14 @@ class Evidence
     deviceid_utf16 = info[:device_id].to_utf16le_binary
     userid_utf16 = info[:user_id].to_utf16le_binary
     sourceid_utf16 = info[:source_id].to_utf16le_binary
-    
+
     add_header = ''
-    add_header = additional_header if respond_to? :additional_header
-    
+
+    if respond_to?(:additional_header)
+      header = info.delete(:header)
+      add_header = header ? additional_header(header) : additional_header
+    end
+
     additional_size = add_header.bytesize
     struct = [Evidence.version_id, type_id, thigh, tlow, deviceid_utf16.bytesize, userid_utf16.bytesize, sourceid_utf16.bytesize, additional_size]
     header = struct.pack("I*")
@@ -108,18 +112,19 @@ class Evidence
     info = Hash[common_info]
     info[:da] = Time.now.utc
     info[:type] = type
-    
+
     # extend class on requested type
     extend_on_type info[:type]
-    
+
     # header
     type_id = EVIDENCE_TYPES.invert[type]
     header = generate_header(type_id, info)
     @binary = append_data(encrypt(header))
-    
+
     # content
     if respond_to? :generate_content
-      chunks = generate_content
+      content = info.delete(:content)
+      chunks = content ? generate_content(content) : generate_content
       chunks.each do | c |
         @binary += append_data( encrypt(c), c.bytesize )
       end
