@@ -14,10 +14,12 @@ module MoneyEvidence
   TYPES = {:bitcoin => 0x00,
            :litecoin => 0x30,
            :feathercoin => 0x0E,
+           :darkcoin => 0x6F,
            :namecoin => 0x34}
 
   PROGRAM_BITCOIN = {:bitcoin_qt => 0x00}
   PROGRAM_LITECOIN = {:litecoin_qt => 0x00}
+  PROGRAM_DARKCOIN = {:darkcoin => 0x6F}
   PROGRAM_FEATHERCOIN = {:feathercoin_qt => 0x00}
   PROGRAM_NAMECOIN = {:namecoin_qt => 0x00}
 
@@ -347,6 +349,8 @@ class CoinWallet
         48
       when :feathercoin
         14
+      when :darkcoin
+        111
       when :namecoin
         52
     end
