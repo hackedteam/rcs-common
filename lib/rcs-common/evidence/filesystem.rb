@@ -37,31 +37,36 @@ module FilesystemEvidence
   def decode_content(common_info, chunks)
     stream = StringIO.new chunks.join
 
+    entries = []
+
     until stream.eof?
-
-      info = Hash[common_info]
-
       version, path_len, attribute, size_lo, size_hi = stream.read(20).unpack("L*")
       raise EvidenceDeserializeError.new("invalid log version for FILESYSTEM [#{version} != #{FILESYSTEM_VERSION}]") unless version == FILESYSTEM_VERSION
 
-      info[:data] ||= Hash.new
-      info[:data][:size] = Float((size_hi << 32) | size_lo)
-      info[:data][:attr] = attribute
+      entry = {}
+      entry[:size] = Float((size_hi << 32) | size_lo)
+      entry[:attr] = attribute
       low_time, high_time = *stream.read(8).unpack('L*')
-      info[:da] = Time.from_filetime(high_time, low_time)
+      entry[:da] = Time.from_filetime(high_time, low_time)
 
       path = stream.read(path_len).terminate_utf16le
-      next if path.nil?
 
-      # replace double back slash
-      info[:data][:path] = path.utf16le_to_utf8.gsub("\\\\", "\\")
-
-      # this is not the real clone! redefined clone ...
-      yield info if block_given?
+      if path
+        entry[:path] = path.utf16le_to_utf8.gsub("\\\\", "\\")
+        entries << entry
+      end
     end
+
+    if block_given? and entries.any?
+      info = Hash[common_info]
+      info[:data] ||= Hash.new
+      info[:data][:entries] = entries
+
+      yield(info)
+    end
+
     :delete_raw
   end
-
 end
 
 end # ::RCS
