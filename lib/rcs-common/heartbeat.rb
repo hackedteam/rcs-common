@@ -18,7 +18,7 @@ module RCS::HeartBeat
     # This method is called from outside
     def self.perform
       heartbeat = new(@component_name, component_fullname: @component_fullname)
-      status, message = *heartbeat.perform if heartbeat.respond_to?(:perform)
+      status, message = *heartbeat.perform
       if status
         heartbeat.update(status, message)
       else
@@ -60,6 +60,11 @@ module RCS::HeartBeat
       end
     ensure
       reset_system_status_and_message
+    end
+
+    # Override this method
+    def perform
+      system_status_and_message
     end
 
     private
