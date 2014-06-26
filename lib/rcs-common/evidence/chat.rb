@@ -25,6 +25,7 @@ module ChatEvidence
       0x09 => :viber,
       0x0a => :wechat,
       0x0d => :line,
+      0x0e => :telegram,
   }
 
   CHAT_INCOMING = 0x01

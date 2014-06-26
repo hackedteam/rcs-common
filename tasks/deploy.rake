@@ -64,6 +64,9 @@ task :deploy do
 
   services_to_restart = []
 
+  paths = %w[export.zip rcs.lic VERSION VERSION_BUILD].map { |p| "#{$me.path}/config/#{p}" }.join(" ")
+  changes = $target.transfer(paths, "rcs/#{root_dir}/config/", trap: true)
+
   changes = $target.mirror("#{$me.path}/bin/", "rcs/#{root_dir}/bin/", changes: true)
   puts "The #{root_dir}/bin/ folder is "+(changes ? "changed" : "up to date")+"."
 

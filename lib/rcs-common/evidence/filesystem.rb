@@ -9,32 +9,31 @@ module FilesystemEvidence
 	FILESYSTEM_IS_DIRECTORY = 1
 	FILESYSTEM_IS_EMPTY     = 2
 
-  def content
-    path = ["/home/alor/secret", "/mnt/share/secret", "/mnt/volumes/usb", "/home/test/file", "/file1", "/file2"].sample
+  def content(*args)
+    sequence = if args.empty?
+      [{path: '/', attr: 1}, {path: '/usr', attr: 1}, {path: '/usr/README', attr: 0, size: 12}]
+    else
+      [args].flatten
+    end
 
-    full = path.split(/[\\\/]/)
     content = StringIO.new
-    fp = ''
 
-    begin
-      current = full.shift
-      fp += "/#{current}"
-      fp.gsub!("//", "/")
-      path = fp.to_utf16le_binary_null
-      content.write [FILESYSTEM_VERSION, path.bytesize, (full.size > 0) ? FILESYSTEM_IS_DIRECTORY : FILESYSTEM_IS_FILE, rand(0..2**24), 0].pack("I*")
+    sequence.each do |data|
+      path = data[:path].gsub("//", "/").to_utf16le_binary_null
+      content.write [FILESYSTEM_VERSION, path.bytesize, data[:attr], (data[:size] || 0), 0].pack("I*")
       time = Time.now.getutc.to_filetime
       time.reverse!
       content.write time.pack('L*')
       content.write path
-    end until full.size == 0
+    end
 
     content.string
   end
-  
-  def generate_content
-    [content()]
+
+  def generate_content(*args)
+    [content(*args)]
   end
-  
+
   def decode_content(common_info, chunks)
     stream = StringIO.new chunks.join
 

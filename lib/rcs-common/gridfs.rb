@@ -99,12 +99,20 @@ module RCS
           @name                 = DEFAULT_NAME if @name.empty?
           @mongoid_session_name = options[:mongoid_session_name] || :default
           @setup_on_write       = options[:lazy].nil? ? true : options[:lazy]
+          @osx                  = RbConfig::CONFIG['host_os'] =~ /darwin/
 
           setup unless @setup_on_write
         end
 
+        def session_options
+          # Allow unsafe write on OSX.
+          # @see https://github.com/mongoid/mongoid/issues/3582
+
+          @osx ? {safe: false} : {}
+        end
+
         def session
-          Mongoid.session(mongoid_session_name)
+          Mongoid.session(mongoid_session_name).with(session_options)
         end
 
         def files_collection
@@ -267,9 +275,16 @@ module RCS
           md5.hexdigest if md5
         end
 
-        def binary(data)
-          data.force_encoding(BINARY_ENCODING) if data.respond_to?(:force_encoding)
-          BSON::Binary.new(:generic, data)
+        if Mongoid::VERSION < '4.0.0'
+          def binary(data)
+            data.force_encoding(BINARY_ENCODING) if data.respond_to?(:force_encoding)
+            BSON::Binary.new(:generic, data)
+          end
+        else
+          def binary(data)
+            data.force_encoding(BINARY_ENCODING) if data.respond_to?(:force_encoding)
+            BSON::Binary.new(data, :generic)
+          end
         end
       end
     end
