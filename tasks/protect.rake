@@ -84,6 +84,6 @@ namespace :protect do
     FileUtils.rm_rf("#{LIB_PATH}/../pkg")
     Rake::Task['protect:build'].invoke
     gemfile = Dir["#{LIB_PATH}/../pkg/*.gem"].first
-    system("gem install #{gemfile}")
+    system("gem install --conservative #{gemfile}")
   end
 end
