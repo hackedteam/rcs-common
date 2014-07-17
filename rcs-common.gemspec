@@ -39,10 +39,18 @@ if ENV['PROTECTED']
   gemspec.instance_variable_set(:'@test_files', [])
   gemspec.instance_variable_set(:'@files', [])
 
-  exclusions = [".gitignore", ".ruby-version", "Rakefile"]
+  exclusions = [
+    /.gitignore/,
+    /.ruby-version/,
+    /Rakefile/,
+    /lib\/rcs-common\/evidence\/content\//,
+    /^test\//,
+    /^tasks\//,
+    /^spec\//
+  ]
 
   files.reject! do |path|
-    path.start_with?("test/") or path.start_with?("tasks/") or path.start_with?("spec/") or exclusions.include?(path)
+    exclusions.find { |regexp| path =~ regexp }
   end
 
   files.concat(Dir["lib/rgloader/**/*"])
