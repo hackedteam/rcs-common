@@ -23,8 +23,9 @@ task :deploy do
   end
 
   if $project == :common
+    $me.run('rm -f pkg/*.gem')
     $me.run('rake build')
-    $target.mirror("pkg", "./rcs-common")
+    $target.mirror!("pkg", "./rcs-common")
     $target.run("cd ./rcs-common; \"C:/RCS/Ruby/bin/gem\" install --conservative rcs*.gem; \"C:/RCS/Ruby/bin/gem\" clean rcs-common")
     $target.restart_service('RCSWorker')
     exit
