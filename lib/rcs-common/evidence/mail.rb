@@ -19,6 +19,7 @@ module MailEvidence
   PROGRAM_THUNDERBIRD = 0x00000003
   PROGRAM_OUTLOOK = 0x00000004
   PROGRAM_MAIL = 0x00000005
+  PROGRAM_YAHOO = 0x00000006
 
   ADDRESSES = ['ciccio.pasticcio@google.com', 'billg@microsoft.com', 'john.doe@nasa.gov', 'mario.rossi@italy.it']
   SUBJECTS = ['drugs', 'bust me!', 'police here']
@@ -114,6 +115,8 @@ EOF
             ret[:data][:program] = 'outlook'
           when PROGRAM_MAIL
             ret[:data][:program] = 'mail'
+          when PROGRAM_YAHOO
+            ret[:data][:program] = 'yahoo'
           else
             ret[:data][:program] = 'unknown'
         end
