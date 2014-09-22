@@ -1,5 +1,5 @@
-require 'mongoid'
 require 'digest/md5'
+require 'rcs-common/mongoid'
 
 module RCS
   module Common
