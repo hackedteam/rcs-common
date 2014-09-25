@@ -26,6 +26,7 @@ module ChatEvidence
       0x0a => :wechat,
       0x0d => :line,
       0x0e => :telegram,
+      0x0f => :yahoo,
   }
 
   CHAT_INCOMING = 0x01

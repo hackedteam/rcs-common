@@ -2,6 +2,27 @@ require 'fileutils'
 
 namespace :protect do
 
+  def verbose?
+    Rake.verbose == true
+  end
+
+  def report(message)
+    print message + '...'
+    STDOUT.flush
+    if block_given?
+      yield
+    end
+    puts ' ok'
+  end
+
+  def exec_rubyencoder(cmd)
+    if verbose?
+      system(cmd) || raise("Econding failed.")
+    else
+      raise("Econding failed.") if `#{cmd}` =~ /[1-9]\serror/
+    end
+  end
+
   def windows?
     RbConfig::CONFIG['host_os'] =~ /mingw/
   end
@@ -26,8 +47,9 @@ namespace :protect do
       FileUtils.cp_r(LIB_PATH, "#{LIB_PATH}_src")
 
       # Encoding files
-
-      system "#{RUBYENC} --stop-on-error --encoding UTF-8 -b- -r --ruby 2.0.0 \"#{LIB_PATH}/*.rb\""
+      report("Encoding scripts (use --trace to see RubyEncoder output)") do
+        exec_rubyencoder("#{RUBYENC} --stop-on-error --encoding UTF-8 -b- -r --ruby 2.0.0 \"#{LIB_PATH}/*.rb\"")
+      end
 
 
       # Copy rgloader to lib folder
@@ -62,6 +84,6 @@ namespace :protect do
     FileUtils.rm_rf("#{LIB_PATH}/../pkg")
     Rake::Task['protect:build'].invoke
     gemfile = Dir["#{LIB_PATH}/../pkg/*.gem"].first
-    system("gem install #{gemfile}")
+    system("gem install --conservative #{gemfile}")
   end
 end

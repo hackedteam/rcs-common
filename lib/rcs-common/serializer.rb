@@ -288,6 +288,7 @@ module RCS
         0x0c => :wechat,
         0x0d => :line,
         0x0e => :telegram,
+        0x0f => :yahoo,
     }
 
     TYPE_FLAGS = {

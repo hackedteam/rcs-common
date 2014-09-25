@@ -11,8 +11,8 @@ module RCS
 
         init_script = caller[0].scan(/^(.+)\:\d+\:.+$/)[0][0]
 
-        unless init_script.end_with?("lib/rcs-#{name}.rb")
-          raise "Invalid execution directory. Cannot lauch rcs-#{name}"
+        if init_script !~ /(bin|lib)\/rcs\-#{name}/
+          raise "Invalid execution directory"
         end
 
         $execution_directory = File.expand_path('../..', init_script)

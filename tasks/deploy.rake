@@ -23,9 +23,10 @@ task :deploy do
   end
 
   if $project == :common
+    $me.run('rm -f pkg/*.gem')
     $me.run('rake build')
-    $target.mirror("pkg", "./rcs-common")
-    $target.run("cd ./rcs-common; \"C:/RCS/Ruby/bin/gem\" install rcs*.gem; \"C:/RCS/Ruby/bin/gem\" clean rcs-common")
+    $target.mirror!("pkg", "./rcs-common")
+    $target.run("cd ./rcs-common; \"C:/RCS/Ruby/bin/gem\" install --conservative rcs*.gem; \"C:/RCS/Ruby/bin/gem\" clean rcs-common")
     $target.restart_service('RCSWorker')
     exit
   end
@@ -37,13 +38,13 @@ task :deploy do
   if deploy_rcs_common
     $me.run('cd ../rcs-common; rake build')
     $target.mirror("#{$me.path}/../rcs-common/pkg", "./rcs-common")
-    $target.run("cd ./rcs-common; \"C:/RCS/Ruby/bin/gem\" install rcs*.gem; \"C:/RCS/Ruby/bin/gem\" clean rcs-common")
+    $target.run("cd ./rcs-common; \"C:/RCS/Ruby/bin/gem\" install --conservative rcs*.gem; \"C:/RCS/Ruby/bin/gem\" clean rcs-common")
   end
 
   components, root_dir = nil
 
   if $project == :db
-    components = %w[Aggregator Intelligence OCR Translate Worker Connector Money DB]
+    components = %w[Aggregator Intelligence OCR Translate Worker Connector Money DB Monitor]
     root_dir = "DB"
   elsif $project == :collector
     components = %w[Collector Carrier Controller]
