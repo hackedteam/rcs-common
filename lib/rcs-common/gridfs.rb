@@ -170,7 +170,7 @@ module RCS
 
           raise("File not found: #{file_id}") unless attributes
 
-          attributes.symbolize_keys!
+          attributes = attributes.symbolize_keys
 
           file_id = objectid(attributes[:_id])
 
@@ -210,7 +210,7 @@ module RCS
 
           return unless attributes
 
-          attributes.symbolize_keys!
+          attributes = attributes.symbolize_keys
           attributes[:bucket] = self
           attributes[:chunk_size] = attributes[:chunkSize]
           attributes[:content_type] = attributes[:contentType]
