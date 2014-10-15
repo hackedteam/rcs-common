@@ -160,7 +160,11 @@ EOF
     info[:data][:from] = parse_address(m.from)
     info[:data][:rcpt] = parse_address(m.to)
     info[:data][:cc] = parse_address(m.cc)
-    info[:data][:subject] = m.subject.safe_utf8_encode unless m.subject.nil?
+
+    if m.subject
+      info[:data][:subject] = m.subject.dup
+      info[:data][:subject].safe_utf8_encode_invalid
+    end
 
     #trace :debug, "MAIL: multipart #{m.multipart?} parts size: #{m.parts.size}"
     #trace :debug, "MAIL: parts #{m.parts.inspect}"
