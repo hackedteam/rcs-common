@@ -31,6 +31,8 @@ module RCS
     @@prev_cpu = {}
     @@prev_time = {}
     @@current = DEFAULT
+    @@windowsOS = RUBY_PLATFORM.downcase.include?("mingw")
+    @@filesystem_stat_path = nil
 
     def self.reset
       @@current = DEFAULT
@@ -48,13 +50,34 @@ module RCS
       @@current[:message]
     end
 
+    def self.windows?
+      @@windowsOS
+    end
+
+    def self.filesystem_stat(path)
+      Filesystem.stat(path) rescue nil
+    end
+
+    def self.filesystem_stat_path
+      return @@filesystem_stat_path if @@filesystem_stat_path
+
+      pwd = Dir.pwd
+
+      if !windows?
+        return @@filesystem_stat_path = pwd
+      end
+
+      loop do
+        stat = filesystem_stat(pwd+"\\")
+        return @@filesystem_stat_path = stat.path if stat
+        pwd = File.dirname(pwd.gsub('\\', '/')).gsub('/', '\\')
+        raise "Unable to find a valid mount point" if pwd == "."
+      end
+    end
+
     # returns the percentage of free space
     def self.disk_free
-      # check the filesystem containing the current dir
-      path = Dir.pwd
-      # windows just want the drive letter, won't work with full path
-      path = path.slice(0..2) if RUBY_PLATFORM.downcase.include?("mingw")
-      stat = Filesystem.stat(path)
+      stat = Filesystem.stat(filesystem_stat_path)
       # get the free and total blocks
       free = stat.blocks_free.to_f
       total = stat.blocks.to_f
