@@ -44,8 +44,5 @@ pkg
 # For RubyMine
 .idea
 
-# Bundler
-Gemfile.lock
-
 # RVM gemset
 .ruby-gemset
