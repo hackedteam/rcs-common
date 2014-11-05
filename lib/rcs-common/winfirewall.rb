@@ -172,7 +172,7 @@ module RCS
             raise "The Windows Firewall is missing. You cannot call the command #{command.inspect} on this OS."
           end
 
-          trace(:debug, "[Advfirewall] #{command}")
+          #trace(:debug, "[Advfirewall] #{command}")
 
           if read
             resp = AdvfirewallResponse.new(`#{command}`)
