@@ -7,13 +7,17 @@ module CallEvidence
   
   LOG_VOICE_VERSION = 2008121901
   CHANNEL = { 0 => :incoming, 1 => :outgoing }
-  SOFTWARE = { 0x0141 => "Skype",
-               0x0142 => "GTalk",
-               0x0143 => "Yahoo",
-               0x0144 => "Msn",
-               0x0145 => "Phone",
-               0x0146 => "Skype",
-               0X0147 => "Msn" }
+  CALL_PROGRAM = { 0x0141 => :skype,
+                   0x0142 => :gtalk,
+                   0x0143 => :yahoo,
+                   0x0144 => :msn,
+                   0x0145 => :phone,
+                   0x0146 => :skype,
+                   0X0147 => :msn,
+                   0x0148 => :viber,
+                   0x0149 => :wechat,
+                   0x014a => :line,
+                 }
   
   def decode_additional_header(data)
 
@@ -31,7 +35,7 @@ module CallEvidence
     ret[:data][:channel] = CHANNEL[channel]
 
     software = read_uint32 stream
-    ret[:data][:program] = SOFTWARE[software]
+    ret[:data][:program] = CALL_PROGRAM[software]
 
     ret[:data][:sample_rate] = read_uint32 stream
     ret[:data][:incoming] = read_uint32 stream
@@ -58,7 +62,7 @@ module CallEvidence
 
     info[:data][:grid_content] = chunks.join
 
-    info[:end_call] = true if info[:data][:grid_content] == "\xff\xff\xff\xff"
+    info[:end_call] = true if info[:data][:grid_content] == "\xff\xff\xff\xff".force_encoding("ASCII-8BIT")
     info[:end_call] ||= false
 
     yield info if block_given?
@@ -85,6 +89,7 @@ module CalllistoldEvidence
 
     @call_list = CallListSerializer.new.unserialize stream
 
+    info[:da] = @call_list.start_time
     info[:data][:peer] = @call_list.fields[:number]
     info[:data][:peer_name] = @call_list.fields[:name] unless @call_list.fields[:name].nil?
     info[:data][:program] = 'Phone'
@@ -107,7 +112,8 @@ module CalllistEvidence
 
   PROGRAM_TYPE = {
       0x00 => :phone,
-      0x01 => :skype
+      0x01 => :skype,
+      0x02 => :viber,
   }
 
   def content
@@ -167,7 +173,7 @@ module CalllistEvidence
       info[:data][:duration] = stream.read(4).unpack('L').first
 
       delim = stream.read(4).unpack("L").first
-      raise EvidenceDeserializeError.new("Malformed CHAT (missing delimiter)") unless delim == ELEM_DELIMITER
+      raise EvidenceDeserializeError.new("Malformed CALLLIST (missing delimiter)") unless delim == ELEM_DELIMITER
 
       yield info if block_given?
     end

@@ -7,7 +7,7 @@ class TestSerialization < Test::Unit::TestCase
     type = 0xff
     size = 0xaabbcc
 
-    assert_equal "\xCC\xBB\xAA\xFF", RCS::Serialization::prefix(type, size)
+    assert_equal "\xCC\xBB\xAA\xFF".force_encoding('BINARY'), RCS::Serialization::prefix(type, size)
   end
 
   def test_decode_prefix

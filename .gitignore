@@ -10,6 +10,7 @@ doc
 
 # bundler
 .bundle
+Gemfile.lock
 
 # jeweler generated
 pkg
@@ -44,5 +45,5 @@ pkg
 # For RubyMine
 .idea
 
-# Bundler
-Gemfile.lock
+# RVM gemset
+.ruby-gemset

@@ -22,6 +22,10 @@ module MIME
             type = MIME::Type.from_array('application/vnd.rim.cod', 'cod', '8bit', 'linux')
           when '.apk'
             type = MIME::Type.from_array('application/vnd.android.package-archive', 'apk', '8bit', 'linux')
+          when '.aetx'
+            type = MIME::Type.from_array('application/x-aetx', 'aetx', '8bit', 'linux')
+          when '.xap'
+            type = MIME::Type.from_array('application/x-silverlight-app', 'xap', '8bit', 'linux')
         end
       end
       return type

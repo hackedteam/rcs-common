@@ -8,7 +8,7 @@ module UrlEvidence
 
   VERSION_DELIMITER = 0x20100713
   ELEM_DELIMITER = 0xABADC0DE
-  BROWSER_TYPE = ['Unknown', 'Internet Explorer', 'Firefox', 'Opera', 'Safari', 'Chrome', 'Mobile Safari', 'Browser']
+  BROWSER_TYPE = ['Unknown', 'Internet Explorer', 'Firefox', 'Opera', 'Safari', 'Chrome', 'Mobile Safari', 'Browser', 'Web']
 
   def decode_query(url)
     query = []
@@ -23,7 +23,7 @@ module UrlEvidence
   def content
     browser = [1, 2, 3, 4, 5, 6].sample
     r = rand(4)
-    url = ["http://www.google.it/#hl=it&source=hp&q=pippo+baudo&aq=f&aqi=g10&aql=&oq=&gs_rfai=&fp=67a9a41ace8bb1ed", "http://reader.google.com", "https://www.facebook.com", "http://www.stackoverflow.com"][r].to_utf16le_binary_null
+    url = ["http://www.google.it/#hl=it&source=hp&q=pippo+baudo&aq=f&aqi=g10&aql=&oq=&gs_rfai=&fp=67a9a41ace8bb1ed", "http://reader.google.com", "https://www.facebook.com", "www.stackoverflow.com"][r].to_utf16le_binary_null
     window = ["Google Search", "Google Reader", "Facebook", "Stackoverflow"][r].to_utf16le_binary_null
 
     content = StringIO.new

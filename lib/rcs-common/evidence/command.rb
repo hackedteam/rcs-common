@@ -38,7 +38,7 @@ module RCS
       info[:grid_content] = output unless output.nil?
 
       info[:data] ||= Hash.new
-      info[:data][:content] = output.safe_utf8_encode unless output.nil?
+      info[:data][:content] = output.safe_utf8_encode_invalid unless output.nil?
       info[:data][:content] ||= ''
 
       yield info if block_given?

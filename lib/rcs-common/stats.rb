@@ -49,6 +49,7 @@ class Stats
   end
 
   def add_to_section(section, k, v)
+    @stats[section][:last][0][k] ||= 0
     @stats[section][:last][0][k] += v
   end
 

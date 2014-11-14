@@ -25,17 +25,17 @@ module PositionEvidence
         content.write GPS_Position.struct(45.12345, 9.54321, rand(10..100))
         content.write [ ELEM_DELIMITER ].pack('L')
 
-      when LOCATION_GSM, LOCATION_CDMA
+      when LOCATION_GSM
         content.write [@loc_type, 0, 0].pack('L*')
         content.write Time.now.getutc.to_filetime.pack('L*')
         content.write CELL_Position.struct(222, 1, 61208, 528, -92, 0)
         content.write [ ELEM_DELIMITER ].pack('L')
 
       when LOCATION_WIFI
-        content.write ["\xAA\xBB\xCC\xDD\xEE\xFF", "\x00\x11\x22\x33\x44\x55", "\xAB\xCD\xEF\x01\x23\x45"].sample
+        content.write ["\x00\x17\xC2\xF8\x9C\x60", "\x00\x25\xC9\xDF\xAB\xA7", "\x38\x22\x9D\xF7\x84\xF4"].sample
         content.write [0, 0].pack('C*') # dummy for the C struck packing
         content.write [4].pack('L')
-        content.write ["ciao", "miao", "blau"].sample.ljust(32, "\x00")
+        content.write ["FASTWEB-1-0017C2F89C60", "ht-guest-wifi", "FASTWEB-1-38229DF784F4"].sample.ljust(32, "\x00")
         content.write [rand(100) * -1].pack('l')
 
       when LOCATION_IP
@@ -52,7 +52,7 @@ module PositionEvidence
   end
 
   def additional_header
-    @loc_type = [LOCATION_GPS, LOCATION_GSM, LOCATION_CDMA, LOCATION_WIFI, LOCATION_IP].sample
+    @loc_type = [LOCATION_GPS, LOCATION_GSM, LOCATION_WIFI, LOCATION_IP].sample
     @nstruct = (@loc_type == LOCATION_IP) ? 1 : rand(5) + 1
     header = StringIO.new
     header.write [LOCATION_VERSION, @loc_type, @nstruct].pack("I*")
@@ -124,9 +124,9 @@ module PositionEvidence
           info[:da] = Time.from_filetime(high, low)
           gps = GPS_Position.new
           gps.read stream
-          info[:data][:latitude] = "%.7f" % gps.latitude
-          info[:data][:longitude] = "%.7f" % gps.longitude
-          info[:data][:accuracy] = "%d" % gps.accuracy
+          info[:data][:latitude] = gps.latitude.to_f
+          info[:data][:longitude] = gps.longitude.to_f
+          info[:data][:accuracy] = gps.accuracy.to_i
           delim = stream.read(4).unpack('L').first
           raise EvidenceDeserializeError.new("Malformed LOCATION GPS (missing delimiter)") unless delim == ELEM_DELIMITER
           yield info if block_given?
