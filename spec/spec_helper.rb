@@ -1,6 +1,5 @@
 require 'bundler'
 require 'rspec'
-require 'mongoid'
 require 'pry'
 
 RSpec.configure do |config|

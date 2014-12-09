@@ -1,7 +1,5 @@
 # encoding: utf-8
 
-require 'json'
-
 require 'rcs-common/trace'
 require 'rcs-common/evidence/common'
 

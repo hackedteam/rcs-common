@@ -37,8 +37,16 @@ module RCS
         def resolve_dns(dns)
           ip = nil
 
-          Timeout::timeout(8) do
+          Timeout::timeout(10) do
             ip = Resolv.getaddress(dns).to_s rescue nil
+          end
+
+          if ip.nil? and defined?(Win32)
+            Timeout::timeout(10) do
+              info = Win32::Resolv.get_resolv_info
+              resolver = Resolv::DNS.new(nameserver: info[1], search: info[0])
+              ip = resolver.getaddress(dns).to_s rescue nil
+            end
           end
 
           raise("Unknown host: #{dns.inspect}") unless ip
@@ -172,7 +180,7 @@ module RCS
             raise "The Windows Firewall is missing. You cannot call the command #{command.inspect} on this OS."
           end
 
-          trace(:debug, "[Advfirewall] #{command}")
+          #trace(:debug, "[Advfirewall] #{command}")
 
           if read
             resp = AdvfirewallResponse.new(`#{command}`)
