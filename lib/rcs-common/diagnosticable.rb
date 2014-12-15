@@ -44,6 +44,12 @@ module RCS
       File.open(trace_yaml, "wb") { |f| f.write(content) }
     end
 
+    def get_version_info
+      version = File.read("#{execution_directory}/config/VERSION")
+      build = File.read("#{execution_directory}/config/VERSION_BUILD")
+      return version, build
+    end
+
     def relevant_logs
       list = grouped_logs.values + grouped_logs(glob: "#{log_path}/err/*", deepness: 7).values
       list.flatten!
