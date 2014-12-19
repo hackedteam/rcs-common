@@ -150,6 +150,8 @@ module ChatmmEvidence
      users = ["ALoR", "Bruno", "Naga", "Quez", "Tizio", "Caio"]
      from = users.sample.to_utf16le_binary_null
      to = users.sample.to_utf16le_binary_null
+     mime = "image/jpeg".to_utf16le_binary_null
+     filename = "nice_picture.jpec".to_utf16le_binary_null
 
      header = StringIO.new
      t = Time.now.getutc
@@ -160,6 +162,8 @@ module ChatmmEvidence
      header.write from
      header.write to
      header.write to
+     header.write mime
+     header.write filename
 
      header.string
    end
@@ -170,6 +174,12 @@ module ChatmmEvidence
 
     stream = StringIO.new data
     info = decode_from_to({}, stream)
+
+    content_type = stream.read_utf16le_string
+    info[:data][:type] = content_type.utf16le_to_utf8 unless content_type.nil?
+
+    filename = stream.read_utf16le_string
+    info[:data][:name] = filename.utf16le_to_utf8 unless filename.nil?
 
     return info
    end
