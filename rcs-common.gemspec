@@ -23,9 +23,9 @@ gemspec = Gem::Specification.new do |s|
   s.add_dependency('ffi')
   s.add_dependency('mail')
   s.add_dependency('sbdb')
-  s.add_dependency('mongoid', "~> 4.0.0")
+  s.add_dependency('mongoid')
 
-  s.add_development_dependency("bundler", "> 1.0.0")
+  s.add_development_dependency("bundler")
   s.add_development_dependency('rake')
   s.add_development_dependency('test-unit')
   s.add_development_dependency('simplecov')
