@@ -170,7 +170,7 @@ module RCS
 
           raise("File not found: #{file_id}") unless attributes
 
-          attributes = attributes.symbolize_keys
+          attributes = attributes.to_h.symbolize_keys
 
           file_id = objectid(attributes[:_id])
 
@@ -210,7 +210,7 @@ module RCS
 
           return unless attributes
 
-          attributes = attributes.symbolize_keys
+          attributes = attributes.to_h.symbolize_keys
           attributes[:bucket] = self
           attributes[:chunk_size] = attributes[:chunkSize]
           attributes[:content_type] = attributes[:contentType]
@@ -224,6 +224,8 @@ module RCS
 
           files_collection.find(_id: file_id).remove
           chunks_collection.find(files_id: file_id).remove_all
+
+          return nil
         end
 
         def drop

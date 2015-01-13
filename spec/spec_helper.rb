@@ -2,6 +2,11 @@ require 'bundler'
 require 'rspec'
 require 'pry'
 
+$LOAD_PATH << File.expand_path('../lib', __FILE__)
+
+require 'rcs-common'
+require 'rcs-common/mongoid'
+
 RSpec.configure do |config|
   config.before(:all) do
     ENV['MONGOID_ENV'] = 'spec'
@@ -12,7 +17,3 @@ RSpec.configure do |config|
     Mongoid.purge!
   end
 end
-
-$LOAD_PATH << File.expand_path('../lib', __FILE__)
-
-require 'rcs-common'

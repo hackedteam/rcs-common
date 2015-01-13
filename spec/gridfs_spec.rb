@@ -19,7 +19,7 @@ module RCS::Common::GridFS
 
     let(:bucket) { Bucket.new }
 
-    let(:db_name) { bucket.session.instance_variable_get('@current_database').name }
+    let(:db_name) { bucket.session.options[:database] }
 
     let(:mongo_client_db) { Mongo::MongoClient.new[db_name] }
 
@@ -110,7 +110,7 @@ module RCS::Common::GridFS
     describe '#eof?' do
 
       it 'is false when there are bytes to read' do
-        expect(file.eof?).to be_false
+        expect(file.eof?).to be_falsey
       end
 
       context 'when file#read has been called' do
@@ -118,7 +118,7 @@ module RCS::Common::GridFS
         before { file.read }
 
         it 'is true' do
-          expect(file.eof?).to be_true
+          expect(file.eof?).to be_truthy
         end
       end
 
@@ -130,15 +130,15 @@ module RCS::Common::GridFS
 
         it 'is false until the are no more bytes to read' do
           file.read(1)
-          expect(file.eof?).to be_false
+          expect(file.eof?).to be_falsey
           file.read($chunk_size**2)
-          expect(file.eof?).to be_true
+          expect(file.eof?).to be_truthy
 
           file.rewind
           file.read(1)
-          expect(file.eof?).to be_false
+          expect(file.eof?).to be_falsey
           file.read($chunk_size*2)
-          expect(file.eof?).to be_true
+          expect(file.eof?).to be_truthy
         end
       end
     end
@@ -212,7 +212,7 @@ module RCS::Common::GridFS
       bucket = Bucket.new
 
       non_utf8_string = "- Men\xFC -"
-      expect(non_utf8_string.valid_encoding?).to be_false
+      expect(non_utf8_string.valid_encoding?).to be_falsey
       id = bucket.put non_utf8_string
       file = bucket.get(id)
       expect(file.read.encoding.to_s).to eq('ASCII-8BIT')
@@ -269,17 +269,17 @@ module RCS::Common::GridFS
       context 'when the file is missing' do
 
         it 'raises an error' do
-          fake_id = Moped::BSON::ObjectId.new
+          fake_id = ::BSON::ObjectId.new
           expect { bucket.append(fake_id, 'foo') }.to raise_error(/not found/)
         end
 
         context 'when option :create is passed' do
 
           it 'creates the file' do
-            fake_id = Moped::BSON::ObjectId.new
+            fake_id = ::BSON::ObjectId.new
             expect { bucket.append(fake_id, 'foo', create: true) }.not_to raise_error
 
-            fake_id = Moped::BSON::ObjectId.new
+            fake_id = ::BSON::ObjectId.new
             file_id, length = bucket.append(fake_id, 'foo', create: {filename: 'bar'})
             file = bucket.get(file_id)
             expect(file.filename).to eq('bar')
@@ -312,7 +312,7 @@ module RCS::Common::GridFS
       end
 
       it 'returns nil when the file is missing' do
-        id = Moped::BSON::ObjectId.new
+        id = ::BSON::ObjectId.new
         expect(bucket.delete(id)).to be_nil
       end
 
@@ -353,7 +353,7 @@ module RCS::Common::GridFS
         context '#get' do
 
           it 'returns nil (without errors)' do
-            expect(bucket.get(Moped::BSON::ObjectId.new)).to be_nil
+            expect(bucket.get(::BSON::ObjectId.new)).to be_nil
           end
         end
 
@@ -385,7 +385,7 @@ module RCS::Common::GridFS
       it 'creates the indexes' do
         session = Bucket.new(nil, lazy: false).session
 
-        db_name = session.instance_variable_get('@current_database').name
+        db_name = session.options[:database]
 
         chunks_indexes = session['fs.chunks'].indexes
         files_indexes = session['fs.files'].indexes
@@ -458,7 +458,7 @@ module RCS::Common::GridFS
       end
 
       it 'returns nil when nothing is found' do
-         id = Moped::BSON::ObjectId.new
+         id = ::BSON::ObjectId.new
          expect(bucket.get(id)).to be_nil
       end
 
@@ -469,13 +469,13 @@ module RCS::Common::GridFS
 
       it 'works if the given id is a (Moped::)BSON::ObjectId' do
         id = bucket.put(content)
-        id = BSON ? BSON::ObjectId.from_string(id.to_s) : Moped::BSON::ObjectId.from_string(id.to_s)
+        id = BSON ? ::BSON::ObjectId.from_string(id.to_s) : ::BSON::ObjectId.from_string(id.to_s)
         expect(bucket.get(id)).not_to be_nil
       end
 
       it 'does not works with filenames (raise an error)' do
         id = bucket.put(content, filename: 'foo.bar')
-        expect{ bucket.get('foo.bar') }.to raise_error(/is not a valid object id/)
+        expect{ bucket.get('foo.bar') }.to raise_error(BSON::ObjectId::Invalid)
       end
     end
 
