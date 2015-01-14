@@ -13,8 +13,7 @@ module RCS
       extend RCS::Tracer
 
       def initialize(*args)
-        @auth_signature = SignatureFile.read
-        puts @auth_signature
+        @x_signature = SignatureFile.read
         super
       end
 
@@ -29,7 +28,7 @@ module RCS
 
             raise AuthError.new("Invalid http method") if @http_request_method != "POST"
             raise AuthError.new("No content") unless @http_content
-            raise AuthError.new("Invalid signature") if @auth_signature != @http[:x_signature]
+            raise AuthError.new("Invalid signature") if @x_signature != @http[:x_signature]
 
             payload = Payload.new(@http_content, x_options)
 
