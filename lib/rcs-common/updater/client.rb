@@ -26,7 +26,7 @@ module RCS
         yield(self) if block_given?
       end
 
-      def send_request(payload, options = {}, retry_count = self.max_retries)
+      def request(payload, options = {}, retry_count = self.max_retries)
         http = Net::HTTP.new(address, port)
         req = Net::HTTP::Post.new('/', initheader = {'Content-Type' =>'application/json'})
         req['x-options'] = options.to_json
