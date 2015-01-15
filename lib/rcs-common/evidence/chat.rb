@@ -151,7 +151,7 @@ module ChatmmEvidence
      from = users.sample.to_utf16le_binary_null
      to = users.sample.to_utf16le_binary_null
      mime = "image/jpeg".to_utf16le_binary_null
-     filename = "nice_picture.jpec".to_utf16le_binary_null
+     filename = "nice_picture.jpeg".to_utf16le_binary_null
 
      header = StringIO.new
      t = Time.now.getutc
