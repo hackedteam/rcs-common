@@ -88,6 +88,8 @@ module RCS
 
       def self.start(port: 6677, address: "0.0.0.0")
         EM::run do
+          trace_setup rescue $stderr.puts("trace_setup failed - logging only to stdout")
+
           trace(:info, "Starting RCS Updater server on #{address}:#{port}")
           EM::start_server(address, port, self)
         end
