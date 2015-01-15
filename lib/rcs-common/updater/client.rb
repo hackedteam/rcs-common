@@ -1,6 +1,7 @@
 require 'yajl/json_gem'
 require 'net/http'
 require 'uri'
+require 'timeout'
 
 require_relative "../trace.rb"
 require_relative "client_helpers"
@@ -12,7 +13,7 @@ module RCS
       include RCS::Tracer
 
       attr_reader :address, :port
-      attr_accessor :max_retries, :retry_interval
+      attr_accessor :max_retries, :retry_interval, :open_timeout
       attr_accessor :pwd
 
       def initialize(address, port: 6677)
@@ -21,7 +22,8 @@ module RCS
         @signature = SignatureFile.read
 
         self.max_retries = 3
-        self.retry_interval = 4 #sec
+        self.retry_interval = 4 # sec
+        self.open_timeout = 8 # sec
 
         yield(self) if block_given?
       end
@@ -37,6 +39,7 @@ module RCS
         msg = ["#{payload.size} B", options.inspect]
         trace(:debug, "REQ #{msg.join(' | ')}")
 
+        http.open_timeout = self.open_timeout
         res = http.request(req)
         status_code = res.code.to_i
 
@@ -54,7 +57,9 @@ module RCS
         if retry_count > 0
           trace(:warn, "Retrying in #{retry_interval} seconds, #{retry_count} attempt(s) left")
           sleep(self.retry_interval)
-          send_request(payload, options, retry_count-1)
+          return request(payload, options, retry_count-1)
+        else
+          return nil
         end
       end
 

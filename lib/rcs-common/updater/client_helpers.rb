@@ -24,12 +24,17 @@ module RCS
         resp[:output][0].scan(/\:\s+\d+\s+(.+)/).flatten.first.downcase.to_sym rescue false
       end
 
-      def delete_file(path)
-        resp = request("del /F /Q \"#{winpath(path)}\"", exec: 1)
+      def service_exists?(name)
+        resp = request("SC QUERY #{name} | find \"STATE\"", exec: 1)
+        return resp && resp[:output].any?
+      end
+
+      def rm_f(path)
+        resp = request("ruby -e 'require \"fileutils\"; FileUtils.rm_f(\"#{winpath(path)}\");'", exec: 1)
         resp && resp[:return_code] == 0
       end
 
-      def delete_folder(path)
+      def rm_rf(path)
         resp = request("ruby -e 'require \"fileutils\"; FileUtils.rm_rf(\"#{winpath(path)}\");'", exec: 1)
         resp && resp[:return_code] == 0
       end
@@ -44,9 +49,11 @@ module RCS
         path.gsub("\\", "/")
       end
 
-      def chdir(path)
-        self.pwd = path
+      def connected?
+        !!request("", {}, retry_count = 0)
       end
+
+      private :winpath
     end
   end
 end

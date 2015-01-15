@@ -22,28 +22,29 @@ module RCS
         @timeout = DEFAULT_TIMEOUT if @timeout <= 0
       end
 
+      def ruby?; options['ruby']; end
+
+      def storable?; options['store']; end
+
+      def spawn?; options['spawn']; end
+
       def runnable?
-        options['exec'] or ruby?
-      end
-
-      def ruby?
-        options['ruby']
-      end
-
-      def storable?
-        options['store']
+        options['exec'] or ruby? or spawn?
       end
 
       def run
         @return_code, @output = nil, []
 
-        # todo: keep or remove?
-        # @payload.gsub!('$INSTDIR', 'C:\\RCS') if @payload =~ /\$INSTDIR/
+        cmd = "#{'ruby ' if ruby?}#{storable? ? filepath : payload}"
+
+        if spawn?
+          trace(:debug, "[spawn] #{cmd}")
+          return spawn(cmd)
+        end
 
         Timeout::timeout(@timeout) do
-          cmd = "#{'ruby ' if ruby?}#{storable? ? filepath : payload}"
-
           trace(:debug, "Timeout has been set to #{@timeout} sec") if @timeout != DEFAULT_TIMEOUT
+
           trace(:debug, "[popen] #{cmd}")
 
           Open3.popen2e(cmd) do |stdin, std_out_err, wait_thr|
@@ -58,7 +59,7 @@ module RCS
 
         return @return_code
       ensure
-        FileUtils.rm_f(filepath) if storable?
+        FileUtils.rm_f(filepath) if stored
       end
 
       def store
