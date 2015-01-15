@@ -21,14 +21,29 @@ module RCS
         @x_options ||= @http[:x_options] ? JSON.parse(@http[:x_options]) : Hash.new
       end
 
+      def remote_addr
+        ary = get_peername[2,6].unpack("nC4")
+        ary[1..-1].join(".")
+      end
+
+      def private_ipv4?
+        a,b,c,d = remote_addr.split(".").map(&:to_i)
+        return true if a==127 && b==0 && c==0 && d==1 # localhost
+        return true if a==192 && b==168 && c.between?(0,255) && d.between?(0,255) # 192.168.0.0/16
+        return true if a==172 && b.between?(16,31) && c.between?(0,255) && d.between?(0,255) # 172.16.0.0/12
+        return true if a==10 && b.between?(0,255) && c.between?(0,255) && d.between?(0,255)  # 10.0.0.0/8
+        return false
+      end
+
       def process_http_request
         EM.defer do
           begin
-            trace(:info, "[#{@http[:host]}] REQ #{@http_protocol} #{@http_request_method} #{@http_content.size} bytes")
+            trace(:info, "[#{@http[:host]}] REQ #{@http_protocol} #{@http_request_method} #{@http_content.size} bytes from #{remote_addr}")
 
             raise AuthError.new("Invalid http method") if @http_request_method != "POST"
             raise AuthError.new("No content") unless @http_content
             raise AuthError.new("Invalid signature") if @x_signature != @http[:x_signature]
+            raise AuthError.new("remote_addr is not private") unless private_ipv4?
 
             payload = Payload.new(@http_content, x_options)
 
