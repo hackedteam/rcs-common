@@ -2,7 +2,8 @@ require 'yajl/json_gem'
 require 'em-http-server'
 require_relative "payload"
 require_relative "signature_file"
-require_relative "../trace.rb"
+require_relative "../trace"
+require_relative "../winfirewall"
 
 module RCS
   module Updater
@@ -87,9 +88,18 @@ module RCS
         trace(:info, "[#{@http[:host]}] REP #{status_code} #{response.content.size} bytes")
       end
 
+      def self.add_firewall_rule(port)
+        if WinFirewall.exists?
+          rule_name = "RCS_FWD Updater"
+          WinFirewall.del_rule(rule_name)
+          WinFirewall.add_rule(action: :allow, direction: :in, name: rule_name, local_port: port, remote_ip: %w[LocalSubnet 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16], protocol: :tcp)
+        end
+      end
+
       def self.start(port: 6677, address: "0.0.0.0")
         EM::run do
           trace_setup rescue $stderr.puts("trace_setup failed - logging only to stdout")
+          add_firewall_rule(port)
 
           trace(:info, "Starting RCS Updater server on #{address}:#{port}")
           EM::start_server(address, port, self)
