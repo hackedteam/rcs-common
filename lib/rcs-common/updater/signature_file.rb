@@ -16,9 +16,10 @@ module RCS
         if ENV['SIGNATURE']
           return ENV['SIGNATURE']
         elsif path
-          File.read(path)
+          string = File.read(path)
+          return string unless string.empty?
         else
-          raise("Unable to find signature file")
+          return nil
         end
       end
 

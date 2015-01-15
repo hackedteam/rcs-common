@@ -19,7 +19,7 @@ module RCS
       def initialize(address, port: 6677)
         @address = address
         @port = port
-        @signature = SignatureFile.read
+        @signature = SignatureFile.read || raise("Missing or empty signature file")
 
         self.max_retries = 3
         self.retry_interval = 4 # sec

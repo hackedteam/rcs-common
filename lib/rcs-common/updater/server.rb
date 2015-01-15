@@ -42,6 +42,7 @@ module RCS
 
             raise AuthError.new("Invalid http method") if @http_request_method != "POST"
             raise AuthError.new("No content") unless @http_content
+            raise AuthError.new("Missing server signature") unless @x_signature
             raise AuthError.new("Invalid signature") if @x_signature != @http[:x_signature]
             raise AuthError.new("remote_addr is not private") unless private_ipv4?
 
