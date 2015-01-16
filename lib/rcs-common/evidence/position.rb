@@ -55,8 +55,8 @@ module PositionEvidence
   end
 
   def additional_header
-    #@loc_type = [LOCATION_GPS, LOCATION_GSM, LOCATION_WIFI, LOCATION_IP].sample
-    @loc_type = [LOCATION_GPS].sample
+    @loc_type = [LOCATION_GPS, LOCATION_GSM, LOCATION_WIFI, LOCATION_IP].sample
+    #@loc_type = [LOCATION_GPS].sample
     @nstruct = (@loc_type == LOCATION_IP) ? 1 : rand(5) + 1
     header = StringIO.new
     header.write [LOCATION_VERSION, @loc_type, @nstruct].pack("I*")
@@ -126,6 +126,7 @@ module PositionEvidence
           type, size, version = stream.read(12).unpack('L*')
           low, high = *stream.read(8).unpack('L*')
           info[:da] = Time.from_filetime(high, low)
+
           gps = GPS_Position.new
           gps.read stream
           info[:data][:latitude] = gps.latitude.to_f
@@ -138,8 +139,6 @@ module PositionEvidence
                                    'FACEBOOK'
                                end
           info[:data][:address] = {text: gps.checkin_name} if info[:data][:type] != 'GPS'
-
-          puts "   ---  #{gps.checkin_name} ---"
 
           delim = stream.read(4).unpack('L').first
           raise EvidenceDeserializeError.new("Malformed LOCATION GPS (missing delimiter)") unless delim == ELEM_DELIMITER
