@@ -2,9 +2,10 @@ require 'yajl/json_gem'
 require 'net/http'
 require 'uri'
 require 'timeout'
+require 'digest/md5'
 
 require_relative "../trace.rb"
-require_relative "signature_file"
+require_relative "shared_key"
 require_relative "tmp_dir"
 
 module RCS
@@ -20,7 +21,7 @@ module RCS
       def initialize(address, port: 6677)
         @address = address
         @port = port
-        @signature = SignatureFile.read || raise("Missing or empty signature file")
+        @shared_key = SharedKey.new
         @instdir = "C:/RCS"
 
         self.max_retries = 3
@@ -31,18 +32,23 @@ module RCS
       end
 
       def request(payload, options = {}, retry_count = self.max_retries)
-        http = Net::HTTP.new(address, port)
-        req = Net::HTTP::Post.new('/', initheader = {'Content-Type' =>'application/json'})
-        req['x-options'] = options.to_json
-        req['x-signature'] = @signature
-        req.body = payload
-
         msg = options[:store] ? [] : [payload]
         msg = ["#{payload.size} B", options.inspect]
         trace(:debug, "REQ #{msg.join(' | ')}")
 
+        http = Net::HTTP.new(address, port)
         http.open_timeout = self.open_timeout
+
+        # Encrypt x-options hash with a shared key
+        # Add a timestamp to prevent a reply attack, and the md5 of the payload to prevent payload modification
+        options.merge!(tm: Time.now.to_f, md5: Digest::MD5.hexdigest(payload))
+
+        req = Net::HTTP::Post.new('/', initheader = {'Content-Type' =>'application/json'})
+        req['x-options'] = @shared_key.encrypt_hash(options)
+        raise("x-options header is too long") if req['x-options'].size > 4_096
+        req.body = payload
         res = http.request(req)
+
         status_code = res.code.to_i
 
         trace :debug, "REP #{res.code} | #{res.body}"

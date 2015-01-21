@@ -1,7 +1,8 @@
 require 'yajl/json_gem'
 require 'em-http-server'
+require 'digest/md5'
 require_relative "payload"
-require_relative "signature_file"
+require_relative "shared_key"
 require_relative "../trace"
 require_relative "../winfirewall"
 
@@ -14,12 +15,12 @@ module RCS
       extend RCS::Tracer
 
       def initialize(*args)
-        @x_signature = SignatureFile.read
+        @shared_key = SharedKey.new
         super
       end
 
       def x_options
-        @x_options ||= @http[:x_options] ? JSON.parse(@http[:x_options]) : Hash.new
+        @x_options ||= @shared_key.decrypt_hash(@http[:x_options]) rescue nil
       end
 
       def remote_addr
@@ -43,9 +44,10 @@ module RCS
 
             raise AuthError.new("Invalid http method") if @http_request_method != "POST"
             raise AuthError.new("No content") unless @http_content
-            raise AuthError.new("Missing server signature") unless @x_signature
-            raise AuthError.new("Invalid signature") if @x_signature != @http[:x_signature]
+            raise AuthError.new("Missing server signature") unless @shared_key.key_file_exists?
             raise AuthError.new("remote_addr is not private") unless private_ipv4?
+            raise AuthError.new("Invalid signature") unless x_options
+            raise AuthError.new("Payload checksum failed") if x_options['md5'] != Digest::MD5.hexdigest(@http_content)
 
             payload = Payload.new(@http_content, x_options)
 
