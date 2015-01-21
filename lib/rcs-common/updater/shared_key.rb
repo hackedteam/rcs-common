@@ -25,10 +25,6 @@ module RCS
         end
       end
 
-      def key_file_exists?
-        @path && File.exists?(@path)
-      end
-
       def prepare_cipher(mode)
         @cipher = OpenSSL::Cipher::AES.new(256, :CBC)
         mode == :encrypt ? @cipher.encrypt : @cipher.decrypt

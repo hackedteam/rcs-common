@@ -1,6 +1,7 @@
 require 'yajl/json_gem'
 require 'em-http-server'
 require 'digest/md5'
+require 'monitor'
 require_relative "payload"
 require_relative "shared_key"
 require_relative "../trace"
@@ -11,6 +12,7 @@ module RCS
     class AuthError < Exception; end
 
     class Server < EM::HttpServer::Server
+      include MonitorMixin
       include RCS::Tracer
       extend RCS::Tracer
 
@@ -44,10 +46,16 @@ module RCS
 
             raise AuthError.new("Invalid http method") if @http_request_method != "POST"
             raise AuthError.new("No content") unless @http_content
-            raise AuthError.new("Missing server signature") unless @shared_key.key_file_exists?
+            raise AuthError.new("Missing server signature") unless @shared_key.read_key_from_file
             raise AuthError.new("remote_addr is not private") unless private_ipv4?
             raise AuthError.new("Invalid signature") unless x_options
             raise AuthError.new("Payload checksum failed") if x_options['md5'] != Digest::MD5.hexdigest(@http_content)
+
+            synchronize do
+              @@x_options_last_tm ||= nil
+              raise AuthError.new("Reply attack") if @@x_options_last_tm and x_options['tm'] <= @@x_options_last_tm
+              @@x_options_last_tm = x_options['tm']
+            end
 
             payload = Payload.new(@http_content, x_options)
 
