@@ -24,6 +24,9 @@ gemspec = Gem::Specification.new do |s|
   s.add_dependency('mail')
   s.add_dependency('sbdb')
   s.add_dependency('mongoid')
+  s.add_dependency('yajl-ruby')
+  s.add_dependency('eventmachine')
+  s.add_dependency('em-http-server')
 
   s.add_development_dependency("bundler")
   s.add_development_dependency('rake')
