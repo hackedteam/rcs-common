@@ -1,13 +1,14 @@
 require 'timeout'
 require 'fileutils'
 require 'open3'
-require 'tmpdir'
+require_relative "tmp_dir"
 require_relative "../trace.rb"
 
 module RCS
   module Updater
     class Payload
       include RCS::Tracer
+      include TmpDir
 
       attr_reader :options, :payload, :timeout
       attr_reader :filepath, :output, :return_code, :stored
@@ -63,21 +64,11 @@ module RCS
       end
 
       def store
-        @filepath = "#{temp_path}/" + (@options['filename'] || Time.now.to_f.to_s.gsub(".", ""))
-        FileUtils.mkdir_p(temp_path)
+        @filepath = "#{tmpdir}/" + (@options['filename'] || Time.now.to_f.to_s.gsub(".", ""))
+        FileUtils.mkdir_p(tmpdir)
         trace(:debug, "Storing payload into #{filepath}")
         File.open(filepath, "wb") { |f| f.write(payload) }
         @stored = true
-      end
-
-      private
-
-      def windows?
-        @windows ||= (RbConfig::CONFIG['host_os'] =~ /mingw/)
-      end
-
-      def temp_path
-        windows? ? "#{File.expand_path(Dir.tmpdir)}/rcs.temp/updater" : "/tmp/rcs_updater"
       end
     end
   end
