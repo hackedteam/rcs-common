@@ -22,7 +22,6 @@ module FilesystemEvidence
       path = data[:path].gsub("//", "/").to_utf16le_binary_null
       content.write [FILESYSTEM_VERSION, path.bytesize, data[:attr], (data[:size] || 0), 0].pack("I*")
       time = Time.now.getutc.to_filetime
-      time.reverse!
       content.write time.pack('L*')
       content.write path
     end
