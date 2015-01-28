@@ -5,7 +5,12 @@ module RCS
 
   module AddressbookEvidence
     def content
-      fields = { :first_name => ["John", "Liza", "Bruno"].sample, :last_name => ["Doe", "Rossi", "Bianchi"].sample, :handle => ["pippo.pluto", "ciao.miao", "happy.hippo"].sample}
+      fields = { :first_name => ["John", "Liza", "Bruno"].sample,
+                 :last_name => ["Doe", "Rossi", "Bianchi"].sample,
+                 :handle => ["pippo.pluto", "ciao.miao", "happy.hippo"].sample,
+                 :mobile_phone_number => "+393380123456",
+                 :home_phone_number => "+39024567890",
+                 :email_1 => "test@me.com"}
       AddressBookSerializer.new.serialize fields
     end
 
@@ -28,6 +33,9 @@ module RCS
         info[:data][:program] = contact.program
         info[:data][:type] = contact.type
         info[:data][:handle] = contact.handle if contact.handle
+        info[:data][:multi_handles] = contact.multi_handles unless contact.multi_handles.empty?
+
+        #trace :debug, "MULTI HANDLES: #{contact.multi_handles.inspect}"
 
         yield info if block_given?
       end

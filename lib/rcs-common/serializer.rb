@@ -208,7 +208,7 @@ module RCS
   class AddressBookSerializer
     include RCS::Tracer
 
-    attr_reader :name, :contact, :info, :type, :program, :handle
+    attr_reader :name, :contact, :info, :type, :program, :handle, :multi_handles
 
     POOM_V1_0_PROTO = 0x01000000
     POOM_V2_0_PROTO = 0x01000001
@@ -290,6 +290,7 @@ module RCS
         0x0e => :telegram,
         0x0f => :yahoo,
         0x10 => :messages,
+        0x11 => :contacts
     }
 
     TYPE_FLAGS = {
@@ -298,6 +299,7 @@ module RCS
 
     def initialize
       @fields = {}
+      @multi_handles = []
       @poom_strings = {}
       ADDRESSBOOK_TYPES.each_pair do |k, v|
         @poom_strings[v] = v.to_s.gsub(/_/, " ").capitalize.encode('UTF-8')
@@ -313,7 +315,7 @@ module RCS
         stream.write utf16le_str
       end
       header = [stream.pos + 20, POOM_V2_0_PROTO, 0].pack('L*')
-      header += [0x02, [0, LOCAL_CONTACT].sample].pack('L*')
+      header += [ADDRESSBOOK_PROGRAM.invert[:contacts], [0, LOCAL_CONTACT].sample].pack('L*')
 
       return header + stream.string
     end
@@ -340,7 +342,8 @@ module RCS
           flags = stream.read(4).unpack("L").shift
       end
 
-      @fields = {}
+      # initialize the values to array
+      @fields = Hash.new {|h,k| h[k] = []}
 
       # BODY
       header_length = stream.pos - header_begin
@@ -349,13 +352,13 @@ module RCS
         type, size = Serialization.decode_prefix content.slice!(0, 4)
         str = content.slice!(0, size).utf16le_to_utf8
         #trace :debug, "ADDRESSBOOK FIELD #{ADDRESSBOOK_TYPES[type]} = #{str}"
-        @fields[ADDRESSBOOK_TYPES[type]] = str if ADDRESSBOOK_TYPES.has_key? type
+        @fields[ADDRESSBOOK_TYPES[type]] << str if ADDRESSBOOK_TYPES.has_key? type
       end
 
       # name
       @name = ""
-      @name = @fields[:first_name] if @fields.has_key? :first_name
-      @name += " " + @fields[:last_name] if @fields.has_key? :last_name
+      @name = @fields[:first_name].first if @fields.has_key? :first_name
+      @name += " " + @fields[:last_name].first if @fields.has_key? :last_name
 
       @program = ADDRESSBOOK_PROGRAM[program]
       @program ||= :unknown
@@ -364,38 +367,34 @@ module RCS
       @type ||= :peer
       @type = :target if (flags & LOCAL_CONTACT != 0)
 
-      # contact
+      # choose the most significant contact field (the handle)
       @contact = ""
-      if @fields.has_key? :mobile_phone_number
-        @contact = @fields[:mobile_phone_number]
-      elsif @fields.has_key? :business_phone_number
-        @contact = @fields[:business_phone_number]
-      elsif @fields.has_key? :home_phone_number
-        @contact = @fields[:home_phone_number]
-      elsif @fields.has_key? :home_fax_number
-        @contact = @fields[:home_fax_number]
-      elsif @fields.has_key? :car_phone_number
-        @contact = @fields[:car_phone_number]
-      elsif @fields.has_key? :radio_phone_number
-        @contact = @fields[:radio_phone_number]
-      end
+      @contact = @handle = @fields[:handle].first if @fields.has_key? :handle
 
-      if @fields.has_key? :handle
-        @handle = @fields[:handle]
-      end
+      #trace :debug, "FIELDS: #{@fields.inspect}"
 
       # info
       @info = ""
       omitted_fields = [:first_name, :last_name, :body, :file_as]
       @fields.each_pair do |k, v|
         next if omitted_fields.include? k
-        str = @poom_strings[k]
-        @info += str.nil? ? "" : "#{str}: "
-        @info += v
-        @info += "\n"
+        v.each do |entry|
+          str = @poom_strings[k]
+          add_multi_handles(str, entry)
+          @info += str.nil? ? "" : "#{str}: "
+          @info += entry
+          @info += "\n"
+        end
       end
 
       self
+    end
+
+    def add_multi_handles(key, value)
+      # only take the phones and mails
+      return if key['phone'].nil? and key['mail'].nil?
+      @multi_handles << {program: 'phone', handle: value} if key['phone']
+      @multi_handles << {program: 'mail', handle: value} if key['mail']
     end
 
   end # ::PoomSerializer
