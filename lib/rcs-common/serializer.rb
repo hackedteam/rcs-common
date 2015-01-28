@@ -208,7 +208,7 @@ module RCS
   class AddressBookSerializer
     include RCS::Tracer
 
-    attr_reader :name, :contact, :info, :type, :program, :handle, :multi_handles
+    attr_reader :name, :contact, :info, :type, :program, :handles
 
     POOM_V1_0_PROTO = 0x01000000
     POOM_V2_0_PROTO = 0x01000001
@@ -299,7 +299,7 @@ module RCS
 
     def initialize
       @fields = {}
-      @multi_handles = []
+      @handles = []
       @poom_strings = {}
       ADDRESSBOOK_TYPES.each_pair do |k, v|
         @poom_strings[v] = v.to_s.gsub(/_/, " ").capitalize.encode('UTF-8')
@@ -369,7 +369,10 @@ module RCS
 
       # choose the most significant contact field (the handle)
       @contact = ""
-      @contact = @handle = @fields[:handle].first if @fields.has_key? :handle
+      if @fields.has_key? :handle
+        @contact = @fields[:handle].first
+        @handles << {type: @program, handle: @fields[:handle].first}
+      end
 
       #trace :debug, "FIELDS: #{@fields.inspect}"
 
@@ -380,7 +383,7 @@ module RCS
         next if omitted_fields.include? k
         v.each do |entry|
           str = @poom_strings[k]
-          add_multi_handles(str, entry)
+          add_to_handles(str, entry)
           @info += str.nil? ? "" : "#{str}: "
           @info += entry
           @info += "\n"
@@ -390,11 +393,11 @@ module RCS
       self
     end
 
-    def add_multi_handles(key, value)
+    def add_to_handles(key, value)
       # only take the phones and mails
       return if key['phone'].nil? and key['mail'].nil?
-      @multi_handles << {program: 'phone', handle: value} if key['phone']
-      @multi_handles << {program: 'mail', handle: value} if key['mail']
+      @handles << {type: 'phone', handle: value} if key['phone']
+      @handles << {type: 'mail', handle: value} if key['mail']
     end
 
   end # ::PoomSerializer
