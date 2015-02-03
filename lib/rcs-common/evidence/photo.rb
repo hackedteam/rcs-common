@@ -21,7 +21,7 @@ module PhotoEvidence
 
     data = {program: "iphoto",
             path: "/Users/Target/Pictures/iPhoto Library/",
-            faces: [{name: 'ciccio', handle: '129461946129481'}],
+            tags: [{name: 'ciccio', handle: '129461946129481', type: 'facebook'}],
             description: "my wonderful photo",
             place: {lat: 45.0, lon: 9.1, r: 50},
             device: ''
@@ -49,7 +49,7 @@ module PhotoEvidence
     ret[:data][:path] = data['path']
     ret[:data][:desc] = data['description']
     ret[:data][:device] = data['device']
-    ret[:data][:faces] = data['faces'] #.map {|x| x['name']}.join(", ")
+    ret[:data][:tags] = data['tags'] #.map {|x| x['name']}.join(", ")
     ret[:data][:latitude] = data['place']['lat'] if data['place']
     ret[:data][:longitude] = data['place']['lon'] if data['place']
     ret[:data][:accuracy] = data['place']['r'] if data['place']
