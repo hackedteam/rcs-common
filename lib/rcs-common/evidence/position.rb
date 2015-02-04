@@ -223,7 +223,7 @@ class GPS_Position
     #str += Array.new(12,0).pack('l*')  # DWORD rgdwSatellitesInViewSignalToNoiseRatio[GPS_MAX_SATELLITES];  // Signal to noise ratio of each satellite in view
 
     # we abuse this space to write the name of the checkin
-    str += name.ljust(248, "\x00")
+    str += name.to_utf16le_binary_null.ljust(248, "\x00")
 
     return str
   end
@@ -244,8 +244,8 @@ class GPS_Position
     stream.read(4)                                # VDOP
 
     temp = stream.read(248)
-    name = StringIO.new(temp).read_ascii_string
-    @checkin_name = name.force_encoding('UTF-8') unless name.nil?
+    name = StringIO.new(temp).read_utf16le_string
+    @checkin_name = name.utf16le_to_utf8 unless name.nil?
   end
 end
 
