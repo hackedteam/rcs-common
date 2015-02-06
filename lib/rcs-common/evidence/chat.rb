@@ -24,7 +24,8 @@ module Chat
       0x10 => :messages,
   }
 
-  CHAT_INCOMING = 0x01
+  CHAT_INCOMING = 0x00000001
+  CHATMM_NOT_RETRIEVED = 0x10000000
 
   def decode_from_to(common_info, stream)
     tm = stream.read 36
