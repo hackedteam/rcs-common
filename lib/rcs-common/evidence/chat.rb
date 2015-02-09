@@ -38,6 +38,7 @@ module Chat
 
     flags = stream.read(4).unpack('L').first
     info[:data][:incoming] = (flags & CHAT_INCOMING != 0) ? 1 : 0
+    info[:data][:size] = (flags & CHATMM_NOT_RETRIEVED != 0) ? 0 : 1
 
     from = stream.read_utf16le_string
     info[:data][:from] = from.utf16le_to_utf8
@@ -188,7 +189,7 @@ module ChatmmEvidence
   def decode_content(common_info, chunks)
     info = Hash[common_info]
     info[:data] ||= Hash.new
-    info[:grid_content] = chunks.join
+    info[:grid_content] = chunks.join if info[:data][:size] != 0
     yield info if block_given?
     :delete_raw
   end
