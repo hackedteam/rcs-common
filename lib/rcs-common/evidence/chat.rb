@@ -181,7 +181,7 @@ module ChatmmEvidence
     info[:data][:type] = content_type.utf16le_to_utf8 unless content_type.nil?
 
     filename = stream.read_utf16le_string
-    info[:data][:name] = filename.utf16le_to_utf8 unless filename.nil?
+    info[:data][:path] = filename.utf16le_to_utf8 unless filename.nil?
 
     return info
    end
