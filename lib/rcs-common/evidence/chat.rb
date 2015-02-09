@@ -24,7 +24,8 @@ module Chat
       0x10 => :messages,
   }
 
-  CHAT_INCOMING = 0x01
+  CHAT_INCOMING = 0x00000001
+  CHATMM_NOT_RETRIEVED = 0x10000000
 
   def decode_from_to(common_info, stream)
     tm = stream.read 36
@@ -37,6 +38,7 @@ module Chat
 
     flags = stream.read(4).unpack('L').first
     info[:data][:incoming] = (flags & CHAT_INCOMING != 0) ? 1 : 0
+    info[:data][:size] = (flags & CHATMM_NOT_RETRIEVED != 0) ? 0 : 1
 
     from = stream.read_utf16le_string
     info[:data][:from] = from.utf16le_to_utf8
@@ -179,7 +181,7 @@ module ChatmmEvidence
     info[:data][:type] = content_type.utf16le_to_utf8 unless content_type.nil?
 
     filename = stream.read_utf16le_string
-    info[:data][:name] = filename.utf16le_to_utf8 unless filename.nil?
+    info[:data][:path] = filename.utf16le_to_utf8 unless filename.nil?
 
     return info
    end
@@ -187,7 +189,7 @@ module ChatmmEvidence
   def decode_content(common_info, chunks)
     info = Hash[common_info]
     info[:data] ||= Hash.new
-    info[:grid_content] = chunks.join
+    info[:grid_content] = chunks.join if info[:data][:size] != 0
     yield info if block_given?
     :delete_raw
   end
