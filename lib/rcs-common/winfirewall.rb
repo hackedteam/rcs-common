@@ -1,6 +1,6 @@
-require 'rcs-common/trace'
 require 'resolv'
 require 'timeout'
+require_relative 'trace'
 
 module RCS
   module Common

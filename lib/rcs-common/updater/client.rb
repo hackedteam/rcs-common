@@ -3,10 +3,13 @@ require 'net/http'
 require 'uri'
 require 'timeout'
 require 'digest/md5'
+require 'base64'
 
 require_relative "../trace.rb"
 require_relative "shared_key"
 require_relative "tmp_dir"
+require_relative "../winfirewall"
+require_relative "payload"
 
 module RCS
   module Updater
@@ -14,7 +17,7 @@ module RCS
       include RCS::Tracer
       include TmpDir
 
-      attr_reader :address, :port, :instdir
+      attr_reader :address, :port
       attr_accessor :max_retries, :retry_interval, :open_timeout
       attr_accessor :pwd
 
@@ -22,13 +25,10 @@ module RCS
         @address = address
         @port = port
         @shared_key = SharedKey.new
-        @instdir = "C:/RCS"
 
         self.max_retries = 3
         self.retry_interval = 4 # sec
-        self.open_timeout = 8 # sec
-
-        yield(self) if block_given?
+        self.open_timeout = 10 # sec
       end
 
       def request(payload, options = {}, retry_count = self.max_retries)
@@ -67,101 +67,264 @@ module RCS
           sleep(self.retry_interval)
           return request(payload, options, retry_count-1)
         else
-          return nil
+          raise(ex)
         end
+      end
+
+      def local_command(cmd, options = {})
+        payload = Payload.new(cmd, options.merge('exec' => true))
+        payload.store if payload.storable?
+        payload.run if payload.runnable?
+        return payload
       end
 
 
       # Helpers
 
-      def store_file(path, remote_path = nil)
-        path = File.expand_path(path)
-        payload = File.open(path, 'rb') { |f| f.read }
-        path = store(payload, filename: File.basename(path))
+      def localhost?
+        @address == 'localhost' or @address == '127.0.0.1'
+      end
 
-        if remote_path
-          return move(path, remote_path)
-        else
-          return path
-        end
+      def store_file(path, remote_path = nil)
+        path = unixpath(File.expand_path(path))
+        payload = File.open(path, 'rb') { |f| f.read }
+        return store(payload, filename: File.basename(path))
       end
 
       def store(payload, filename: nil)
-        resp = request(payload, filename: filename, store: 1)
-        return (resp and resp[:stored]) ? resp[:path] : false
-      end
+        raise("Missing filename") unless filename
 
-      def grant_users_access(path)
-        request("icacls #{winpath(path)} /grant Users:(OI)(CI)", exec: 1)
-      end
-
-      def store_folder(local_path, remote_path)
-        Dir["#{local_path}/**/*"].each do |path|
-          relative_path = path[local_path.size+1..-1]
-          remote_abs_path = "#{remote_path}/#{relative_path}"
-
-          if File.directory?(path)
-            mkdir_p(remote_abs_path)
-          else
-            store_file(path, remote_abs_path) || raise("Unable to store #{path} into #{remote_abs_path}")
-          end
+        if localhost?
+          path = unixpath("#{tmpdir}/#{filename}")
+          File.open(path, 'wb') { |f| f.write(payload) }
+          return path
+        else
+          return request(payload, filename: filename, store: 1)[:path]
         end
       end
 
       def start(payload)
         path = store(payload+"\nexit", filename: 'start.bat')
-        request("start #{path}", {spawn: 1}, retry_count = 0)
+
+        if localhost?
+          resp = local_command("start #{path}", 'spawn' => 1)
+        else
+          resp = request("start #{path}", {spawn: 1}, retry_count = 0)
+        end
+
+        sleep(1)
+
+        return resp
+      end
+
+      alias :detached :start
+
+      def restart_service(name)
+        stop_service(name)
+        start_service(name)
       end
 
       def start_service(name)
-        resp = request("NET START #{name}", exec: 1)
-        resp && resp[:return_code] == 0
+        cmd = "NET START #{name}"
+        return localhost? ? local_command(cmd) : request(cmd, exec: 1)
       end
 
       def stop_service(name)
-        resp = request("NET STOP #{name}", exec: 1)
-        resp && resp[:return_code] == 0
-      end
-
-      def service_status(name)
-        resp = request("SC QUERY #{name} | find \"STATE\"", exec: 1)
-        return false if !resp or resp[:return_code] != 0
-        resp[:output][0].scan(/\:\s+\d+\s+(.+)/).flatten.first.downcase.to_sym rescue false
+        cmd = "NET STOP #{name}"
+        return localhost? ? local_command(cmd) : request(cmd, exec: 1)
       end
 
       def service_exists?(name)
-        resp = request("SC QUERY #{name} | find \"STATE\"", exec: 1)
-        return resp && resp[:output].any?
+        cmd = "SC QUERY #{name} | find \"STATE\""
+        resp = localhost? ? local_command(cmd) : request(cmd, exec: 1)
+        return resp[:output].strip.size > 0
+      end
+
+      def registry_add(key_path, value_name, value_data)
+        value_type = if value_data.kind_of?(Fixnum)
+          :REG_DWORD
+        else
+          :REG_SZ
+        end
+
+        cmd = "reg add #{winpath(key_path)} /f /t #{value_type} /v #{value_name} /d #{value_data}"
+        return localhost? ? local_command(cmd) : request(cmd, exec: 1)
+      end
+
+      def write_file(path, content)
+        if localhost?
+          File.open(unixpath(path), 'wb') { |file| file.write(content) }
+        else
+          # todo
+        end
+      end
+
+      def read_file(path)
+        if localhost?
+          File.read(unixpath(path))
+        else
+          # todo
+        end
+      end
+
+      def delete_service(service_name)
+        cmd = "sc delete #{service_name}"
+        return localhost? ? local_command(cmd) : request(cmd, exec: 1)
+      end
+
+      def add_firewall_rule(rule_name, params = {})
+        if localhost?
+          WinFirewall.del_rule(rule_name)
+          WinFirewall.add_rule(params.merge(name: rule_name))
+        else
+          # todo
+        end
+      end
+
+      def service_config(service_name, param_name, param_value)
+        param_name = param_name.to_s
+        cmd = ""
+
+        if %w[type start error binPath group tag depend obj DisplayName password].include?(param_name)
+          cmd = "sc config #{service_name} #{param_name}= \"#{param_value}\""
+        elsif %[description].include?(param_name)
+          cmd = "sc description #{service_name} \"#{param_value}\""
+        else
+          raise "Invalid parameter #{param_name}"
+        end
+
+        return localhost? ? local_command(cmd) : request(cmd, exec: 1)
+      end
+
+      def service_failure(service_name, reset = 0, action1 = "restart/60000", action2 = "restart/60000", action3 = "restart/60000")
+        cmd = "sc failure #{service_name} reset= #{reset.to_i} actions= "+[action1, action2, action3].compact.join("/")
+        return localhost? ? local_command(cmd) : request(cmd, exec: 1)
+      end
+
+      def execute(cmd)
+        resp = localhost? ? local_command(cmd) : request(cmd, exec: 1)
+
+        if resp[:return_code] != 0
+          return nil
+        else
+          return resp[:output]
+        end
+      end
+
+      def database_exists?(name, mongo: nil)
+        eval = "f=null; db.adminCommand({listDatabases: 1})['databases'].forEach(function(e){ if (e.name == '#{name}') { f = true } }); if (!f) { throw('not found') }"
+        cmd = "#{winpath(mongo)} 127.0.0.1 --eval \"#{eval}\""
+        return execute(cmd)
+      end
+
+      def rm_rf(path, allow: [], check: true)
+        if localhost?
+          FileUtils.rm_rf(unixpath(path))
+        else
+          request("ruby -e 'require \"fileutils\"; FileUtils.rm_rf(\"#{unixpath(path)}\");'", exec: 1)
+        end
+
+        if check
+          ls(unixpath(path)+"/*").each do |p|
+            raise("rm_rf command failed on folder #{path}") unless allow.find { |regexp| p =~ /#{regexp}/i }
+          end
+        end
+
+        return true
       end
 
       def rm_f(path)
-        resp = request("ruby -e 'require \"fileutils\"; FileUtils.rm_f(\"#{winpath(path)}\");'", exec: 1)
-        resp && resp[:return_code] == 0
+        if localhost?
+          FileUtils.rm_f(unixpath(path))
+        else
+          request("ruby -e 'require \"fileutils\"; FileUtils.rm_f(\"#{unixpath(path)}\");'", exec: 1)
+        end
+
+        if ls(path).any?
+          raise("rm_f command failed on file #{path}")
+        else
+          return true
+        end
       end
 
-      def rm_rf(path)
-        resp = request("ruby -e 'require \"fileutils\"; FileUtils.rm_rf(\"#{winpath(path)}\");'", exec: 1)
-        resp && resp[:return_code] == 0
+      def add_to_hosts_file(hash)
+        line = "\n#{hash[0]}\t#{hash[1]}\n"
+        path = "C:\\Windows\\System32\\Drivers\\etc\\hosts"
+
+        if localhost?
+          File.open(path, 'ab') { |file| file.write(line) } unless File.read(path).include?(line.strip)
+        else
+          # TODO
+        end
       end
 
-      def md(path)
-        resp = request("md winpath(path)", exec: 1)
-        resp && resp[:return_code] == 0
+      def extract_sfx(sfx_path, destination_path)
+        mkdir_p(destination_path)
+
+        if localhost?
+          local_command("\"#{winpath(sfx_path)}\" -y -o\"#{winpath(destination_path)}\"")
+        else
+          remote_path = store_file(sfx_path)
+          request("\"#{winpath(remote_path)}\" -y -o\"#{winpath(destination_path)}\"", exec: 1)
+          rm_f(remote_path)
+        end
       end
 
-      def copy(from, to)
-        resp = request("copy #{winpath(from)} #{winpath(to)}", exec: 1)
-        resp && resp[:return_code] == 0
-      end
+      # TODO: ensure no duplication
+      def add_to_path(*paths)
+        list = [paths].flatten.map{ |p| winpath(p) }.join(";")
 
-      def move(from, to)
-        resp = request("move #{winpath(from)} #{winpath(to)}", exec: 1)
-        resp && resp[:return_code] == 0
+        if localhost?
+          ENV['PATH'] += ";#{list}" unless ENV['path'].include?(list)
+          return local_command("setx path \"%path%;#{list}\" /M && set PATH=\"%PATH%;#{list}\"")
+        else
+          return request("setx path \"%path%;#{list}\"", exec: 1)
+        end
       end
 
       def mkdir_p(path)
-        resp = request("ruby -e 'require \"fileutils\"; FileUtils.mkdir_p(\"#{unixpath(path)}\");", exec: 1)
-        resp && resp[:return_code] == 0
+        if localhost?
+          FileUtils.mkdir_p(winpath(path))
+        else
+          request("ruby -e 'require \"fileutils\"; FileUtils.mkdir_p(\"#{unixpath(path)}\");", exec: 1)
+        end
+      end
+
+      def cp(from, to)
+        if localhost?
+          FileUtils.cp(unixpath(from), unixpath(to))
+        else
+          request("ruby -e 'require \"fileutils\"; FileUtils.cp(\"#{unixpath(from)}\", \"#{unixpath(to)}\");", exec: 1)
+        end
+      end
+
+      def cp_r(from, to)
+        if localhost?
+          FileUtils.cp_r(unixpath(from), unixpath(to))
+        else
+          request("ruby -e 'require \"fileutils\"; FileUtils.cp_r(\"#{unixpath(from)}\", \"#{unixpath(to)}\");", exec: 1)
+        end
+      end
+
+      def mv(from, to)
+        if localhost?
+          FileUtils.mv(unixpath(from), unixpath(to))
+        else
+          request("ruby -e 'require \"fileutils\"; FileUtils.mv(\"#{unixpath(from)}\", \"#{unixpath(to)}\");", exec: 1)
+        end
+      end
+
+      def ls(glob)
+        if localhost?
+          return Dir[unixpath(glob)]
+        else
+          resp = request('ruby -e \'require "base64"; require "json"; puts Base64.urlsafe_encode64(Dir["'+unixpath(glob)+'"].to_json)\'', exec: 1)
+          return JSON.parse(Base64.urlsafe_decode64(resp[:output].strip))
+        end
+      end
+
+      def file_exists?(path)
+        ls(path).any?
       end
 
       def winpath(path)
@@ -175,9 +338,27 @@ module RCS
       end
 
       def connected?
-        !!request("", {}, retry_count = 0)
+        if localhost?
+          return true
+        else
+          return !!(request("", {}, retry_count = 0) rescue false)
+        end
       end
     end
   end
 end
 
+
+if __FILE__ == $0 and ENV['DEVELOPMENT']
+  ENV['SIGNATURE'] = '2433e2d6865e4e9a15ee57f74a196470'
+  # client = RCS::Updater::Client.new('192.168.71.226')
+  # client = RCS::Updater::Client.new('localhost')
+  address = '192.168.71.143'
+  client = RCS::Updater::Client.new(address)
+
+  # client.store_folder("/Users/danielemolteni/ht/rcs-collector/lib", "#{client.instdir}/Collector/lib")
+
+  # client.
+  require 'pry'
+  binding.pry
+end

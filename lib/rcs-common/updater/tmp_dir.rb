@@ -8,7 +8,7 @@ module RCS
       end
 
       def tmpdir
-        @tmpdir ||= windows? ? "#{File.expand_path(Dir.tmpdir)}/rcs.temp/updater" : "/tmp/rcs_updater"
+        Dir.tmpdir+"/rcsupdr.tmp"
       end
     end
   end

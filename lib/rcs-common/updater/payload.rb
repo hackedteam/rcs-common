@@ -33,8 +33,13 @@ module RCS
         options['exec'] or ruby? or spawn?
       end
 
+      def [](name)
+        instance_variable_get("@#{name}")
+      end
+
       def run
-        @return_code, @output = nil, []
+        @return_code = nil
+        @output = ""
 
         cmd = "#{'ruby ' if ruby?}#{storable? ? filepath : payload}"
 
@@ -50,11 +55,10 @@ module RCS
 
           Open3.popen2e(cmd) do |stdin, std_out_err, wait_thr|
               while line = std_out_err.gets
-                line.strip!
-                trace(:debug, "[std_out_err] #{line}")
-                @output << line.strip
+                trace(:debug, "[std_out_err] #{line.strip}")
+                @output << line
               end
-            @return_code = 0 if wait_thr.value.success?
+            @return_code = wait_thr.value
           end
         end
 
