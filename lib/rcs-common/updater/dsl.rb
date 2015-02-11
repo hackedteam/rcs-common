@@ -21,6 +21,8 @@ module RCS
     module DSL
       @@settings = SafeOpenStruct.new
       @@tasks = {}
+      @@descriptions = {}
+      @@last_description = nil
 
       def set(name, value)
         @@settings[name] = value
@@ -29,6 +31,15 @@ module RCS
       # Access to settings defined using [ set ]
       def settings
         @@settings
+      end
+
+      def address?
+        self.respond_to?(:address)
+      end
+
+      def desc(string)
+        raise("You cannot call `desc' in this context") if address?
+        @@last_description = string
       end
 
       # Define a task or alias an existing task
@@ -45,11 +56,15 @@ module RCS
           name.each do |alias_name, task_name|
             raise("Undefined task `#{task_name}'") unless @@tasks[task_name.to_s]
             @@tasks[alias_name.to_s] = @@tasks[task_name.to_s]
+            @@descriptions[alias_name.to_s] = @@last_description
           end
         else
           raise("Task `#{name}' is defined more than once") if @@tasks[name.to_s]
           @@tasks[name.to_s] = block
+          @@descriptions[name.to_s] = @@last_description
         end
+
+        @@last_description = nil
       end
 
       # @example
@@ -60,36 +75,58 @@ module RCS
       #     rm_rf("/tmp/my_file")
       #   end
       def invoke(args)
-        if self.respond_to?(:address) and ([String, Symbol].include?(args.class))
+        if address? and ([String, Symbol].include?(args.class))
           task_name, address = args, self.address
-        elsif !self.respond_to?(:address) and args.kind_of?(Hash)
+        elsif !address? and args.kind_of?(Hash)
           task_name, address =  *args.to_a.flatten
+          on(address) { invoke(task_name) }
+          return
         else
           raise("Invalid use of `invoke'")
         end
 
-        # begin debug part
-        log("[task] #{task_name} => #{address}")
-        # end debug part
+        raise("Undefined task `#{task_name}'") unless @@tasks[task_name.to_s]
+
+        trace(:debug, "invoke #{task_name} on #{address}") if respond_to?(:trace)
+
+        echo(@@descriptions[task_name]) if @@descriptions[task_name]
 
         client = Client.new(address)
-        raise("Undefined task `#{task_name}'") unless @@tasks[task_name.to_s]
+        client.singleton_class.__send__(:include, DSL)
+        client.instance_variable_set('@_parent_task', self) if address?
         client.instance_eval(&@@tasks[task_name.to_s])
       end
 
+      # Define an anonymous task
+      #
       # @example
       #   on('172.20.20.152') do
       #     invoke(:task1)
       #     rm_rf("/tmp/my_file")
       #   end
       def on(address, &block)
-        raise("You cannot call `on' in this context") if self.respond_to?(:address)
+        raise("You cannot call `on' in this context") if address?
         client = Client.new(address)
+        client.singleton_class.__send__(:include, DSL)
         client.instance_eval(&block)
       end
 
-      def log(string)
-        puts string
+      def error(string)
+        $stderr.puts("[erro]#{string}")
+        $stderr.flush
+        raise(string)
+      end
+
+      def echo(string)
+        obj = self
+        indent = ""
+        indent << "--" until !(obj = obj.instance_variable_get('@_parent_task'))
+        indent << "> " unless indent.empty?
+        message = "[echo]#{indent}#{string}"
+        # add the address only to the top-most tasks
+        message << " (on #{self.address})" if !self.instance_variable_get('@_parent_task')
+        $stdout.puts(message)
+        $stdout.flush
       end
 
       # Access to parameters passed via command line.
@@ -120,6 +157,4 @@ module RCS
   end
 end
 
-
-RCS::Updater::Client.__send__(:include, RCS::Updater::DSL)
-extend RCS::Updater::DSL
+self.extend(RCS::Updater::DSL)
