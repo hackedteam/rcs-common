@@ -58,7 +58,7 @@ module RCS
                 trace(:debug, "[std_out_err] #{line.strip}")
                 @output << line
               end
-            @return_code = wait_thr.value
+            @return_code = wait_thr.value.exitstatus
           end
         end
 

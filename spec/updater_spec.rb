@@ -26,6 +26,8 @@ module RCS::Updater
 
       # Wait for the server to bind
       sleep(2)
+
+      allow(client).to receive(:localhost?).and_return(false)
     end
 
     after do
@@ -59,7 +61,7 @@ module RCS::Updater
 
       it 'raises an error' do
         client.max_retries = 0
-        expect(client.request("xpas123Mnq1", exec: 1)).to be_nil
+        expect { client.request("xpas123Mnq1", exec: 1) }.to raise_error
       end
     end
 
@@ -71,7 +73,7 @@ module RCS::Updater
       it 'gets a valid response' do
         resp = client.request("hostname", exec: 1)
         expect(resp[:return_code]).to eq(0)
-        expect(resp[:output]).to eq([`hostname`.strip])
+        expect(resp[:output]).to eq(`hostname`)
       end
     end
   end
