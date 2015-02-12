@@ -19,7 +19,7 @@ namespace :protect do
     if verbose?
       system(cmd) || raise("Econding failed.")
     else
-      raise("Econding failed.") if `#{cmd}` =~ /[1-9]\serror/
+      raise("Econding failed.") if `#{cmd}` !~ /processed, 0 errors/
     end
   end
 
@@ -36,10 +36,11 @@ namespace :protect do
     RUBYENC = "#{RUBYENCPATH}/rgencoder"
   end
 
+  RUBYENC_VERSION = '2.0.0'
+
   LIB_PATH = File.expand_path('../../lib', __FILE__)
 
   raise("Invalid lib path") unless File.exists?("#{LIB_PATH}/rcs-common.rb")
-
 
   desc "Build an encrypted version of rcs-common gem into the pkg directory"
   task :build do
@@ -48,7 +49,7 @@ namespace :protect do
 
       # Encoding files
       report("Encoding scripts (use --trace to see RubyEncoder output)") do
-        exec_rubyencoder("#{RUBYENC} --stop-on-error --encoding UTF-8 -b- -r --ruby 2.0.0 \"#{LIB_PATH}/*.rb\"")
+        exec_rubyencoder("#{RUBYENC} --stop-on-error --encoding UTF-8 -b- -r --ruby #{RUBYENC_VERSION} \"#{LIB_PATH}/*.rb\"")
       end
 
 
@@ -61,7 +62,7 @@ namespace :protect do
       files = Dir["#{RUBYENCPATH}/Loaders/**/**"]
         # keep only the interesting files (2.0.x windows, macos)
       files.delete_if {|v| v.match(/bsd/i) or v.match(/linux/i)}
-      files.keep_if {|v| v.match(/20/) or v.match(/loader.rb/) }
+      files.keep_if {|v| v.match(/#{RUBYENC_VERSION.gsub('.','')[0..1]}/) or v.match(/loader.rb/) }
 
       files.each { |f| FileUtils.cp(f, rgpath) }
 
