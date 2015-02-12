@@ -21,10 +21,11 @@ module PhotoEvidence
 
     data = {program: "iphoto",
             path: "/Users/Target/Pictures/iPhoto Library/",
-            tags: [{name: 'ciccio', handle: '129461946129481', type: 'facebook'}],
+            tags: [{name: 'ciccio', handle: '1234567890', type: 'facebook'}, {name: 'pasticcio', handle: '0987654321', type: 'facebook'}],
             description: "my wonderful photo",
             place: {lat: 45.0, lon: 9.1, r: 50},
-            device: ''
+            device: '',
+            target: false
             }
 
     header.write data.to_json
@@ -53,6 +54,7 @@ module PhotoEvidence
     ret[:data][:latitude] = data['place']['lat'] if data['place']
     ret[:data][:longitude] = data['place']['lon'] if data['place']
     ret[:data][:accuracy] = data['place']['r'] if data['place']
+    ret[:data][:type] = :target if data['target']
 
     return ret
   end
