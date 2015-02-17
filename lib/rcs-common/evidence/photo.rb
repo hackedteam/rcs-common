@@ -47,7 +47,7 @@ module PhotoEvidence
 
     data = JSON.parse(binary.read)
 
-    ret[:da] = data['time'] # override the date acquired
+    ret[:da] = data['time'] if data['time'] # override the date acquired
     ret[:data][:program] = data['program']
     ret[:data][:path] = data['path']
     ret[:data][:desc] = data['description']
