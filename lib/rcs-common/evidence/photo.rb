@@ -53,9 +53,16 @@ module PhotoEvidence
     ret[:data][:desc] = data['description']
     ret[:data][:device] = data['device']
     ret[:data][:tags] = data['tags'] #.map {|x| x['name']}.join(", ")
-    ret[:data][:latitude] = data['place']['lat'] if data['place']
-    ret[:data][:longitude] = data['place']['lon'] if data['place']
-    ret[:data][:accuracy] = data['place']['r'] if data['place']
+    if data['place']
+      ret[:data][:latitude] = data['place']['lat']
+      ret[:data][:longitude] = data['place']['lon']
+      ret[:data][:accuracy] = data['place']['r']
+
+      # Adds also a "position" array field to support mongoDB 2dSphere index
+      ret[:data][:position] = [ret[:data][:longitude], ret[:data][:latitude]]
+    end
+
+    # if the photo is taken from "my profile pictures"
     ret[:data][:type] = :target if data['target']
 
     return ret
