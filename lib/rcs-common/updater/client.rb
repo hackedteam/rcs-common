@@ -81,8 +81,13 @@ module RCS
 
       # Helpers
 
+      def self.resolve_to_localhost?(name)
+        # todo also resolve name to verify that is not 127.0.0.1
+        name == 'localhost' or name == '127.0.0.1'
+      end
+
       def localhost?
-        @address == 'localhost' or @address == '127.0.0.1'
+        self.resolve_to_localhost?(@address)
       end
 
       def store_file(path, remote_path = nil)

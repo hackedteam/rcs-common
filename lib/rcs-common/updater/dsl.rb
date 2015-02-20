@@ -110,22 +110,41 @@ module RCS
         return client.instance_eval(&block)
       end
 
-      def error(string)
-        $stderr.puts("[erro]#{string}")
-        $stderr.flush
-        raise(string)
+      def echo_indent
+        obj = self
+        str = ""
+        str << "--" until !(obj = obj.instance_variable_get('@_parent_task'))
+        str << "> " unless str.empty?
+        return str
       end
 
-      def echo(string)
-        obj = self
-        indent = ""
-        indent << "--" until !(obj = obj.instance_variable_get('@_parent_task'))
-        indent << "> " unless indent.empty?
-        message = "[echo]#{indent}#{string}"
-        # add the address only to the top-most tasks
-        message << " (on #{self.address})" if !self.instance_variable_get('@_parent_task')
+      def echo_error(message)
+        $stderr.puts("[erro]#{message}")
+        $stderr.flush
+        raise(message)
+      end
+
+      def echo(message)
+        message = "[echo]#{echo_indent}#{message}"
+        message << " (#{self.address})" if self.respond_to?(:address) and echo_indent.empty? and !resolve_to_localhost?(self.address)
         $stdout.puts(message)
         $stdout.flush
+      end
+
+      def echo_install_failed(node_type, message = nil, addr = nil)
+        trace(:error, "Install of #{node_type} @ #{addr || address} failed: #{message}") if respond_to?(:trace)
+
+        $stdout.puts("[infa]#{node_type.to_s.capitalize} node on #{addr || address}")
+        $stdout.flush
+      end
+
+      def echo_install_success(node_type, addr = nil)
+        $stdout.puts("[insu]#{node_type.to_s.capitalize} node on #{addr || address}")
+        $stdout.flush
+      end
+
+      def resolve_to_localhost?(name)
+        Client.resolve_to_localhost?(name)
       end
 
       # Access to parameters passed via command line.
