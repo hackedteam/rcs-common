@@ -56,11 +56,18 @@ END
       included do
         cattr_accessor :signature_fields
         self.signature_fields = []
+
+        cattr_accessor :signature_chained
+        self.signature_chained = false
+
         cattr_accessor :dsa_priv, :dsa_pub
         self.dsa_priv = OpenSSL::PKey::DSA.new(DSA_PRIV_KEY)
         self.dsa_pub = OpenSSL::PKey::DSA.new(DSA_PUB_KEY)
 
-        field :signature, type: String
+        field :signature, type: Hash, default: {}
+
+        index({'signature.index' => 1}, {background: true})
+
         set_callback :create, :before, :set_signature
         set_callback :update, :before, :set_signature
       end
@@ -68,33 +75,56 @@ END
       def set_signature
         now = Time.now.getutc.to_f
 
-        #puts "SET: #{signature_fields} => #{concat_values(now, signature_fields)}"
-
-        # calculate the digest
-        digest = OpenSSL::Digest::SHA256.digest(concat_values(now, signature_fields))
-        # sign the digest
-        sig = dsa_priv.syssign(digest)
-
         # save the version and the fields used to calculate the signature
         # this could help in the future if the signature_fields are changed
         hash = {version: 1,
                 fields: signature_fields,
-                timestamp: now,
-                signature: Base64.strict_encode64(sig)}
+                timestamp: now}
 
-        self.signature = Base64.strict_encode64(hash.to_json)
+        # if we need full consistency all over the collection (to detect deletions)
+        hash[:index] = self.class.next_canary_index if self.signature_chained
+        puts "INDEX: #{hash[:index]}"
+
+=begin
+        if self.signature_chained
+          if self.class.is_canary?(self)
+            puts "CANARY: #{self.signature.inspect}"
+            hash[:index] = self.signature[:index] || 0
+          else
+            hash[:index] = self.class.next_canary_index
+            puts "INDEX: #{hash[:index]}"
+          end
+        end
+=end
+
+        #puts "SET: #{signature_fields} => #{concat_values(hash, signature_fields)}"
+
+        # calculate the digest
+        digest = OpenSSL::Digest::SHA256.digest(concat_values(hash, signature_fields))
+        # sign the digest
+        sig = dsa_priv.syssign(digest)
+
+        # put the dsa signature in the hash and save it
+        hash[:signature] = Base64.strict_encode64(sig)
+        self.signature[:integrity] = Base64.strict_encode64(hash.to_json)
+        self.signature[:index] = hash[:index] if hash[:index]
       end
 
       def check_signature
         # load the serialized signature
-        hash = JSON.parse(Base64.decode64(self.signature)).with_indifferent_access
+        hash = JSON.parse(Base64.decode64(self.signature[:integrity])).with_indifferent_access
 
-        #puts "CHECK: #{signature_fields} => #{concat_values(hash[:timestamp], hash[:fields])}"
+        # extract and remove the dsa signature from the hash
+        sig = Base64.decode64(hash.delete(:signature))
+
+        #puts "CHECK: #{signature_fields} => #{concat_values(hash, hash[:fields])}"
+
+        # check the tampering of the index
+        puts "HASH: #{hash[:index]}  SIGN: #{self.signature[:index]}"
+        return false if self.signature_chained and hash[:index] != self.signature[:index]
 
         # calculate the digest
-        digest = OpenSSL::Digest::SHA256.digest(concat_values(hash[:timestamp], hash[:fields]))
-        # extract the previous signature
-        sig = Base64.decode64(hash[:signature])
+        digest = OpenSSL::Digest::SHA256.digest(concat_values(hash, hash[:fields]))
         # verify the integrity
         dsa_pub.sysverify(digest, sig)
       rescue Exception => e
@@ -109,30 +139,55 @@ END
 
       private
 
-      def calculate_signature(value)
-        key = "ʎəʞ ʇəɹɔəs ɹədns əɥʇ sı sıɥʇ"
-        Base64.strict_encode64(OpenSSL::HMAC.digest(OpenSSL::Digest.new('sha256'), key, value))
-      end
-
-      def concat_values(time, keys)
+      def concat_values(hash, keys)
         # always include the id of the document to prevent cloning of document
-        text = self[:_id].to_s
-
-        # save the timestamp
-        text << '|' + time.to_s
+        # also include the hash itself (with timestamp) to prevent replay attack
+        text = self[:_id].to_s + '|' + hash.to_json + '|'
 
         # concatenate all the other fields
         keys.each do |key|
           # use json serialization here, since it works for strings, integers, complex arrays or hashes...
-          text << '|' + self[key].to_json unless self[key].blank?
+          text << self[key].to_json + '|' unless self[key].blank?
         end
-        text << '|'
+
+        return text
       end
 
       module ClassMethods
         def sign_options(options)
           self.signature_fields = options[:include] if options[:include]
+          self.signature_chained = !!options[:chained]
         end
+
+        def verify_integrity
+          #can = next_canary_index
+          #canary = get_canary
+          #puts can.inspect
+          #puts get_canary.inspect
+          #puts get_canary.check_signature
+
+          raise 'not yet implemented'
+          #return false
+        end
+
+        def next_canary_index
+          canary_id = {_id: BSON::ObjectId.from_string('000000000000000000000000')}
+          # first case, we use the moped driver to skip the callbacks
+          self.collection.insert(canary_id) if self.where(canary_id).count.eql? 0
+          #self.with(collection: "#{self.collection.name}_canary").find_or_create_by({_id: BSON::ObjectId.from_string('000000000000000000000000')})
+          # atomically increment the index
+          canary = self.where({_id: BSON::ObjectId.from_string('000000000000000000000000')}).find_and_modify({"$inc" => {'signature.index' => 1}}, new: true)
+          canary[:signature][:index]
+        end
+
+        private
+
+        def get_canary
+          self.find(BSON::ObjectId.from_string('000000000000000000000000'))
+        rescue
+          raise "Signature canary not found: cannot verify the integrity of the collection"
+        end
+
       end
 
     end

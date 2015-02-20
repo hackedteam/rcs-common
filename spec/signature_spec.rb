@@ -14,6 +14,15 @@ class TestSignature
   sign_options :include => [:name, :surname, :code, :complex]
 end
 
+class TestChainedSignature
+  include Mongoid::Document
+  include RCS::Mongoid::Signature
+
+  field :name, type: String
+
+  sign_options :include => [:name], :chained => true
+end
+
 describe RCS::Mongoid::Signature do
 
   describe '.included' do
@@ -96,10 +105,71 @@ describe RCS::Mongoid::Signature do
     end
 
     it 'invalidate the signature when changing the signature itself' do
-      test.signature = 'mod'
+      test.signature = {}
       expect(test.check_signature).to be_falsey
     end
 
   end
 
+  context 'when using a chained signature' do
+
+    it 'validate the first entry' do
+      first = TestChainedSignature.create(name: '1')
+      expect(TestChainedSignature.verify_integrity).to be_truthy
+    end
+
+    it 'validate the last entry' do
+      first = TestChainedSignature.create(name: '1')
+      last = TestChainedSignature.create(name: '2')
+      expect(TestChainedSignature.verify_integrity).to be_truthy
+    end
+
+    it 'detect an emptied collection' do
+      first = TestChainedSignature.create(name: '1')
+      TestChainedSignature.collection.drop
+      expect(TestChainedSignature.verify_integrity).to be_falsey
+    end
+
+    it 'detect removal of the first entry' do
+      first = TestChainedSignature.create(name: '1')
+      first.destroy
+      expect(TestChainedSignature.verify_integrity).to be_falsey
+    end
+
+    it 'detect removal of the first entry (after the next insertion)' do
+      first = TestChainedSignature.create(name: '1')
+      first.destroy
+      last = TestChainedSignature.create(name: '2')
+      expect(TestChainedSignature.verify_integrity).to be_falsey
+    end
+
+    it 'detect removal of the last entry' do
+      TestChainedSignature.create(name: '1')
+      last = TestChainedSignature.create(name: '2')
+      last.destroy
+      last = TestChainedSignature.create(name: '3')
+      expect(TestChainedSignature.verify_integrity).to be_falsey
+    end
+
+    it 'detect the removal of middle entries' do
+      first = TestChainedSignature.create(name: '1')
+      middle = TestChainedSignature.create(name: '2')
+      last = TestChainedSignature.create(name: '3')
+      middle.destroy
+      expect(TestChainedSignature.verify_integrity).to be_falsey
+    end
+
+    it 'it is multi thread-safe' do
+      ths = []
+      100.times do
+        ths << Thread.new do
+          a = TestChainedSignature.create(name: "#{Thread.current.object_id}")
+          #puts a.signature
+        end
+      end
+      ths.each {|t| t.join}
+      puts "END"
+      puts TestChainedSignature.count
+    end
+  end
 end
