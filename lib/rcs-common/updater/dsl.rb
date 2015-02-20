@@ -79,8 +79,7 @@ module RCS
           task_name, address = args, self.address
         elsif !address? and args.kind_of?(Hash)
           task_name, address =  *args.to_a.flatten
-          on(address) { invoke(task_name) }
-          return
+          return on(address) { invoke(task_name) }
         else
           raise("Invalid use of `invoke'")
         end
@@ -94,7 +93,7 @@ module RCS
         client = Client.new(address)
         client.singleton_class.__send__(:include, DSL)
         client.instance_variable_set('@_parent_task', self) if address?
-        client.instance_eval(&@@tasks[task_name.to_s])
+        return client.instance_eval(&@@tasks[task_name.to_s])
       end
 
       # Define an anonymous task
@@ -108,7 +107,7 @@ module RCS
         raise("You cannot call `on' in this context") if address?
         client = Client.new(address)
         client.singleton_class.__send__(:include, DSL)
-        client.instance_eval(&block)
+        return client.instance_eval(&block)
       end
 
       def error(string)
