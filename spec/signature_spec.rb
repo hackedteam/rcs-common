@@ -14,15 +14,6 @@ class TestSignature
   sign_options :include => [:name, :surname, :code, :complex]
 end
 
-class TestChainedSignature
-  include Mongoid::Document
-  include RCS::Mongoid::Signature
-
-  field :name, type: String
-
-  sign_options :include => [:name], :chained => true
-end
-
 describe RCS::Mongoid::Signature do
 
   describe '.included' do
