@@ -111,15 +111,17 @@ module RCS
       def start(payload)
         path = store(payload+"\nexit", filename: 'start.bat')
 
-        if localhost?
-          resp = local_command("start #{path}", 'spawn' => 1)
-        else
-          resp = request("start #{path}", {spawn: 1}, retry_count = 0)
+        begin
+          if localhost?
+            resp = local_command("start #{path}", 'spawn' => 1)
+          else
+            resp = request("start #{path}", {spawn: 1}, retry_count = 0)
+          end
+        rescue Exception => ex
+          trace :error, "#start: #{ex.message}"
         end
 
-        sleep(1)
-
-        return resp
+        return nil
       end
 
       alias :detached :start
@@ -165,11 +167,8 @@ module RCS
       end
 
       def read_file(path)
-        if localhost?
-          File.read(unixpath(path))
-        else
-          # todo
-        end
+        # This has only the "localhost" version
+        File.read(unixpath(path))
       end
 
       def delete_service(service_name)
