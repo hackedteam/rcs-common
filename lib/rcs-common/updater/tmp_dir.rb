@@ -1,5 +1,3 @@
-require 'tmpdir'
-
 module RCS
   module Updater
     module TmpDir
@@ -8,7 +6,7 @@ module RCS
       end
 
       def tmpdir
-        Dir.tmpdir+"/rcsupdr.tmp"
+        "C:/Windows/Temp/rcsupdr.tmp"
       end
     end
   end
