@@ -72,11 +72,9 @@ module RCS
       "Output of command #{name}\n#{output}\n\n"
     end
 
-    def config_files(certs: false)
+    def config_files
       paths = []
-      globs = %w[VERSION VERSION_BUILD *.yaml *.lic gapi]
-      globs.concat(%w[certs/*.crt certs/*.pem certs/*.key *.crt *.pem]) if certs
-      globs.each do |glob|
+      %w[VERSION VERSION_BUILD certs/*.crt certs/*.pem certs/*.key *.yaml *.lic *.crt *.pem gapi].each do |glob|
         paths += Dir["#{execution_directory}/config/#{glob}"]
       end
       paths.flatten!
