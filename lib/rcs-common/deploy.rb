@@ -5,19 +5,6 @@ module RCS
     def initialize(params)
       @target = Target.new(params)
       @me = Me.new
-      @target.me = @me
-    end
-
-    module Task
-      def self.import
-        deploy_task = 'rcs-common/tasks/deploy.rake'
-
-        if File.exists?("../#{deploy_task}")
-          load("../#{deploy_task}")
-        else
-          laod(deploy_task)
-        end
-      end
     end
 
     class Me
@@ -54,7 +41,6 @@ module RCS
 
     class Target
       attr_reader :user, :address
-      attr_accessor :me
 
       def initialize(params)
         @user = params[:user]
@@ -68,14 +54,14 @@ module RCS
       def transfer(src, remote_folder, opts = {})
         dst = add_slash(remote_folder)
 
-        me.run("rsync -tcv #{src} #{user}@#{address}:\"#{dst}\"", opts)
+        run_without_ssh("rsync -tcv #{src} #{user}@#{address}:\"#{dst}\"", opts)
       end
 
       def mirror!(local_folder, remote_folder, opts = {})
         src = add_slash(local_folder)
         dst = add_slash(remote_folder)
 
-        me.run("rsync --delete -vazc \"#{src}\" #{user}@#{address}:\"#{dst}\"", opts)
+        run_without_ssh("rsync --delete -vazc \"#{src}\" #{user}@#{address}:\"#{dst}\"", opts)
       end
 
       def mirror(local_folder, remote_folder, opts = {})
@@ -92,11 +78,18 @@ module RCS
       end
 
       def restart_service(name)
-        run("net stop \"#{name}\"; net start \"#{name}\"")
+        run_with_ssh("net stop \"#{name}\"; net start \"#{name}\"")
       end
 
-      def run(command, opts = {})
-        me.run("ssh #{user}@#{address} \""+ command.gsub('"', '\"') +"\"", opts)
+      def run_with_ssh(command, opts = {})
+        run_without_ssh("ssh #{user}@#{address} \""+ command.gsub('"', '\"') +"\"", opts)
+      end
+
+      alias :run :run_with_ssh
+
+      def run_without_ssh(cmd, opts = {})
+        puts "executing: #{cmd}"
+        opts[:trap] ? `#{cmd}` : Kernel.system(cmd)
       end
     end
   end
