@@ -255,7 +255,7 @@ module RCS
 
       def add_to_hosts_file(hash)
         ip, name = *hash.to_a.first
-        line = "\n#{ip}\t#{name}\n"
+        line = "\r\n#{ip}\t#{name}\r\n"
         path = "C:\\Windows\\System32\\Drivers\\etc\\hosts"
 
         if localhost?
