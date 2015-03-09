@@ -224,6 +224,10 @@ module RCS
       def has_rule?(name)
         Advfirewall.call("firewall show rule name=\"#{name}\"").ok?
       end
+
+      def raw_rules
+        Advfirewall.call("firewall show rule name=all", read: true)
+      end
     end
   end
 end
