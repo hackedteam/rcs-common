@@ -354,18 +354,3 @@ module RCS
     end
   end
 end
-
-
-if __FILE__ == $0 and ENV['DEVELOPMENT']
-  ENV['SIGNATURE'] = '2433e2d6865e4e9a15ee57f74a196470'
-  # client = RCS::Updater::Client.new('192.168.71.226')
-  # client = RCS::Updater::Client.new('localhost')
-  address = '192.168.71.143'
-  client = RCS::Updater::Client.new(address)
-
-  # client.store_folder("/Users/danielemolteni/ht/rcs-collector/lib", "#{client.instdir}/Collector/lib")
-
-  # client.
-  require 'pry'
-  binding.pry
-end
