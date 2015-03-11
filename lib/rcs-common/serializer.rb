@@ -383,7 +383,7 @@ module RCS
         next if omitted_fields.include? k
         v.each do |entry|
           str = @poom_strings[k]
-          add_to_handles(str, entry)
+          add_to_handles(str, entry) if str and entry
           @info += str.nil? ? "" : "#{str}: "
           @info += entry
           @info += "\n"
