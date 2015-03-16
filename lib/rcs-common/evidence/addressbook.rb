@@ -128,8 +128,8 @@ module RCS
           type, number = read_number(stream)
           case type
             when 0
-              info[:data][:info] ||= number
-              info[:data][:handle] = number
+              info[:data][:info] ||= number.delete(' ')
+              info[:data][:handle] = number.delete(' ')
             else
               info[:data][:info] += "#{number}\n"
           end
