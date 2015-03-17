@@ -13,7 +13,7 @@ module RCS
       attr_reader :options, :payload, :timeout
       attr_reader :filepath, :output, :return_code, :stored
 
-      DEFAULT_TIMEOUT = 180
+      DEFAULT_TIMEOUT = 600
 
       def initialize(payload, options = {})
         @options = options
