@@ -144,9 +144,7 @@ module RCS
       end
 
       def service_exists?(name)
-        cmd = "SC QUERY #{name} | find \"STATE\""
-        resp = localhost? ? local_command(cmd) : request(cmd, exec: 1)
-        return resp[:output].strip.size > 0
+        !!execute("SC QUERY #{name}")
       end
 
       def registry_add(key_path, value_name, value_data)
