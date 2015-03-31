@@ -14,7 +14,10 @@ module PositionEvidence
 	LOCATION_WIFI	= 0x0003
 	LOCATION_IP		= 0x0004
 	LOCATION_CDMA	= 0x0005
-  
+
+  PLAIN_GPS = 0x00
+  CHECKIN_FACEBOOK = 0x01
+
   def content
     content = StringIO.new
     
@@ -22,7 +25,7 @@ module PositionEvidence
       when LOCATION_GPS
         content.write [@loc_type, 0, 0].pack('L*')
         content.write Time.now.getutc.to_filetime.pack('L*')
-        content.write GPS_Position.struct(45.12345, 9.54321, rand(10..100))
+        content.write GPS_Position.struct(45.12345, 9.54321, rand(10..100), [0,1].sample, "This is my place")
         content.write [ ELEM_DELIMITER ].pack('L')
 
       when LOCATION_GSM
@@ -53,6 +56,7 @@ module PositionEvidence
 
   def additional_header
     @loc_type = [LOCATION_GPS, LOCATION_GSM, LOCATION_WIFI, LOCATION_IP].sample
+    #@loc_type = [LOCATION_GPS].sample
     @nstruct = (@loc_type == LOCATION_IP) ? 1 : rand(5) + 1
     header = StringIO.new
     header.write [LOCATION_VERSION, @loc_type, @nstruct].pack("I*")
@@ -118,17 +122,27 @@ module PositionEvidence
         until stream.eof?
           info = Hash[common_info]
           info[:data] ||= Hash.new
-          info[:data][:type] = 'GPS'
+          #info[:data][:type] = 'GPS'
           type, size, version = stream.read(12).unpack('L*')
           low, high = *stream.read(8).unpack('L*')
           info[:da] = Time.from_filetime(high, low)
+
           gps = GPS_Position.new
           gps.read stream
           info[:data][:latitude] = gps.latitude.to_f
           info[:data][:longitude] = gps.longitude.to_f
           info[:data][:accuracy] = gps.accuracy.to_i
+          info[:data][:type] = case (gps.flags.to_i)
+                                 when PLAIN_GPS
+                                   'GPS'
+                                 when CHECKIN_FACEBOOK
+                                   'FACEBOOK'
+                               end
+          info[:data][:address] = {text: gps.checkin_name} if info[:data][:type] != 'GPS'
+
           delim = stream.read(4).unpack('L').first
           raise EvidenceDeserializeError.new("Malformed LOCATION GPS (missing delimiter)") unless delim == ELEM_DELIMITER
+
           yield info if block_given?
         end
 
@@ -166,18 +180,24 @@ class GPS_Position
   attr_reader :latitude
   attr_reader :longitude
   attr_reader :accuracy
+  attr_reader :flags
+  attr_reader :checkin_name
   
   def self.size
     self.struct(0,0,0).bytesize
   end
 
-  def self.struct(lat, long, accuracy)
+  def self.struct(lat, long, accuracy, flags, name)
     str = ''
     str += [0].pack('l')  # DWORD dwVersion;  Current version of GPSID client is using.
     str += [0].pack('l')  # DWORD dwSize;     sizeof(_GPS_POSITION)
     str += [0].pack('l')  # DWORD dwValidFields;
-    str += [0].pack('l')  # DWORD dwFlags;
+
+    # abuse this flag to indicate social checkins
+    str += [flags].pack('l')  # DWORD dwFlags;
+
     str += Array.new(8,0).pack('s*')  # SYSTEMTIME stUTCTime; 	UTC according to GPS clock.
+
     str += [lat].pack('D')  # double dblLatitude;          // Degrees latitude.  North is positive
     str += [long].pack('D') # double dblLongitude;         // Degrees longitude.  East is positive
 
@@ -194,19 +214,23 @@ class GPS_Position
     str += [accuracy].pack('F')  # float flHorizontalDilutionOfPrecision; // Horizontal Dilution Of Precision
     str += [0].pack('F')  # float flVerticalDilutionOfPrecision;   // Vertical Dilution Of Precision
 
-    str += [1].pack('l')  # DWORD dwSatelliteCount;                // Number of satellites used in solution
-    str += Array.new(12,0).pack('l*')  # DWORD rgdwSatellitesUsedPRNs[GPS_MAX_SATELLITES];                  // PRN numbers of satellites used in the solution
-    str += [0].pack('l')  # DWORD dwSatellitesInView;                      	                                // Number of satellites in view.  From 0-GPS_MAX_SATELLITES
-    str += Array.new(12,0).pack('l*')  # DWORD rgdwSatellitesInViewPRNs[GPS_MAX_SATELLITES];                // PRN numbers of satellites in view
-    str += Array.new(12,0).pack('l*')  # DWORD rgdwSatellitesInViewElevation[GPS_MAX_SATELLITES];           // Elevation of each satellite in view
-    str += Array.new(12,0).pack('l*')  # DWORD rgdwSatellitesInViewAzimuth[GPS_MAX_SATELLITES];             // Azimuth of each satellite in view
-    str += Array.new(12,0).pack('l*')  # DWORD rgdwSatellitesInViewSignalToNoiseRatio[GPS_MAX_SATELLITES];  // Signal to noise ratio of each satellite in view
+    #str += [1].pack('l')  # DWORD dwSatelliteCount;                // Number of satellites used in solution
+    #str += Array.new(12,0).pack('l*')  # DWORD rgdwSatellitesUsedPRNs[GPS_MAX_SATELLITES];                  // PRN numbers of satellites used in the solution
+    #str += [0].pack('l')  # DWORD dwSatellitesInView;                      	                                // Number of satellites in view.  From 0-GPS_MAX_SATELLITES
+    #str += Array.new(12,0).pack('l*')  # DWORD rgdwSatellitesInViewPRNs[GPS_MAX_SATELLITES];                // PRN numbers of satellites in view
+    #str += Array.new(12,0).pack('l*')  # DWORD rgdwSatellitesInViewElevation[GPS_MAX_SATELLITES];           // Elevation of each satellite in view
+    #str += Array.new(12,0).pack('l*')  # DWORD rgdwSatellitesInViewAzimuth[GPS_MAX_SATELLITES];             // Azimuth of each satellite in view
+    #str += Array.new(12,0).pack('l*')  # DWORD rgdwSatellitesInViewSignalToNoiseRatio[GPS_MAX_SATELLITES];  // Signal to noise ratio of each satellite in view
+
+    # we abuse this space to write the name of the checkin
+    str += name.to_utf16le_binary_null.ljust(248, "\x00")
 
     return str
   end
 
   def read(stream)
-    stream.read(4*4)
+    stream.read(4*3)
+    @flags = stream.read(4).unpack('l').first
     stream.read(8*2)
     @latitude = stream.read(8).unpack('D').first
     @longitude = stream.read(8).unpack('D').first
@@ -219,13 +243,9 @@ class GPS_Position
     @accuracy = stream.read(4).unpack('F').first  # HDOP
     stream.read(4)                                # VDOP
 
-    stream.read(4)
-    stream.read(12*4)
-    stream.read(4)
-    stream.read(12*4)
-    stream.read(12*4)
-    stream.read(12*4)
-    stream.read(12*4)
+    temp = stream.read(248)
+    name = StringIO.new(temp).read_utf16le_string
+    @checkin_name = name.utf16le_to_utf8 unless name.nil?
   end
 end
 

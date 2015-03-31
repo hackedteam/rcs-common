@@ -49,7 +49,6 @@ module RCS
       header.write [SMS_VERSION].pack("l")
       header.write [[0,1].sample].pack("l") # incoming
       time = Time.now.getutc.to_filetime
-      time.reverse!
       header.write time.pack('L*')
       header.write "+39123456789".ljust(16, "\x00")
       header.write "+39987654321".ljust(16, "\x00")

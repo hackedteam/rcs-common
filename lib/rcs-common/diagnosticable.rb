@@ -100,6 +100,25 @@ module RCS
       hash
     end
 
+    # Get the state (running, stopped, etc.) and the configuration information
+    # of all the Windows services that start with "RCS"
+    def services_state
+      states = ""
+      config = ""
+
+      `sc query state= all`.split("SERVICE_NAME:").each do |info|
+        name = info.scan(/\s*(.+)\n/).flatten.first
+
+        if name =~ /^rcs/i
+          state = info.scan(/STATE\s+:\s+\d+\s*(.+)\s*/).flatten.first
+          states << "#{name}: #{state}\n"
+          config << `sc qc #{name}`.scan(/SERVICE_NAME:\s*(.*)/m).flatten.last.to_s
+        end
+      end
+
+      return "#{states}\n#{config}"
+    end
+
     def huge_log?(path)
       File.size(path) > 52428800 # 50 megabytes
     end

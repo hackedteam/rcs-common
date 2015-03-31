@@ -5,7 +5,11 @@ module RCS
 
   module AddressbookEvidence
     def content
-      fields = { :first_name => ["John", "Liza", "Bruno"].sample, :last_name => ["Doe", "Rossi", "Bianchi"].sample, :handle => ["pippo.pluto", "ciao.miao", "happy.hippo"].sample}
+      fields = { :first_name => ["John", "Liza", "Bruno"].sample,
+                 :last_name => ["Doe", "Rossi", "Bianchi"].sample,
+                 :mobile_phone_number => "+393380123456",
+                 :home_phone_number => "+39024567890",
+                 :email_1 => "test@me.com"}
       AddressBookSerializer.new.serialize fields
     end
 
@@ -27,7 +31,7 @@ module RCS
         info[:data][:info] = contact.info
         info[:data][:program] = contact.program
         info[:data][:type] = contact.type
-        info[:data][:handle] = contact.handle if contact.handle
+        info[:data][:handles] = contact.handles unless contact.handles.empty?
 
         yield info if block_given?
       end
@@ -46,6 +50,8 @@ module RCS
     PROGRAM_WHATSAPP = 0x00000001
     PROGRAM_SKYPE = 0x00000002
     PROGRAM_VIBER = 0x00000004
+    PROGRAM_MESSAGES = 0x00000008
+    PROGRAM_LINE = 0x00000010
 
     def content
       header = StringIO.new
@@ -101,6 +107,8 @@ module RCS
         info[:data][:program] = :whatsapp if (flags & PROGRAM_WHATSAPP != 0)
         info[:data][:program] = :skype if (flags & PROGRAM_SKYPE != 0)
         info[:data][:program] = :viber if (flags & PROGRAM_VIBER != 0)
+        info[:data][:program] = :line if (flags & PROGRAM_LINE != 0)
+        info[:data][:program] = :messages if (flags & PROGRAM_MESSAGES != 0)
 
         len = read_uint32 stream
 
@@ -120,8 +128,8 @@ module RCS
           type, number = read_number(stream)
           case type
             when 0
-              info[:data][:info] ||= number
-              info[:data][:handle] = number
+              info[:data][:info] ||= number.delete(' ')
+              info[:data][:handle] = number.delete(' ')
             else
               info[:data][:info] += "#{number}\n"
           end

@@ -1,6 +1,7 @@
-require 'rcs-common/trace'
 require 'resolv'
 require 'timeout'
+require_relative 'trace'
+require_relative 'resolver'
 
 module RCS
   module Common
@@ -9,6 +10,8 @@ module RCS
 
       # Represent a Windows Firewall rule.
       class Rule
+        include Resolver
+
         ATTRIBUTES = %i[direction action local_ip remote_ip local_port remote_port name protocol profiles enabled grouping edge_traversal]
 
         RULE_GROUP = 'RCS Firewall Rules'
@@ -32,30 +35,6 @@ module RCS
             define_singleton_method(name) { @attributes[name] }
             define_singleton_method("#{name}=") { |value| @attributes[name] = value }
           end
-        end
-
-        def resolve_dns(dns)
-          ip = nil
-
-          Timeout::timeout(10) do
-            ip = Resolv.getaddress(dns).to_s rescue nil
-          end
-
-          if ip.nil? and defined?(Win32)
-            Timeout::timeout(10) do
-              info = Win32::Resolv.get_resolv_info
-              resolver = Resolv::DNS.new(nameserver: info[1], search: info[0])
-              ip = resolver.getaddress(dns).to_s rescue nil
-            end
-          end
-
-          raise("Unknown host: #{dns.inspect}") unless ip
-
-          return ip
-        rescue Timeout::Error
-          raise("Cannot resolve DNS #{dns.inspect}: timeout")
-        rescue Exception => ex
-          raise("Cannot resolve DNS #{dns.inspect}: #{ex.message}")
         end
 
         def resolve_addresses!
@@ -244,6 +223,10 @@ module RCS
 
       def has_rule?(name)
         Advfirewall.call("firewall show rule name=\"#{name}\"").ok?
+      end
+
+      def raw_rules
+        Advfirewall.call("firewall show rule name=all", read: true)
       end
     end
   end

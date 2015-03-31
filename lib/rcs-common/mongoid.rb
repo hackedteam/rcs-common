@@ -8,3 +8,12 @@ module BSON
     end
   end
 end
+
+# Fix #symbolize_key called on BSON::Document
+module BSON
+  class Document < ::Hash
+    def symbolize_keys
+      to_h.symbolize_keys
+    end
+  end
+end

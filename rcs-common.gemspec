@@ -17,15 +17,18 @@ gemspec = Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   s.add_dependency("log4r", ">= 1.1.9")
+  s.add_dependency('eventmachine', '= 1.0.3')
+  s.add_dependency('mongoid', '= 4.0.1')
   s.add_dependency('mime-types')
   s.add_dependency('sys-filesystem')
   s.add_dependency('sys-cpu')
   s.add_dependency('ffi')
   s.add_dependency('mail')
   s.add_dependency('sbdb')
-  s.add_dependency('mongoid', "~> 4.0.0")
+  s.add_dependency('yajl-ruby')
+  s.add_dependency('em-http-server')
 
-  s.add_development_dependency("bundler", "> 1.0.0")
+  s.add_development_dependency("bundler")
   s.add_development_dependency('rake')
   s.add_development_dependency('test-unit')
   s.add_development_dependency('simplecov')
